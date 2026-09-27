@@ -6184,9 +6184,15 @@ function updateMapCityLabel(cityName) {
 }
 
 // Геокодирование адреса через Nominatim (с кешем)
-async function geocodeAddress(address) {
-  const cleanAddr = applyCity(address).trim();
+async function geocodeAddress(address) {async function geocodeAddress(address) {
+  let cleanAddr = applyCity(address).trim();
   if (!cleanAddr) return null;
+  
+  // Если в адресе нет города — добавляем
+  const city = getMyCity();
+  if (city && !cleanAddr.toLowerCase().includes(city.toLowerCase())) {
+    cleanAddr = city + ', ' + cleanAddr;
+  }
   
   if (mapGeocache[cleanAddr]) {
     return mapGeocache[cleanAddr];
@@ -6254,14 +6260,16 @@ async function renderMapMarkers() {
   const filtered = currentMapFilter === 'all'
     ? activities
     : activities.filter(a => a.timeId === currentMapFilter);
-
-  // ГРУППИРУЕМ по адресу (регистр + пробелы игнорируем)
-  const groups = {};
-  for (const act of filtered) {
-    const key = (act.addr || '').trim().toLowerCase().replace(/\s+/g, ' ');
-    if (!groups[key]) groups[key] = { addr: act.addr, items: [] };
-    groups[key].items.push(act);
-  }
+    
+// ГРУППИРУЕМ по дому (обрезаем квартиру/офис после первой запятой)
+const groups = {};
+for (const act of filtered) {
+  const raw = (act.addr || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  // Отрезаем всё после первой запятой: "ленина 35, кв. 10" → "ленина 35"
+  const key = raw.split(',')[0].trim();
+  if (!groups[key]) groups[key] = { addr: act.addr, items: [] };
+  groups[key].items.push(act);
+}
 
   // Рисуем по одному маркеру на каждую группу
   for (const key in groups) {
