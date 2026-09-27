@@ -4547,8 +4547,24 @@ function renderTotals3() {
     ${trBlock}
     ${plan > 0 && remains > 0 ? `<div class="section"><div class="section-title sec-meet-analysis">👥 Встречи для плана (${remains.toFixed(2)} УП)</div>${meetRows.map(r => `<div class="analysis-row"><div class="label">${r.label}</div><div class="count">${r.count.toFixed(2)}</div></div>`).join('')}</div><div class="section"><div class="section-title sec-sales-analysis">💰 Продажи для плана (${remains.toFixed(2)} УП)</div>${salesRows.map(r => `<div class="analysis-row"><div class="label">${r.label}</div><div class="count">${r.count.toFixed(2)}</div></div>`).join('')}</div>` : ''}
     ${plan > 0 && remains <= 0 ? `<div class="plan-done">🎉 План выполнен! 🎉</div>` : ''}
-    <div class="section"><div class="section-title sec-months">📅 История по дням месяца</div>${monthDays.length === 0 ? '<div style="padding:16px;text-align:center;color:#888">Пока нет данных за этот месяц</div>' : monthDays.map(d => `<div class="row" style="justify-content:space-between"><div class="name" style="flex:1">${d.date}</div><div style="font-weight:700;color:#27ae60">${d.up.toFixed(2)} УП</div></div>`).join('')}</div>
-    <div class="section"><div class="section-title sec-months">📊 История по месяцам</div>${monthsSorted.length === 0 ? '<div style="padding:16px;text-align:center;color:#888">Пока нет данных</div>' : monthsSorted.map(key => { const [y, m] = key.split('-'); const d = new Date(parseInt(y), parseInt(m) - 1, 1); const name = d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }); return `<div class="row month-history-row" data-year="${y}" data-month="${m}" style="justify-content:space-between;cursor:pointer;"><div class="name" style="flex:1">${name}</div><div style="font-weight:700;color:#2980b9">${monthTotals[key].up.toFixed(2)} УП</div><div style="margin-left:8px;color:#95a5a6;font-size:16px;">›</div></div>`; }).join('')}</div>`;
+    <div class="section">
+      <div class="section-title sec-months history-toggle" id="daysHistoryToggle" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+        <span>📅 История по дням месяца</span>
+        <span class="history-arrow" id="daysHistoryArrow" style="transition:transform 0.2s;">▼</span>
+      </div>
+      <div id="daysHistoryBody" style="display:none;">
+        ${monthDays.length === 0 ? '<div style="padding:16px;text-align:center;color:#888">Пока нет данных за этот месяц</div>' : monthDays.map(d => `<div class="row" style="justify-content:space-between"><div class="name" style="flex:1">${d.date}</div><div style="font-weight:700;color:#27ae60">${d.up.toFixed(2)} УП</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title sec-months history-toggle" id="monthsHistoryToggle" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+        <span>📊 История по месяцам</span>
+        <span class="history-arrow" id="monthsHistoryArrow" style="transition:transform 0.2s;">▼</span>
+      </div>
+      <div id="monthsHistoryBody" style="display:none;">
+        ${monthsSorted.length === 0 ? '<div style="padding:16px;text-align:center;color:#888">Пока нет данных</div>' : monthsSorted.map(key => { const [y, m] = key.split('-'); const d = new Date(parseInt(y), parseInt(m) - 1, 1); const name = d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }); return `<div class="row month-history-row" data-year="${y}" data-month="${m}" style="justify-content:space-between;cursor:pointer;"><div class="name" style="flex:1">${name}</div><div style="font-weight:700;color:#2980b9">${monthTotals[key].up.toFixed(2)} УП</div><div style="margin-left:8px;color:#95a5a6;font-size:16px;">›</div></div>`; }).join('')}
+      </div>
+    </div>`;
 
   document.querySelectorAll('#app3 .month-history-row').forEach(row => {
     row.addEventListener('click', () => {
@@ -4579,6 +4595,31 @@ function renderTotals3() {
         list.classList.toggle('show');
         daysToggle.textContent = list.classList.contains('show') ? '▲ Скрыть календарь' : '▼ Показать календарь';
       }
+    });
+  }
+    // Аккордеон «История по дням»
+  const daysHistToggle = document.getElementById('daysHistoryToggle');
+  const daysHistBody = document.getElementById('daysHistoryBody');
+  const daysHistArrow = document.getElementById('daysHistoryArrow');
+  if (daysHistToggle && daysHistBody && daysHistArrow) {
+    daysHistToggle.addEventListener('click', () => {
+      const isOpen = daysHistBody.style.display !== 'none';
+      daysHistBody.style.display = isOpen ? 'none' : 'block';
+      daysHistArrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+      vibro(10);
+    });
+  }
+
+  // Аккордеон «История по месяцам»
+  const monthsHistToggle = document.getElementById('monthsHistoryToggle');
+  const monthsHistBody = document.getElementById('monthsHistoryBody');
+  const monthsHistArrow = document.getElementById('monthsHistoryArrow');
+  if (monthsHistToggle && monthsHistBody && monthsHistArrow) {
+    monthsHistToggle.addEventListener('click', () => {
+      const isOpen = monthsHistBody.style.display !== 'none';
+      monthsHistBody.style.display = isOpen ? 'none' : 'block';
+      monthsHistArrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+      vibro(10);
     });
   }
   const btnSales = document.getElementById('btnSalesChart');
