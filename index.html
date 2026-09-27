@@ -6228,10 +6228,11 @@ function loadGeocache() {
 // Рендеринг маркеров на карте
 async function renderMapMarkers() {
   if (!map) return;
-  
+
   mapMarkers.forEach(m => map.removeLayer(m));
   mapMarkers = [];
-  
+
+  // Собираем все активности с адресами
   const activities = [];
   ROUTE_TIMES.forEach(t => {
     const list = routeState.lists[t.id] || [];
@@ -6248,50 +6249,81 @@ async function renderMapMarkers() {
       }
     });
   });
-  
-  const filtered = currentMapFilter === 'all' 
-    ? activities 
+
+  // Фильтр по слоту
+  const filtered = currentMapFilter === 'all'
+    ? activities
     : activities.filter(a => a.timeId === currentMapFilter);
-  
+
+  // ГРУППИРУЕМ по адресу (регистр + пробелы игнорируем)
+  const groups = {};
   for (const act of filtered) {
-    const coords = await geocodeAddress(act.addr);
+    const key = (act.addr || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!groups[key]) groups[key] = { addr: act.addr, items: [] };
+    groups[key].items.push(act);
+  }
+
+  // Рисуем по одному маркеру на каждую группу
+  for (const key in groups) {
+    const group = groups[key];
+    const coords = await geocodeAddress(group.addr);
     if (!coords) continue;
-    
-    let markerClass = 'map-marker ' + act.timeId;
-    if (act.status === 'done') markerClass += ' done';
-    if (act.status === 'ndz') markerClass += ' ndz';
-    if (act.status === 'perenos') markerClass += ' perenos';
-    
+
+    const count = group.items.length;
+    const first = group.items[0];
+
+    // Класс маркера — берём время первой встречи
+    let markerClass = 'map-marker ' + first.timeId;
+    if (group.items.every(i => i.status === 'done')) markerClass += ' done';
+    if (group.items.every(i => i.status === 'ndz')) markerClass += ' ndz';
+    if (group.items.every(i => i.status === 'perenos')) markerClass += ' perenos';
+
+    // В маркере: если встреч больше 1 — показываем цифру, иначе номер
+    const label = count > 1 ? count : (first.idx + 1);
+
     const icon = L.divIcon({
       className: '',
-      html: `<div class="${markerClass}"><span>${act.idx + 1}</span></div>`,
+      html: `<div class="${markerClass}"><span>${label}</span></div>`,
       iconSize: [34, 34],
       iconAnchor: [17, 34],
       popupAnchor: [0, -34]
     });
-    
+
     const marker = L.marker(coords, { icon }).addTo(map);
-    
-    const statusText = STATUS_LABELS[act.status] || '—';
+
+    // Формируем попап со списком всех встреч по этому адресу
+    let itemsHtml = '';
+    group.items.forEach((act, i) => {
+      const statusText = STATUS_LABELS[act.status] || '—';
+      const borderTop = i > 0 ? 'border-top:1px solid #eee;padding-top:8px;margin-top:6px;' : '';
+      itemsHtml += `
+        <div style="${borderTop}">
+          <div class="map-popup-time">${act.timeLabel}</div>
+          ${act.note ? `<div class="map-popup-status">📝 ${escapeHtml(act.note)}</div>` : ''}
+          <div class="map-popup-status">Статус: ${statusText}</div>
+          <button class="map-popup-btn" onclick="openActivityFromMap('${act.timeId}', ${act.idx})">⚡ Открыть</button>
+        </div>
+      `;
+    });
+
     const popupContent = `
       <div class="map-popup">
-        <div class="map-popup-time">${act.timeLabel}</div>
-        <div class="map-popup-addr">${escapeHtml(act.addr)}</div>
-        ${act.note ? `<div class="map-popup-status">📝 ${escapeHtml(act.note)}</div>` : ''}
-        <div class="map-popup-status">Статус: ${statusText}</div>
-        <button class="map-popup-btn" onclick="openActivityFromMap('${act.timeId}', ${act.idx})">⚡ Открыть активность</button>
+        <div class="map-popup-addr">${escapeHtml(group.addr)}</div>
+        <div class="map-popup-status">Встреч в этом доме: <b>${count}</b></div>
+        ${itemsHtml}
       </div>
     `;
-    
-    marker.bindPopup(popupContent, { maxWidth: 250 });
+
+    marker.bindPopup(popupContent, { maxWidth: 280 });
     mapMarkers.push(marker);
   }
-  
+
   updateMapInfoCount(filtered.length);
-  
+
+  // Подгоняем карту под все маркеры
   if (mapMarkers.length > 0) {
-    const group = L.featureGroup(mapMarkers);
-    map.fitBounds(group.getBounds().pad(0.1));
+    const fg = L.featureGroup(mapMarkers);
+    map.fitBounds(fg.getBounds().pad(0.1));
   }
 }
 
