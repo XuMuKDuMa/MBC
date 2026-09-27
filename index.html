@@ -2925,7 +2925,18 @@ body.dark .aap-item::after {
 .map-marker.t14_16{background:#3498db}
 .map-marker.t16_18{background:#27ae60}
 .map-marker.done{opacity:.55}
-.map-marker.ndz{background:#c2185b}
+.map-marker.wait{animation:markerPulse 1.8s ease-in-out infinite}
+@keyframes markerPulse{
+  0%, 100%{transform:rotate(-45deg) scale(1)}
+  50%    {transform:rotate(-45deg) scale(1.15)}
+}
+.map-marker.perenos{opacity:.45}
+.map-marker.ndz{opacity:.45;animation:markerPulse 1.8s ease-in-out infinite}
+.map-marker.ndz{
+  background:#c2185b;
+  animation:markerPulse 1.8s ease-in-out infinite;
+  opacity:.75;
+}
 .map-marker.perenos{background:#7f8c8d}
 
 .map-popup{min-width:190px}
@@ -3698,6 +3709,7 @@ function buildRouteCard(item, timeId) {
       saveRouteState(routeState);
       renderRoute();
       updateDrawerRoutes();
+      if (map) renderMapMarkers();
       vibro(10);
     });
     return card;
@@ -3798,6 +3810,7 @@ function buildRouteCard(item, timeId) {
       saveRouteState(routeState);
       renderRoute();
       updateDrawerRoutes();
+      if (map) renderMapMarkers();
     }
   });
   topRow.appendChild(btnDel);
@@ -3826,6 +3839,7 @@ function buildRouteCard(item, timeId) {
       saveRouteState(routeState);
       renderRoute();
       updateDrawerRoutes();
+      if (map) renderMapMarkers();
       vibro(15);
       if (!wasSame) {
         if (sb.key === 'wait')    showSuccessNotification('Встреча в ожидании', 'wait');
@@ -3959,6 +3973,7 @@ function renderRoute() {
         saveRouteState(routeState);
         renderRoute();
         updateDrawerRoutes();
+        if (map) renderMapMarkers();
         setTimeout(() => {
           const inputs = document.querySelectorAll(`#app4 .route-time-block .route-addr-input`);
           const last = inputs[inputs.length - 1];
@@ -6311,16 +6326,12 @@ async function renderMapMarkers() {
     ? activities
     : activities.filter(a => a.timeId === currentMapFilter);
 
-// ГРУППИРУЕМ по дому (обрезаем квартиру/офис после первой запятой)
+// НЕ группируем — каждая встреча = отдельный маркер
 const groups = {};
-for (const act of filtered) {
-  const raw = (act.addr || '').trim().toLowerCase().replace(/\s+/g, ' ');
-  // Отрезаем всё после первой запятой: "ленина 35, кв. 10" → "ленина 35"
-  const key = raw.split(',')[0].trim();
-  if (!groups[key]) groups[key] = { addr: act.addr, items: [] };
-  groups[key].items.push(act);
-}
-
+filtered.forEach((act, i) => {
+  groups['item_' + i] = { addr: act.addr, items: [act] };
+});
+const usedCoords = {};
   // Рисуем по одному маркеру на каждую группу
   for (const key in groups) {
     const group = groups[key];
@@ -6331,11 +6342,11 @@ for (const act of filtered) {
     const first = group.items[0];
 
     // Класс маркера — берём время первой встречи
-    let markerClass = 'map-marker ' + first.timeId;
-    if (group.items.every(i => i.status === 'done')) markerClass += ' done';
-    if (group.items.every(i => i.status === 'ndz')) markerClass += ' ndz';
-    if (group.items.every(i => i.status === 'perenos')) markerClass += ' perenos';
-
+let markerClass = 'map-marker ' + first.timeId;
+if (group.items.every(i => i.status === 'done'))    markerClass += ' done';
+if (group.items.every(i => i.status === 'ndz'))     markerClass += ' ndz wait';
+if (group.items.every(i => i.status === 'perenos')) markerClass += ' perenos';
+if (group.items.some(i => i.status === 'wait'))     markerClass += ' wait';
     // В маркере: если встреч больше 1 — показываем цифру, иначе номер
     const label = count > 1 ? count : (first.idx + 1);
 
@@ -6347,7 +6358,18 @@ for (const act of filtered) {
       popupAnchor: [0, -34]
     });
 
-    const marker = L.marker(coords, { icon }).addTo(map);
+    // Сдвигаем маркеры, если они в одной точке
+const coordKey = coords[0].toFixed(4) + ',' + coords[1].toFixed(4);
+let finalCoords = [...coords];
+if (usedCoords[coordKey]) {
+  const n = usedCoords[coordKey];
+  const angle = n * (Math.PI * 2 / 6);  // 6 позиций по кругу
+  finalCoords[0] += Math.cos(angle) * 0.0002;   // ~20 метров
+  finalCoords[1] += Math.sin(angle) * 0.0002;
+}
+usedCoords[coordKey] = (usedCoords[coordKey] || 0) + 1;
+
+const marker = L.marker(finalCoords, { icon }).addTo(map);
 
     // Формируем попап со списком всех встреч по этому адресу
     let itemsHtml = '';
