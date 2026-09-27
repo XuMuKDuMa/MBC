@@ -6184,7 +6184,7 @@ function updateMapCityLabel(cityName) {
 }
 
 // Геокодирование адреса через Nominatim (с кешем)
-async function geocodeAddress(address) {async function geocodeAddress(address) {
+async function geocodeAddress(address) {
   let cleanAddr = applyCity(address).trim();
   if (!cleanAddr) return null;
   
@@ -6260,7 +6260,7 @@ async function renderMapMarkers() {
   const filtered = currentMapFilter === 'all'
     ? activities
     : activities.filter(a => a.timeId === currentMapFilter);
-    
+
 // ГРУППИРУЕМ по дому (обрезаем квартиру/офис после первой запятой)
 const groups = {};
 for (const act of filtered) {
