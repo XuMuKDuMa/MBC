@@ -5506,7 +5506,11 @@ function checkReminder() {
   const now = new Date();
   const hours = now.getHours();
   const sentToday = localStorage.getItem(REPORT_SENT_KEY) === now.toDateString();
-  if (hours >= 16 && hours < 18 && !sentToday) {
+  if (hours >= 17 && hours < 18 && !sentToday) {
+    // Не показывать, если уже открыта модалка предварительного отчёта
+    const quickModal = document.getElementById('quickReportModal');
+    if (quickModal && quickModal.classList.contains('show')) return;
+
     const modal = document.getElementById('reminderModal');
     modal.classList.add('show');
     vibro([200, 100, 200, 100, 200]);
@@ -5555,7 +5559,7 @@ function checkMorningReportReminder() {
   const now = new Date();
   const hours = now.getHours();
 
-  if (hours < 8 || hours >= 9) return;
+  // if (hours < 8 || hours >= 9) return;  // ← закомментировано для теста
 
   const sentToday = localStorage.getItem(MORNING_REPORT_SENT_KEY) === now.toDateString();
   if (sentToday) return;
@@ -5569,8 +5573,13 @@ function checkMorningReportReminder() {
 document.getElementById('btnCloseReminder').addEventListener('click', () => {
   document.getElementById('reminderModal').classList.remove('show');
 });
+// Будильник утреннего отчёта (8:00–9:00)
+setTimeout(checkMorningReportReminder, 2000);
+setInterval(checkMorningReportReminder, 60 * 1000);
+
+// Будильник отчёта за день (17:00–18:00)
 setTimeout(checkReminder, 800);
-setInterval(checkReminder, 5 * 60 * 1000);
+setInterval(checkReminder, 60 * 1000);
 (function initKeyboardHide() {
   let initialHeight = window.innerHeight;
   function isInputFocused() {
