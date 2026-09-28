@@ -257,14 +257,17 @@ body.dark .drawer-totals-panel .dtp-value.magenta {
     background: #f0f2f5;
     z-index: 10;
   }
-  .screens-track {
-    display: flex;
-    width: 400%;
-    height: 100%;
-    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: auto;
-    transform: translate3d(0,0,0);
-  }
+.screens-track {
+  display: flex;
+  width: 400%;
+  height: 100%;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: auto;
+  transform: translate3d(0,0,0);
+}
+.screens-track.animating {
+  will-change: transform;
+}
 
   .screen { 
     width: 25%; 
@@ -2945,12 +2948,23 @@ body.dark .aap-item::after {
 }
 #mapView{position:absolute;left:0;right:0;top:106px;bottom:0;min-height:300px;z-index:1}
 .map-bottom-card{
-  position:absolute;left:12px;right:12px;bottom:18px;z-index:500;
+  position:absolute;left:12px;right:12px;
+  bottom: calc(110px + env(safe-area-inset-bottom, 0));
+  z-index:500;
   background:rgba(255,255,255,.94);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   border:1px solid rgba(255,255,255,.75);border-radius:16px;
   padding:11px 13px;box-shadow:0 8px 24px rgba(31,41,55,.18);
   display:flex;align-items:center;justify-content:space-between;gap:10px;
+  will-change: transform, opacity;
+  transition:
+    transform .35s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity .3s ease;
+}
+.map-bottom-card.hidden {
+  transform: translateY(140px);
+  opacity: 0;
+  pointer-events: none;
 }
 .map-info-main{display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;font-weight:700;color:#263944}
 .map-info-main span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -3038,6 +3052,31 @@ body.dark .map-info-count{background:#1a3a25;color:#4ade80}
 .bb-item.bb-today .bb-text{margin-top:-1px}
 body.dark .bb-item.bb-today .bb-today-orb{border-color:#1a2430}
 @media(min-width:700px){.bottom-bar{max-width:700px;width:700px}}
+
+/* ─── Компактные слоты в одну колонку ─── */
+#screen4 .slot-grid {
+  grid-template-columns: 1fr !important;
+  gap: 7px !important;
+  margin: 0 10px 12px !important;
+}
+#screen4 .slot-btn {
+  min-height: 68px !important;
+  padding: 9px 12px 8px 15px !important;
+  border-radius: 14px !important;
+}
+#screen4 .slot-btn .slot-head { min-height: 25px; }
+#screen4 .slot-btn .slot-time { font-size: 15px !important; font-weight: 850 !important; }
+#screen4 .slot-summary { display:flex; align-items:center; gap:7px; min-width:0; }
+#screen4 .slot-summary-main { font-size:11px; font-weight:850; color:#263944; white-space:nowrap; }
+#screen4 .slot-summary-status { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; font-weight:650; color:#82919b; }
+#screen4 .slot-chev { flex-shrink:0; margin-left:auto; }
+#screen4 .slot-btn.active .slot-summary-main,
+#screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,255,.88) !important; }
+#screen4 .slot-btn.status-empty .slot-summary-main { color:#8a99a5; }
+body.dark #screen4 .slot-summary-main { color:#e5edf1; }
+body.dark #screen4 .slot-summary-status { color:#81929d; }
+body.dark #screen4 .slot-btn.active .slot-summary-main,
+body.dark #screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,255,.9) !important; }
 </style>
 
 </head>
@@ -3430,26 +3469,42 @@ function updateBottomBarActive(n) {
     item.classList.toggle('active', Number(item.dataset.bbTab) === n);
   });
 }
+
 function goToTab(n, animate = true) {
-  if (n < 1 || n > 5) return; // ← ИЗМЕНЕНО: было 4, стало 5
+  if (n < 1 || n > 5) return;
+  if (n === currentTab) return;
   currentTab = n;
   document.body.classList.remove('tab-1', 'tab-2', 'tab-3', 'tab-4');
   document.body.classList.add('tab-' + n);
   updateBottomBarActive(n);
+
   const w = window.innerWidth;
   if (!animate) screensTrack.style.transition = 'none';
-  screensTrack.style.transform = `translateX(-${(n - 1) * w}px)`;
-  if (!animate) { void screensTrack.offsetWidth; screensTrack.style.transition = ''; }
-  if (n === 3) renderTotals3();
-  if (n === 4) renderRoute();
-  if (n === 5) initMap(); // ← ДОБАВЛЕНО: инициализация карты
 
-  // скролл наверх при переключении
+  // Включаем GPU-ускорение на время анимации
+  if (animate) screensTrack.classList.add('animating');
+
+  screensTrack.style.transform = `translateX(-${(n - 1) * w}px)`;
+
+  if (!animate) { void screensTrack.offsetWidth; screensTrack.style.transition = ''; }
+
+  // Рендерим раздел ПОСЛЕ анимации, чтобы не тормозить
+  setTimeout(() => {
+    if (n === 3) renderTotals3();
+    if (n === 4) {
+  _openSlotId = getCurrentSlotId();
+  renderRoute();
+}
+    if (n === 5) initMap();
+    screensTrack.classList.remove('animating');
+  }, animate ? 300 : 0);
+
+  // Скролл наверх при переключении
   const screenEl = document.getElementById('screen' + n);
   if (screenEl) {
     setTimeout(() => {
       screenEl.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 320);
+    }, 300);
   }
 }
 
@@ -3633,6 +3688,15 @@ const ROUTE_TIMES = [
   { id: 't14_16', label: '14:00–16:00' },
   { id: 't16_18', label: '16:00–18:00' },
 ];
+function getCurrentSlotId() {
+  const h = new Date().getHours();
+  if (h >= 10 && h < 12) return 't10_12';
+  if (h >= 12 && h < 14) return 't12_14';
+  if (h >= 14 && h < 16) return 't14_16';
+  if (h >= 16 && h < 18) return 't16_18';
+  // До 10:00 или после 18:00 — по умолчанию первый слот
+  return 't10_12';
+}
 function defaultRouteState() {
   const state = { lists: {} };
   ROUTE_TIMES.forEach(t => { state.lists[t.id] = []; });
@@ -3971,16 +4035,27 @@ function renderRoute() {
     const btn = document.createElement('button');
     btn.className = 'slot-btn status-' + dom + (isOpen ? ' active' : '');
     btn.dataset.slotId = t.id;
-    btn.innerHTML = `
-      <div class="slot-head">
-        <div class="slot-time">${t.label}</div>
-        <span class="slot-map-btn" data-map-btn="${t.id}" title="Открыть маршрут в Яндекс.Картах">${PIN_SVG}</span>
-      </div>
-      <div class="slot-foot">
-        <span class="slot-badge ${cnt > 0 ? 'has-items' : ''}">${cnt}</span>
-        <span class="slot-chev">▼</span>
-      </div>
-    `;
+    const wait = list.filter(x => x.status === 'wait').length;
+const done = list.filter(x => x.status === 'done').length;
+const ndz = list.filter(x => x.status === 'ndz').length;
+const perenos = list.filter(x => x.status === 'perenos').length;
+
+btn.innerHTML = `
+  <div class="slot-head">
+    <div class="slot-time">${t.label}</div>
+    <span class="slot-map-btn" data-map-btn="${t.id}" title="Открыть маршрут в Яндекс.Картах">${PIN_SVG}</span>
+  </div>
+  <div class="slot-summary">
+    <span class="slot-summary-main">${cnt ? `${cnt} ${cnt === 1 ? 'встреча' : (cnt < 5 ? 'встречи' : 'встреч')}` : 'Нет встреч'}</span>
+    <span class="slot-summary-status">${cnt ? [
+      wait ? `${wait} ждут` : '',
+      done ? `${done} готово` : '',
+      ndz ? `${ndz} НДЗ` : '',
+      perenos ? `${perenos} отмена` : ''
+    ].filter(Boolean).join(' · ') : 'Добавить встречу'}</span>
+    <span class="slot-chev">▼</span>
+  </div>
+`;
 
     btn.addEventListener('click', (e) => {
       if (e.target.closest('[data-map-btn]')) return;
