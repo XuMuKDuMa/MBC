@@ -265,9 +265,7 @@ body.dark .drawer-totals-panel .dtp-value.magenta {
   will-change: auto;
   transform: translate3d(0,0,0);
 }
-.screens-track.animating {
-  will-change: transform;
-}
+
 
   .screen { 
     width: 25%; 
@@ -3474,12 +3472,8 @@ if (n === 5) initMap();
   // ─── Анимация свайпа ───
   const w = window.innerWidth;
   if (!animate) screensTrack.style.transition = 'none';
-  if (animate) screensTrack.classList.add('animating');
   screensTrack.style.transform = `translateX(-${(n - 1) * w}px)`;
   if (!animate) { void screensTrack.offsetWidth; screensTrack.style.transition = ''; }
-
-  // Выключаем will-change после анимации
-  setTimeout(() => screensTrack.classList.remove('animating'), animate ? 340 : 0);
 
   // Скролл наверх
   const screenEl = document.getElementById('screen' + n);
