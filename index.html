@@ -257,15 +257,12 @@ body.dark .drawer-totals-panel .dtp-value.magenta {
     background: #f0f2f5;
     z-index: 10;
   }
-.screens-track {
+  .screens-track {
   display: flex;
-  width: 400%;
+  width: 500% !important;
   height: 100%;
-  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: auto;
   transform: translate3d(0,0,0);
 }
-
 
   .screen { 
     width: 25%; 
@@ -3469,11 +3466,10 @@ if (n === 3) renderTotals3();
 if (n === 4) renderRouteIfChanged();
 if (n === 5) initMap();
 
-  // ─── Анимация свайпа ───
-  const w = window.innerWidth;
-  if (!animate) screensTrack.style.transition = 'none';
-  screensTrack.style.transform = `translateX(-${(n - 1) * w}px)`;
-  if (!animate) { void screensTrack.offsetWidth; screensTrack.style.transition = ''; }
+  // ─── Мгновенное переключение (без анимации — не мигает в APK) ───
+const w = window.innerWidth;
+screensTrack.style.transition = 'none';
+screensTrack.style.transform = `translateX(-${(n - 1) * w}px)`;
 
   // Скролл наверх
   const screenEl = document.getElementById('screen' + n);
