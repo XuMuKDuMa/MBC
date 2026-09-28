@@ -3391,7 +3391,6 @@ const STATUS_ICONS = {
 function renderAllActivities() {
   const body = document.getElementById('aapBody');
   const countEl = document.getElementById('aapCount');
-  body.innerHTML = '';
 
   const all = [];
   ROUTE_TIMES.forEach(t => {
@@ -3408,52 +3407,35 @@ function renderAllActivities() {
     return;
   }
 
+  let html = '';
   ROUTE_TIMES.forEach(t => {
     const list = routeState.lists[t.id] || [];
     if (list.length === 0) return;
 
-    const title = document.createElement('div');
-    title.className = 'aap-slot-title slot-' + t.id;
-    title.innerHTML = `
+    html += `<div class="aap-slot-title slot-${t.id}">
       <span><span class="aap-slot-dot"></span>${t.label}</span>
       <span class="aap-slot-cnt">${list.length}</span>
-    `;
-    body.appendChild(title);
+    </div>`;
 
-    list.forEach(item => {
-      const row = document.createElement('div');
+    list.forEach((item, idx) => {
       const statusCls = item.status ? ('status-' + item.status) : 'status-none';
-      row.className = 'aap-item ' + statusCls;
-
       const icoText = STATUS_ICONS[item.status || 'none'];
       const statusText = STATUS_LABELS[item.status] || '—';
+      const addr = item.addr ? escapeHtml(item.addr) : '<i style="color:#91a0aa">без адреса</i>';
+      const note = item.note ? `<div class="aap-note">${escapeHtml(item.note)}</div>` : '';
 
-      row.innerHTML = `
+      html += `<div class="aap-item ${statusCls}" data-time-id="${t.id}" data-idx="${idx}">
         <div class="aap-ico">${icoText}</div>
         <div class="aap-body">
-          <div class="aap-addr">${item.addr ? escapeHtml(item.addr) : '<i style="color:#91a0aa">без адреса</i>'}</div>
-          ${item.note ? `<div class="aap-note">${escapeHtml(item.note)}</div>` : ''}
+          <div class="aap-addr">${addr}</div>
+          ${note}
         </div>
         <div class="aap-status">${statusText}</div>
-      `;
-
-      // Тап → открыть навигатор с этим адресом
-      row.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const addr = (item.addr || '').trim();
-        if (!addr) {
-          showToast('⚠️ Нет адреса для навигации');
-          return;
-        }
-        const fullAddr = applyCity(addr);
-        const encoded = encodeURIComponent(fullAddr);
-        vibro(15);
-        window.open('https://yandex.ru/maps/?text=' + encoded, '_blank');
-      });
-
-      body.appendChild(row);
+      </div>`;
     });
   });
+
+  body.innerHTML = html;
 }
 
 function escapeHtml(s) {
@@ -6318,7 +6300,7 @@ getUserLocation();
 renderMapMarkers();
 updateMapCityLabel();
   }); 
-  }
+}
 
 // Получение геолокации пользователя
 function getUserLocation() {
@@ -6620,6 +6602,27 @@ document.getElementById('mapLocateBtn')?.addEventListener('click', () => {
     getUserLocation();
   }
 });
+// Делегирование кликов по панели «Все активности»
+document.getElementById('aapBody')?.addEventListener('click', (e) => {
+  const row = e.target.closest('.aap-item');
+  if (!row) return;
+
+  const timeId = row.dataset.timeId;
+  const idx = Number(row.dataset.idx);
+  const list = routeState.lists[timeId] || [];
+  const item = list[idx];
+  if (!item) return;
+
+  const addr = (item.addr || '').trim();
+  if (!addr) {
+    showToast('⚠️ Нет адреса для навигации');
+    return;
+  }
+  const fullAddr = applyCity(addr);
+  const encoded = encodeURIComponent(fullAddr);
+  vibro(15);
+  window.open('https://yandex.ru/maps/?text=' + encoded, '_blank');
+});  
 
 loadGeocache();
 </script>
