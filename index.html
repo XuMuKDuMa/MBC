@@ -6269,27 +6269,25 @@ async function geocodeAddress(address) {
   if (mapGeocache[cleanAddr]) {
     return mapGeocache[cleanAddr];
   }
-  
   try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanAddr)}&limit=1&accept-language=ru`,
-      { headers: { 'User-Agent': 'MVS Reports App' } }
-    );
-    const data = await response.json();
-    
-    if (data && data.length > 0) {
-      const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-      mapGeocache[cleanAddr] = coords;
-      saveGeocache();
-      return coords;
-    }
-  } catch (e) {
-    console.warn('Geocode error:', e);
+  const response = await fetch(
+    `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanAddr)}&limit=1`
+  );
+  const data = await response.json();
+
+  if (data && data.features && data.features.length > 0) {
+    const geom = data.features[0].geometry;
+    const coords = [geom.coordinates[1], geom.coordinates[0]];
+    mapGeocache[cleanAddr] = coords;
+    saveGeocache();
+    return coords;
   }
-  
-  return null;
+} catch (e) {
+  console.warn('Geocode error:', e);
 }
 
+  return null;
+}
 function saveGeocache() {
   try {
     localStorage.setItem('map_geocache', JSON.stringify(mapGeocache));
