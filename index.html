@@ -555,7 +555,7 @@ body.dark #btnMorningReport2:active {
     position: fixed; bottom: 260px; left: 50%;
     transform: translateX(-50%);
     background: #2c3e50; color: #fff;
-    padding: 10px 18px; border-radius: 20px;
+    padding: 10px 18px 10px 13px; border-radius: 20px;
     font-size: 14px; font-weight: 500;
     opacity: 0; transition: opacity 0.2s;
     pointer-events: none; z-index: 1200;
@@ -2769,11 +2769,31 @@ body.dark #screen4 .route-add-btn {
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
+.aap-item.status-wait {
+  background: linear-gradient(90deg, rgba(52,152,219,.22), rgba(52,152,219,.08));
+  border-left: 5px solid #3498db;
+}
+.aap-item.status-done {
+  background: linear-gradient(90deg, rgba(39,174,96,.22), rgba(39,174,96,.08));
+  border-left: 5px solid #27ae60;
+}
+.aap-item.status-perenos {
+  background: linear-gradient(90deg, rgba(149,165,166,.22), rgba(149,165,166,.08));
+  border-left: 5px solid #95a5a6;
+}
+.aap-item.status-ndz {
+  background: linear-gradient(90deg, rgba(194,24,91,.22), rgba(194,24,91,.08));
+  border-left: 5px solid #c2185b;
+}
+.aap-item.status-none {
+  background: linear-gradient(90deg, rgba(243,156,18,.18), rgba(243,156,18,.05));
+  border-left: 5px solid #f39c12;
+}
 .aap-item:active {
-  background: #f4f7f9;
+  filter: brightness(0.95);
 }
 body.dark .aap-item:active {
-  background: #26343f;
+  filter: brightness(1.15);
 }
 .aap-item:last-child { border-bottom: none; }
 
@@ -2861,6 +2881,21 @@ body.dark .all-activities-panel .aap-header {
 body.dark .aap-slot-title { color: #90a4ae; }
 body.dark .aap-slot-title .aap-slot-cnt { background: #2c3a48; color: #b0bec5; }
 body.dark .aap-item { border-bottom-color: #2c3a48; }
+body.dark .aap-item.status-wait {
+  background: linear-gradient(90deg, rgba(52,152,219,.28), rgba(52,152,219,.10));
+}
+body.dark .aap-item.status-done {
+  background: linear-gradient(90deg, rgba(39,174,96,.28), rgba(39,174,96,.10));
+}
+body.dark .aap-item.status-perenos {
+  background: linear-gradient(90deg, rgba(149,165,166,.20), rgba(149,165,166,.06));
+}
+body.dark .aap-item.status-ndz {
+  background: linear-gradient(90deg, rgba(194,24,91,.32), rgba(194,24,91,.12));
+}
+body.dark .aap-item.status-none {
+  background: linear-gradient(90deg, rgba(243,156,18,.22), rgba(243,156,18,.07));
+}
 body.dark .aap-item .aap-ico { background: #202d38; border-color: #344652; }
 body.dark .aap-item .aap-addr { color: #e5edf1; }
 body.dark .aap-item .aap-note { color: #a8b8c4; }
