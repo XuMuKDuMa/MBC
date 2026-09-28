@@ -3478,33 +3478,28 @@ function goToTab(n, animate = true) {
   document.body.classList.add('tab-' + n);
   updateBottomBarActive(n);
 
+  // ─── Рендерим контент СРАЗУ, до анимации ───
+  // Тогда при свайпе раздел уже готов — нет мигания
+  if (n === 3) renderTotals3();
+  if (n === 4) renderRoute();
+  if (n === 5) initMap();
+
+  // ─── Анимация свайпа ───
   const w = window.innerWidth;
   if (!animate) screensTrack.style.transition = 'none';
-
-  // Включаем GPU-ускорение на время анимации
   if (animate) screensTrack.classList.add('animating');
-
   screensTrack.style.transform = `translateX(-${(n - 1) * w}px)`;
-
   if (!animate) { void screensTrack.offsetWidth; screensTrack.style.transition = ''; }
 
-  // Рендерим раздел ПОСЛЕ анимации, чтобы не тормозить
-  setTimeout(() => {
-    if (n === 3) renderTotals3();
-    if (n === 4) {
-  _openSlotId = getCurrentSlotId();
-  renderRoute();
-}
-    if (n === 5) initMap();
-    screensTrack.classList.remove('animating');
-  }, animate ? 300 : 0);
+  // Выключаем will-change после анимации
+  setTimeout(() => screensTrack.classList.remove('animating'), animate ? 340 : 0);
 
-  // Скролл наверх при переключении
+  // Скролл наверх
   const screenEl = document.getElementById('screen' + n);
   if (screenEl) {
     setTimeout(() => {
       screenEl.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 300);
+    }, 320);
   }
 }
 
@@ -6324,7 +6319,7 @@ renderMapMarkers();
 updateMapCityLabel();
   }); 
   }
-  
+
 // Получение геолокации пользователя
 function getUserLocation() {
   if (!navigator.geolocation) {
