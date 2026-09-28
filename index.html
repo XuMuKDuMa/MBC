@@ -6336,7 +6336,11 @@ const usedCoords = {};
   for (const key in groups) {
     const group = groups[key];
     const coords = await geocodeAddress(group.addr);
-    if (!coords) continue;
+if (!coords) {
+  console.warn('❌ Не найдено:', group.addr);
+  continue;
+}
+console.log('✅', group.addr, '→', coords[0], coords[1]);
 
     const count = group.items.length;
     const first = group.items[0];
@@ -6398,7 +6402,18 @@ const marker = L.marker(finalCoords, { icon }).addTo(map);
     mapMarkers.push(marker);
   }
 
-  updateMapInfoCount(filtered.length);
+  const found = mapMarkers.length;
+const total = filtered.length;
+const textEl = document.getElementById('mapInfoText');
+if (textEl) {
+  if (found < total) {
+    textEl.textContent = `⚠️ Найдено ${found} из ${total} — проверьте адреса`;
+  } else {
+    textEl.textContent = `Найдено ${total} ${plural(total, 'активность', 'активности', 'активностей')}`;
+  }
+}
+const countEl = document.getElementById('mapInfoCount');
+if (countEl) countEl.textContent = found;
 
   // Подгоняем карту под все маркеры
   if (mapMarkers.length > 0) {
