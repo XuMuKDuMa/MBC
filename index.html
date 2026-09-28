@@ -3361,9 +3361,15 @@ let currentTab = 4;
 const allActPanel = document.getElementById('allActPanel');
 const allActOverlay = document.getElementById('allActOverlay');
 
+let _allActHash = '';
+
 function openAllActivities() {
   closeDrawerTotals();
-  renderAllActivities();
+  const hash = JSON.stringify(routeState.lists);
+  if (hash !== _allActHash) {
+    _allActHash = hash;
+    renderAllActivities();
+  }
   allActPanel.classList.add('open');
   allActOverlay.classList.add('show');
   vibro(15);
@@ -3461,10 +3467,9 @@ function goToTab(n, animate = true) {
   updateBottomBarActive(n);
 
   // ─── Рендерим контент СРАЗУ, до анимации ───
-  // Тогда при свайпе раздел уже готов — нет мигания
-  if (n === 3) renderTotals3();
-  if (n === 4) renderRoute();
-  if (n === 5) initMap();
+if (n === 3) renderTotals3();
+if (n === 4) renderRouteIfChanged();
+if (n === 5) initMap();
 
   // ─── Анимация свайпа ───
   const w = window.innerWidth;
@@ -3971,7 +3976,14 @@ function sortRouteList(timeId) {
   };
   list.sort((a, b) => rank(a.status) - rank(b.status));
 }
+let _routeDataHash = '';
 
+function renderRouteIfChanged() {
+  const hash = JSON.stringify(routeState.lists);
+  if (hash === _routeDataHash) return;
+  _routeDataHash = hash;
+  renderRoute();
+}
 function renderRoute() {
   const app = document.getElementById('app4');
   app.innerHTML = '';
