@@ -2944,7 +2944,26 @@ body.dark .aap-item::after {
   opacity:.75;
 }
 .map-marker.perenos{background:#7f8c8d;opacity:.45}
-
+.leaflet-tooltip.marker-label {
+  background: rgba(255,255,255,.95);
+  border: 1.5px solid #20a36a;
+  border-radius: 8px;
+  padding: 2px 7px;
+  font-size: 9px;
+  font-weight: 900;
+  color: #20a36a;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  white-space: nowrap;
+}
+.leaflet-tooltip.marker-label::before {
+  display: none; /* убрать стрелочку тултипа */
+}
+.leaflet-tooltip.marker-label.wait   { border-color: #3498db; color: #2471a3; background: #eaf3fb; }
+.leaflet-tooltip.marker-label.done   { border-color: #20a464; color: #168653; background: #e7f7ef; }
+.leaflet-tooltip.marker-label.ndz    { border-color: #d13c78; color: #c2185b; background: #fdeaf2; }
+.leaflet-tooltip.marker-label.perenos{ border-color: #8795a1; color: #5a6b7a; background: #eef2f6; }
 .map-popup{min-width:190px}
 .map-popup-time{font-size:12px;font-weight:900;color:#168553;margin-bottom:4px}
 .map-popup-addr{font-size:14px;font-weight:800;color:#263944;line-height:1.25}
@@ -6380,6 +6399,23 @@ usedCoords[coordKey] = (usedCoords[coordKey] || 0) + 1;
 
 const marker = L.marker(finalCoords, { icon }).addTo(map);
 
+// Подпись статуса (если одна встреча) или "N встреч"
+let tooltipText, tooltipClass;
+if (group.items.length === 1) {
+  tooltipText = STATUS_LABELS[first.status] || '';
+  tooltipClass = first.status || '';
+} else {
+  tooltipText = group.items.length + ' встречи';
+  tooltipClass = '';
+}
+if (tooltipText) {
+  marker.bindTooltip(tooltipText, {
+    permanent: true,
+    direction: 'top',
+    offset: [0, -34],
+    className: 'marker-label ' + tooltipClass
+  });
+}
     // Формируем попап со списком всех встреч по этому адресу
     let itemsHtml = '';
     group.items.forEach((act, i) => {
