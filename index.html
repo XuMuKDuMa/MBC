@@ -2879,6 +2879,14 @@ body.dark .aap-item::after {
 }
 .map-title{font-size:17px;font-weight:800;line-height:1.1}
 .map-subtitle{font-size:11px;opacity:.85;margin-top:3px}
+.map-counter{
+  font-size:12px;font-weight:800;color:#fff;
+  background:rgba(255,255,255,.18);
+  padding:5px 11px;border-radius:11px;
+  border:1px solid rgba(255,255,255,.25);
+  margin-left:auto;margin-right:8px;
+  white-space:nowrap;
+}
 .map-locate-btn{
   width:40px;height:40px;border:1px solid rgba(255,255,255,.35);
   border-radius:13px;background:rgba(255,255,255,.16);
@@ -2930,14 +2938,12 @@ body.dark .aap-item::after {
   0%, 100%{transform:rotate(-45deg) scale(1)}
   50%    {transform:rotate(-45deg) scale(1.15)}
 }
-.map-marker.perenos{opacity:.45}
-.map-marker.ndz{opacity:.45;animation:markerPulse 1.8s ease-in-out infinite}
 .map-marker.ndz{
   background:#c2185b;
   animation:markerPulse 1.8s ease-in-out infinite;
   opacity:.75;
 }
-.map-marker.perenos{background:#7f8c8d}
+.map-marker.perenos{background:#7f8c8d;opacity:.45}
 
 .map-popup{min-width:190px}
 .map-popup-time{font-size:12px;font-weight:900;color:#168553;margin-bottom:4px}
@@ -3058,12 +3064,13 @@ body.dark .bb-item.bb-today .bb-today-orb{border-color:#1a2430}
 
     <div class="screen" id="screen5">
       <div class="map-header">
-        <div>
-          <div class="map-title">🗺 Карта</div>
-          <div class="map-subtitle" id="mapCityLabel">Определяем город…</div>
-        </div>
-        <button class="map-locate-btn" id="mapLocateBtn" title="Моё местоположение">◎</button>
-      </div>
+  <div>
+    <div class="map-title">🗺 Карта</div>
+    <div class="map-subtitle" id="mapCityLabel">Определяем город…</div>
+  </div>
+  <div class="map-counter" id="mapCounter">0 / 0</div>
+  <button class="map-locate-btn" id="mapLocateBtn" title="Моё местоположение">◎</button>
+</div>
       <div class="map-toolbar">
         <button class="map-filter active" data-map-filter="all">Все</button>
         <button class="map-filter" data-map-filter="t10_12">10–12</button>
@@ -6412,6 +6419,17 @@ if (textEl) {
     textEl.textContent = `Найдено ${total} ${plural(total, 'активность', 'активности', 'активностей')}`;
   }
 }
+
+// Счётчик в шапке карты
+const counterEl = document.getElementById('mapCounter');
+if (counterEl) {
+  counterEl.textContent = found + ' / ' + total;
+  if (found < total) {
+    counterEl.style.background = 'rgba(231, 76, 60, .35)';
+  } else {
+    counterEl.style.background = 'rgba(255,255,255,.18)';
+  }
+}
 const countEl = document.getElementById('mapInfoCount');
 if (countEl) countEl.textContent = found;
 
@@ -6419,17 +6437,6 @@ if (countEl) countEl.textContent = found;
   if (mapMarkers.length > 0) {
     const fg = L.featureGroup(mapMarkers);
     map.fitBounds(fg.getBounds().pad(0.1));
-  }
-}
-
-function updateMapInfoCount(count) {
-  const countEl = document.getElementById('mapInfoCount');
-  const textEl = document.getElementById('mapInfoText');
-  if (countEl) countEl.textContent = count;
-  if (textEl) {
-    textEl.textContent = count > 0 
-      ? `Найдено ${count} ${plural(count, 'активность', 'активности', 'активностей')}`
-      : 'Нет активностей с адресами';
   }
 }
 
