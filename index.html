@@ -5899,15 +5899,15 @@ document.querySelectorAll('.r1-header, .r2-header, .r3-header').forEach(h => {
       if (isClosing && dx > 0) { active = false; return; }
       if (!isClosing && dx < 0) { active = false; return; }
 
-      isDragging = true;
-      panel.classList.add('no-anim');
-      if (isClosing) {
-        panel.style.transform = 'translateX(0)';
-      } else {
-        panel.style.transform = 'translateX(-100%)';
-        overlay.classList.add('show');
-      }
-      overlay.style.transition = 'none';
+    isDragging = true;
+panel.classList.add('no-anim');
+if (isClosing) {
+  panel.style.transform = 'translateX(0)';
+} else {
+  panel.style.transform = 'translateX(100%)';
+  overlay.classList.add('show');
+}
+overlay.style.transition = 'none';
     }
 
     if (!isDragging) return;
@@ -6033,6 +6033,7 @@ document.querySelectorAll('.r1-header, .r2-header, .r3-header').forEach(h => {
       if (t.clientX < window.innerWidth - EDGE_ZONE) { active = false; return; }
       if (drawerTotalsPanel.classList.contains('open')) { active = false; return; }
       isClosing = false;
+     renderAllActivities();
     }
 
     startX = t.clientX;
