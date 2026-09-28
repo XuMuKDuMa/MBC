@@ -6299,23 +6299,32 @@ function initMap() {
     const mapView = document.getElementById('mapView');
     if (!mapView || map) return;
     
-    map = L.map('mapView', {
-      zoomControl: false,
-      attributionControl: false
-    }).setView([55.7558, 37.6173], 11);
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(map);
-    
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-    
-    getUserLocation();
-    renderMapMarkers();
-    updateMapCityLabel();
+   map = L.map('mapView', {
+  zoomControl: false,
+  attributionControl: false
+}).setView([55.7558, 37.6173], 11);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19
+}).addTo(map);
+
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+// Автоскрытие строки при драге карты
+const card = document.getElementById('mapInfoCard');
+if (card) {
+  map.on('movestart', () => card.classList.add('hidden'));
+  map.on('moveend', () => {
+    setTimeout(() => card.classList.remove('hidden'), 800);
   });
 }
 
+getUserLocation();
+renderMapMarkers();
+updateMapCityLabel();
+  }); 
+  }
+  
 // Получение геолокации пользователя
 function getUserLocation() {
   if (!navigator.geolocation) {
