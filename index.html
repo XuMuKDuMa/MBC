@@ -1864,50 +1864,43 @@ body.dark .bb-item.active .bb-text { color: #4ade80; }
     background: linear-gradient(90deg, rgba(243,156,18,0.55), rgba(243,156,18,0.2));
   }
   .route-card.status-perenos .route-addr-input,
-  .route-card.status-perenos .route-note-input {
-    background: rgba(255,255,255,0.28);
-    border-color: rgba(255,255,255,0.65);
-    color: #1a2a3a;
-    font-weight: 700;
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-  }
+.route-card.status-perenos .route-note-input {
+  background: rgba(255,255,255,0.42);
+  border-color: rgba(255,255,255,0.65);
+  color: #1a2a3a;
+  font-weight: 700;
+}
+  
   .route-card.status-perenos .route-addr-input::placeholder,
   .route-card.status-perenos .route-note-input::placeholder { color: rgba(26, 42, 58, 0.55); }
   .route-card.status-ndz .route-addr-input,
-  .route-card.status-ndz .route-note-input {
-    background: rgba(255,255,255,0.28);
-    border-color: rgba(255,255,255,0.7);
-    color: #ffffff;
-    font-weight: 700;
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
-  }
+ .route-card.status-ndz .route-note-input {
+  background: rgba(255,255,255,0.42);
+  border-color: rgba(255,255,255,0.7);
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
   .route-card.status-ndz .route-addr-input::placeholder,
   .route-card.status-ndz .route-note-input::placeholder { color: rgba(255,255,255,0.75); }
   .route-card.status-wait .route-addr-input,
   .route-card.status-wait .route-note-input {
-    background: rgba(255,255,255,0.32);
-    border-color: rgba(255,255,255,0.7);
-    color: #ffffff;
-    font-weight: 700;
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.22);
-  }
+  background: rgba(255,255,255,0.42);
+  border-color: rgba(255,255,255,0.7);
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.22);
+}
   .route-card.status-wait .route-addr-input::placeholder,
   .route-card.status-wait .route-note-input::placeholder { color: rgba(255,255,255,0.75); }
   .route-card.status-done .route-addr-input,
   .route-card.status-done .route-note-input {
-    background: rgba(255,255,255,0.32);
-    border-color: rgba(255,255,255,0.7);
-    color: #ffffff;
-    font-weight: 700;
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.22);
-  }
+  background: rgba(255,255,255,0.42);
+  border-color: rgba(255,255,255,0.7);
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.22);
+}
   .route-card.status-done .route-addr-input::placeholder,
   .route-card.status-done .route-note-input::placeholder { color: rgba(255,255,255,0.75); }
 
@@ -2970,8 +2963,7 @@ body.dark .aap-item::after {
   position:absolute;left:12px;right:12px;
   bottom: calc(110px + env(safe-area-inset-bottom, 0));
   z-index:500;
-  background:rgba(255,255,255,.94);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  background:rgba(255,255,255,.97);
   border:1px solid rgba(255,255,255,.75);border-radius:16px;
   padding:11px 13px;box-shadow:0 8px 24px rgba(31,41,55,.18);
   display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -3042,7 +3034,7 @@ body.dark #screen5{background:#121a22}
 body.dark .map-toolbar{background:rgba(28,39,51,.96)}
 body.dark .map-filter{background:#263340;color:#b8c5cf;border-color:#3a4a5a}
 body.dark .map-filter.active{background:#20a36a;color:#fff;border-color:#20a36a}
-body.dark .map-bottom-card{background:rgba(28,39,51,.95);border-color:#3a4a5a}
+body.dark .map-bottom-card{background:rgba(28,39,51,.98);border-color:#3a4a5a}
 body.dark .map-info-main{color:#e8eef5}
 body.dark .map-info-count{background:#1a3a25;color:#4ade80}
 .bb-map.active .bb-icon{color:#20a36a}
@@ -6503,8 +6495,14 @@ function loadGeocache() {
 }
 
 // Рендеринг маркеров на карте
+let _mapHash = '';
+
 async function renderMapMarkers() {
   if (!map) return;
+
+  const hash = JSON.stringify(routeState.lists) + '|' + currentMapFilter;
+  if (hash === _mapHash) return;
+  _mapHash = hash;
 
   mapMarkers.forEach(m => map.removeLayer(m));
   mapMarkers = [];
