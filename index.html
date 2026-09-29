@@ -3097,14 +3097,6 @@ body.dark #screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,25
 </head>
 <body class="tab-4">
 <div class="drawer-totals-overlay" id="drawerOverlay"></div>
-<div class="all-activities-overlay" id="allActOverlay"></div>
-<div class="all-activities-panel" id="allActPanel">
-  <div class="aap-header">
-    <div class="aap-title">⚡ Все активности</div>
-    <div class="aap-count" id="aapCount">0</div>
-  </div>
-  <div class="aap-body" id="aapBody"></div>
-</div>
 <div class="drawer-totals-panel" id="drawerTotalsPanel">
 
   <div class="dtp-city-block">
@@ -3373,27 +3365,6 @@ const screensTrack = document.getElementById('screensTrack');
 const screensViewport = document.getElementById('screensViewport');
 let currentTab = 4;
 
-const allActPanel = document.getElementById('allActPanel');
-const allActOverlay = document.getElementById('allActOverlay');
-
-let _allActHash = '';
-
-function openAllActivities() {
-  closeDrawerTotals();
-  if (allActPanel.classList.contains('open')) return;   // ← защита от повторов
-  renderAllActivities();
-  void allActPanel.offsetWidth;                         // ← форс-пересчёт
-  requestAnimationFrame(() => {                         // ← отложенное открытие
-    allActPanel.classList.add('open');
-    allActOverlay.classList.add('show');
-  });
-  vibro(15);
-}
-function closeAllActivities() {
-  allActPanel.classList.remove('open');
-  allActOverlay.classList.remove('show');
-}
-allActOverlay.addEventListener('click', closeAllActivities);
 
 const STATUS_LABELS = {
   wait:    'Ждёт',
@@ -3409,55 +3380,7 @@ const STATUS_ICONS = {
   none:    '⚪',
 };
 
-function renderAllActivities() {
-  const body = document.getElementById('aapBody');
-  const countEl = document.getElementById('aapCount');
 
-  const all = [];
-  ROUTE_TIMES.forEach(t => {
-    const list = routeState.lists[t.id] || [];
-    list.forEach(item => {
-      all.push({ timeId: t.id, timeLabel: t.label, item });
-    });
-  });
-
-  countEl.textContent = all.length;
-
-  if (all.length === 0) {
-    body.innerHTML = `<div class="aap-empty">Нет активностей за сегодня</div>`;
-    return;
-  }
-
-  let html = '';
-  ROUTE_TIMES.forEach(t => {
-    const list = routeState.lists[t.id] || [];
-    if (list.length === 0) return;
-
-    html += `<div class="aap-slot-title slot-${t.id}">
-      <span><span class="aap-slot-dot"></span>${t.label}</span>
-      <span class="aap-slot-cnt">${list.length}</span>
-    </div>`;
-
-    list.forEach((item, idx) => {
-      const statusCls = item.status ? ('status-' + item.status) : 'status-none';
-      const icoText = STATUS_ICONS[item.status || 'none'];
-      const statusText = STATUS_LABELS[item.status] || '—';
-      const addr = item.addr ? escapeHtml(item.addr) : '<i style="color:#91a0aa">без адреса</i>';
-      const note = item.note ? `<div class="aap-note">${escapeHtml(item.note)}</div>` : '';
-
-      html += `<div class="aap-item ${statusCls}" data-time-id="${t.id}" data-idx="${idx}">
-        <div class="aap-ico">${icoText}</div>
-        <div class="aap-body">
-          <div class="aap-addr">${addr}</div>
-          ${note}
-        </div>
-        <div class="aap-status">${statusText}</div>
-      </div>`;
-    });
-  });
-
-  body.innerHTML = html;
-}
 
 function escapeHtml(s) {
   return String(s)
@@ -4005,22 +3928,14 @@ function renderRoute() {
 
 stats.className = 'route-stats';
 stats.innerHTML = `
-  <div class="route-stat clickable" id="statAll"><div class="rs-label">Всего</div><div class="rs-value">${c.total}</div></div>
+  <div class="route-stat"><div class="rs-label">Всего</div><div class="rs-value">${c.total}</div></div>
   <div class="route-stat wait"><div class="rs-label">Ждут</div><div class="rs-value">${c.wait}</div></div>
   <div class="route-stat done"><div class="rs-label">Пров.</div><div class="rs-value">${c.done}</div></div>
   <div class="route-stat ndz"><div class="rs-label">НДЗ</div><div class="rs-value">${c.ndz}</div></div>
   <div class="route-stat perenos"><div class="rs-label">ПР/ОТ</div><div class="rs-value">${c.perenos}</div></div>`;
 frag.appendChild(stats);
 
-// Тап на «Всего» → открывает панель «Все активности»
-const statAll = stats.querySelector('#statAll');
-if (statAll && !statAll.dataset.wired) {
-  statAll.dataset.wired = '1';
-  statAll.addEventListener('click', () => {
-    vibro(15);
-    openAllActivities();
-  });
-}
+
 
   if (c.total === 0) {
     const activityHint = document.createElement('div');
@@ -6076,167 +5991,7 @@ overlay.style.transition = 'none';
     isClosing = false;
   }, { passive: true });
 })();
-(function initAllActivitiesSwipe() {
-  const panel = allActPanel;
-  const overlay = allActOverlay;
-  const EDGE_ZONE = 40;
-  const THRESHOLD = 80;
-  const MIN_DECIDE = 10;
 
-  let startX = 0, startY = 0;
-  let active = false, decided = false, isDragging = false;
-  let isClosing = false;
-  let rafId = null;
-  let pendingX = 0;
-
-  function isExcluded(el) {
-    if (!el || !el.closest) return false;
-    if (el.closest('input, textarea, select, [contenteditable="true"]')) return true;
-    if (el.closest('.modal-overlay.show')) return true;
-    if (el.closest('.drawer-totals-panel.open')) return true;
-    return false;
-  }
-
-  function applyMove() {
-    rafId = null;
-    const w = Math.min(340, window.innerWidth * 0.9);
-    let target = Math.max(0, Math.min(w, pendingX));
-    if (isClosing) {
-      panel.style.transform = `translate3d(${target}px, 0, 0)`;
-      overlay.style.opacity = String((1 - target / w) * 0.5);
-    } else {
-      panel.style.transform = `translate3d(${w - target}px, 0, 0)`;
-      overlay.style.opacity = String(target / w * 0.5);
-    }
-  }
-
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1) return;
-    if (isExcluded(e.target)) { active = false; return; }
-    const t = e.touches[0];
-
-    const isOpen = panel.classList.contains('open');
-
-    if (isOpen) {
-      if (t.clientX < window.innerWidth - 400) { active = false; return; }
-      isClosing = true;
-    } else {
-      if (t.clientX < window.innerWidth - EDGE_ZONE) { active = false; return; }
-      if (drawerTotalsPanel.classList.contains('open')) { active = false; return; }
-      isClosing = false;
-      // Прогрев: рендерим контент заранее, чтобы не мигало при открытии
-      renderAllActivities();
-    }
-
-    startX = t.clientX;
-    startY = t.clientY;
-    pendingX = 0;
-    active = true;
-    decided = false;
-    isDragging = false;
-  }, { passive: true });
-
-  document.addEventListener('touchmove', (e) => {
-    if (!active) return;
-    const t = e.touches[0];
-    if (!t) return;
-    const dx = t.clientX - startX;
-    const dy = t.clientY - startY;
-
-    if (!decided) {
-      if (Math.abs(dx) < MIN_DECIDE && Math.abs(dy) < MIN_DECIDE) return;
-      decided = true;
-      if (Math.abs(dy) > Math.abs(dx) * 1.2) { active = false; return; }
-
-      if (isClosing && dx < 0) { active = false; return; }
-      if (!isClosing && dx > 0) { active = false; return; }
-
-      isDragging = true;
-      panel.classList.add('no-anim');
-      if (isClosing) {
-        panel.style.transform = 'translate3d(0, 0, 0)';
-      } else {
-        panel.style.transform = 'translate3d(100%, 0, 0)';
-        overlay.classList.add('show');
-      }
-      overlay.style.transition = 'none';
-    }
-
-    if (!isDragging) return;
-    if (e.cancelable) e.preventDefault();
-
-    const w = Math.min(340, window.innerWidth * 0.9);
-    let progress;
-    if (isClosing) {
-      progress = Math.max(0, Math.min(1, dx / w));
-    } else {
-      progress = Math.max(0, Math.min(1, Math.abs(dx) / w));
-    }
-    pendingX = progress * w;
-
-    if (rafId === null) rafId = requestAnimationFrame(applyMove);
-  }, { passive: false });
-
-  document.addEventListener('touchend', () => {
-    if (!isDragging) {
-      active = false; decided = false;
-      return;
-    }
-    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
-
-    const passed = pendingX > THRESHOLD;
-
-    panel.classList.remove('no-anim');
-    panel.style.transform = '';
-    overlay.style.transition = '';
-    overlay.style.opacity = '';
-
-    isDragging = false;
-    active = false;
-    decided = false;
-    pendingX = 0;
-
-    if (isClosing) {
-      if (passed) {
-        panel.classList.remove('open');
-        overlay.classList.remove('show');
-        vibro(15);
-      } else {
-        panel.classList.add('open');
-        overlay.classList.add('show');
-      }
-    } else {
-      if (passed) {
-        openAllActivities();
-        vibro(15);
-      } else {
-        panel.classList.remove('open');
-        overlay.classList.remove('show');
-      }
-    }
-    isClosing = false;
-  }, { passive: true });
-
-  document.addEventListener('touchcancel', () => {
-    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
-    panel.classList.remove('no-anim');
-    panel.style.transform = '';
-    overlay.style.transition = '';
-    overlay.style.opacity = '';
-    if (isClosing) {
-      panel.classList.add('open');
-      overlay.classList.add('show');
-    } else {
-      panel.classList.remove('open');
-      overlay.classList.remove('show');
-    }
-    isDragging = false;
-    active = false;
-    decided = false;
-    pendingX = 0;
-    isClosing = false;
-  }, { passive: true });
-})();
 /* ═══ Автосброс МВС 1-го числа ═══ */
 function checkAutoReset2() {
   const now = new Date();
