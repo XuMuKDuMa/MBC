@@ -4647,19 +4647,32 @@ function renderTotals3() {
   const monthUP = Number(sumUP.toFixed(2));
   const remains = plan > 0 ? plan - monthUP : 0;
   const progress = plan > 0 ? Math.min(100, (monthUP / plan) * 100) : 0;
-  const monthTotals = {};
-  Object.keys(h).forEach(dateStr => {
-    const parts = dateStr.split('.');
-    if (parts.length !== 3) return;
-    const m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
-    const key = y + '-' + String(m + 1).padStart(2, '0');
-    if (!monthTotals[key]) monthTotals[key] = { up: 0, od: 0, days: 0 };
-    monthTotals[key].up += h[dateStr].up || 0;
-    monthTotals[key].od += h[dateStr].od || 0;
-    monthTotals[key].days++;
-  });
-  const monthsSorted = Object.keys(monthTotals).sort().reverse();
-  const meetRows = remains > 0 ? ANALYSIS_MEETINGS.map(m => ({ label: m.label, count: remains / m.coef })) : [];
+  // История по месяцам — из двух источников
+const monthTotals = {};
+
+// 1. Из сохранённых месяцев (report_months_history)
+let savedMonths = {};
+try { savedMonths = JSON.parse(localStorage.getItem('report_months_history') || '{}'); } catch (e) {}
+Object.keys(savedMonths).forEach(key => {
+  monthTotals[key] = {
+    up: savedMonths[key].up || 0,
+    od: savedMonths[key].od || 0,
+    days: savedMonths[key].days || 0
+  };
+});
+
+// 2. Из текущих дней (report_day_history) — добавляем или обновляем
+Object.keys(h).forEach(dateStr => {
+  const parts = dateStr.split('.');
+  if (parts.length !== 3) return;
+  const m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
+  const key = y + '-' + String(m + 1).padStart(2, '0');
+  if (!monthTotals[key]) monthTotals[key] = { up: 0, od: 0, days: 0 };
+  monthTotals[key].up += h[dateStr].up || 0;
+  monthTotals[key].od += h[dateStr].od || 0;
+  monthTotals[key].days++;
+});
+const monthsSorted = Object.keys(monthTotals).sort().reverse();const meetRows = remains > 0 ? ANALYSIS_MEETINGS.map(m => ({ label: m.label, count: remains / m.coef })) : [];
   const salesRows = remains > 0 ? ANALYSIS_SALES.map(s => ({ label: s.label, count: remains / s.coef })) : [];
   const wdStats = getWorkingDaysStats();
   const forecastUP = wdStats.remaining > 0 && remains > 0 ? (remains / wdStats.remaining) : 0;
@@ -5342,12 +5355,48 @@ document.addEventListener('click', (e) => {
 });
 document.getElementById('btnResetTotalsMenu').addEventListener('click', () => {
   menu3.classList.remove('show');
-  if (!confirm('Сбросить ВСЮ историю итогов и план?')) return;
-  if (!confirm('Точно сбросить? Восстановить не получится.')) return;
+  if (!confirm('Сбросить итоги ТЕКУЩЕГО месяца?\n\nИстория по месяцам сохранится.')) return;
+
+  // 1. Сохраняем текущий месяц в историю
+  const now = new Date();
+  const currentMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+  // Считаем итоги месяца
+  const h = loadHistory1();
+  let sumUP = 0, sumOD = 0, sumMeetings = 0, days = 0;
+  Object.keys(h).forEach(dateStr => {
+    const parts = dateStr.split('.');
+    if (parts.length !== 3) return;
+    const m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
+    if (m === now.getMonth() && y === now.getFullYear()) {
+      days++;
+      sumUP += h[dateStr].up || 0;
+      sumOD += h[dateStr].od || 0;
+      sumMeetings += h[dateStr].meetings || 0;
+    }
+  });
+
+  // Если за месяц есть данные — сохраняем их в историю месяцев
+  if (days > 0) {
+    let monthsHistory = {};
+    try { monthsHistory = JSON.parse(localStorage.getItem('report_months_history') || '{}'); } catch (e) {}
+    monthsHistory[currentMonthKey] = {
+      up: Number(sumUP.toFixed(2)),
+      od: sumOD,
+      meetings: sumMeetings,
+      days: days,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem('report_months_history', JSON.stringify(monthsHistory));
+  }
+
+  // 2. Очищаем текущую историю по дням
   localStorage.removeItem(HISTORY_KEY1);
   localStorage.removeItem(PLAN_KEY);
+
+  // 3. Перерисовываем
   renderTotals3();
-  showToast('🗑 Итоги и план сброшены');
+  showToast('🗑 Итоги месяца сброшены, история сохранена');
 });
 
 const STORAGE_KEY2 = 'report2_vaziev_v4';
