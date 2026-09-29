@@ -3037,8 +3037,17 @@ body.dark .map-filter.active{background:#20a36a;color:#fff;border-color:#20a36a}
 body.dark .map-bottom-card{background:rgba(28,39,51,.98);border-color:#3a4a5a}
 body.dark .map-info-main{color:#e8eef5}
 body.dark .map-info-count{background:#1a3a25;color:#4ade80}
-.bb-map.active .bb-icon{color:#20a36a}
-.bb-map.active .bb-icon svg{stroke:#20a36a}
+.bb-map.active .bb-icon {
+  background: linear-gradient(145deg, #2ecc71, #159957);
+  border-color: rgba(255,255,255,.96);
+  box-shadow:
+    0 8px 22px rgba(39,174,96,.36),
+    0 2px 5px rgba(31,41,55,.14),
+    inset 0 1px 0 rgba(255,255,255,.3);
+}
+.bb-map.active .bb-icon svg {
+  stroke: #fff;
+}
 
 @media(max-width:380px){
   .map-filter{padding:7px 10px}
@@ -3216,20 +3225,22 @@ body.dark #screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,25
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="4" width="18" height="17" rx="3"/>
       <path d="M16 2v4M8 2v4M3 9h18"/>
-      <path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01"/>
+      <path d="M16 13.5l1.5 1.5L21 11.5"/>
     </svg>
   </span>
-  <span class="bb-text">ВД X-K</span>
-  </button>
+  <span class="bb-text">Сегодня</span>
+</button>
   <button class="bb-item bb-map" data-bb-tab="5" aria-label="Карта">
-    <span class="bb-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/>
-        <path d="M9 3v15M15 6v15"/>
-      </svg>
-    </span>
-    <span class="bb-text">Карта</span>
-  </button>
+  <span class="bb-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s-7-5-7-12a7 7 0 0 1 14 0c0 7-7 12-7 12z"/>
+      <circle cx="12" cy="10" r="2.5"/>
+      <path d="M3 18c1.5-1 3.5-1 5 0" opacity="0.5"/>
+      <path d="M21 18c-1.5-1-3.5-1-5 0" opacity="0.5"/>
+    </svg>
+  </span>
+  <span class="bb-text">Карта</span>
+</button>
   <button class="bb-item" data-bb-tab="2">
     <span class="bb-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
