@@ -3487,7 +3487,7 @@ function goToTab(n, animate = true) {
 
   // ─── Рендерим контент СРАЗУ, до анимации ───
 if (n === 3) renderTotals3();
-if (n === 4) renderRouteIfChanged();
+if (n === 4) renderRoute();            // ← всегда рендерим при переходе
 if (n === 5) initMap();
 
   // ─── Мгновенное переключение (без анимации — не мигает в APK) ───
@@ -3993,7 +3993,7 @@ function sortRouteList(timeId) {
 let _routeDataHash = '';
 
 function renderRouteIfChanged() {
-  const hash = JSON.stringify(routeState.lists);
+  const hash = JSON.stringify(routeState.lists) + '|' + _openSlotId;
   if (hash === _routeDataHash) return;
   _routeDataHash = hash;
   renderRoute();
@@ -4001,7 +4001,7 @@ function renderRouteIfChanged() {
 function renderRoute() {
   const app = document.getElementById('app4');
   app.innerHTML = '';
-
+const hash = JSON.stringify(routeState.lists) + '|' + _openSlotId;
   const c = getRouteCounts();
   const stats = document.createElement('div');
 stats.className = 'route-stats';
@@ -6608,7 +6608,7 @@ if (tooltipText) {
           <div class="map-popup-time">${act.timeLabel}</div>
           ${act.note ? `<div class="map-popup-status">📝 ${escapeHtml(act.note)}</div>` : ''}
           <div class="map-popup-status">Статус: ${statusText}</div>
-          <button class="map-popup-btn" onclick="openActivityFromMap('${act.timeId}', ${act.idx})">⚡ Открыть</button>
+          <button class="map-popup-btn" onclick="openActivityFromMap('${act.timeId}', '${encodeURIComponent(act.addr || '')}')">⚡ Открыть</button>
         </div>
       `;
     });
@@ -6656,18 +6656,50 @@ if (countEl) countEl.textContent = found;
   }
 }
 
-window.openActivityFromMap = function(timeId, idx) {
+window.openActivityFromMap = function(timeId, addrEncoded) {
   vibro(15);
+
+  const targetAddr = decodeURIComponent(addrEncoded || '').trim();
+
+  // 1. Запоминаем слот — он раскроется в renderRoute
   _openSlotId = timeId;
+
+  // 2. Переключаемся на вкладку «Активности»
   goToTab(4);
-  setTimeout(() => {
-    const cards = document.querySelectorAll('#app4 .route-card');
-    if (cards[idx]) {
-      cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-      cards[idx].style.boxShadow = '0 0 0 3px #20a36a';
-      setTimeout(() => { cards[idx].style.boxShadow = ''; }, 2000);
-    }
-  }, 400);
+
+  // 3. Ждём отрисовки: двойной rAF + таймаут для WebView
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const cards = document.querySelectorAll('#app4 .route-card');
+        let targetCard = null;
+
+        // Ищем карточку по адресу
+        if (targetAddr) {
+          cards.forEach(card => {
+            if (targetCard) return;
+            const addrInput = card.querySelector('.route-addr-input');
+            const addrCollapsed = card.querySelector('.route-addr-collapsed');
+            const cardAddr = (addrInput ? addrInput.value : (addrCollapsed ? addrCollapsed.textContent : '')).trim();
+            if (cardAddr === targetAddr) targetCard = card;
+          });
+        }
+
+        // Фолбэк: если адрес пустой или не нашли — берём первую карточку слота
+        if (!targetCard) {
+          const block = document.querySelector(`#app4 .route-time-block[data-time-id="${timeId}"]`);
+          if (block) targetCard = block.querySelector('.route-card');
+        }
+
+        if (targetCard) {
+          targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetCard.style.transition = 'box-shadow 0.3s';
+          targetCard.style.boxShadow = '0 0 0 3px #20a36a';
+          setTimeout(() => { targetCard.style.boxShadow = ''; }, 2000);
+        }
+      }, 150);
+    });
+  });
 };
 
 document.querySelectorAll('.map-filter').forEach(btn => {
