@@ -2412,6 +2412,41 @@ body.dark .slot-btn.active[data-slot-id="t16_18"] {
   background: rgba(255,255,255,.2);
   border: 1px solid rgba(255,255,255,.14);
 }
+
+#screen4 .r3-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+#screen4 .city-input-header {
+  width: 100px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 12px;
+  -webkit-appearance: none;
+  font-family: inherit;
+  text-align: center;
+  transition: background .15s, border-color .15s, width .2s;
+  -webkit-text-fill-color: #ffffff;
+}
+
+#screen4 .city-input-header::placeholder {
+  color: rgba(255,255,255,.65);
+  font-weight: 600;
+}
+
+#screen4 .city-input-header:focus {
+  outline: none;
+  width: 140px;
+  background: rgba(255,255,255,.28);
+  border-color: rgba(255,255,255,.5);
+}
 #screen4 #app4 { padding: 0 0 92px; }
 
 #screen4 .route-stats {
@@ -3164,12 +3199,22 @@ body.dark #screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,25
     </div>
 
     <div class="screen active" id="screen4">
-      <div class="r3-header">
-        <div class="r3-header-left"><div><h1>⚡ Активности</h1><div class="date" id="todayDate4"></div></div></div>
-        <button class="theme-btn" id="themeBtn4">🌙</button>
-      </div>
-      <div id="app4"></div>
+  <div class="r3-header">
+    <div class="r3-header-left"><div><h1>⚡ Активности</h1><div class="date" id="todayDate4"></div></div></div>
+    <div class="r3-header-right">
+      <input
+        id="myCityInput4"
+        class="city-input-header"
+        type="text"
+        placeholder="🏙 Город"
+        autocomplete="off"
+        spellcheck="false"
+      >
+      <button class="theme-btn" id="themeBtn4">🌙</button>
     </div>
+  </div>
+  <div id="app4"></div>
+</div>
 
     <div class="screen" id="screen5">
       <div class="map-header">
