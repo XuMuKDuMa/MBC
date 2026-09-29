@@ -6495,4 +6495,104 @@ document.getElementById('aapBody')?.addEventListener('click', (e) => {
 });  
 
 loadGeocache();
+/* ═══════════════════════════════════════════════
+   СВАЙП ПО ЭКРАНУ — ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+   ═══════════════════════════════════════════════ */
+(function initTabSwipe() {
+  const TABS = [4, 1, 5, 2, 3];       // порядок вкладок (как в нижнем баре)
+  const MIN_DX = 60;                  // минимальная длина свайпа
+  const MAX_DY = 60;                  // чтобы не путать со скроллом
+  const MIN_DECIDE = 10;              // порог принятия решения
+
+  let startX = 0, startY = 0;
+  let tracking = false;
+  let decided = false;
+  let isHorizontal = false;
+
+  function isExcluded(el) {
+    if (!el || !el.closest) return false;
+    if (el.closest('input, textarea, select, [contenteditable="true"]')) return true;
+    if (el.closest('.modal-overlay.show')) return true;
+    if (el.closest('.drawer-totals-panel.open')) return true;
+    if (el.closest('.bottom-bar')) return true;
+    if (el.closest('.route-status-row')) return true;
+    if (el.closest('.slot-map-btn')) return true;
+    if (el.closest('.route-side-btn')) return true;
+    if (el.closest('.map-toolbar')) return true;
+    if (el.closest('.leaflet-container')) return true;   // карта — не свайпаем
+    return false;
+  }
+
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { tracking = false; return; }
+    if (isExcluded(e.target)) { tracking = false; return; }
+
+    const t = e.touches[0];
+    startX = t.clientX;
+    startY = t.clientY;
+    tracking = true;
+    decided = false;
+    isHorizontal = false;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!tracking) return;
+    const t = e.touches[0];
+    if (!t) return;
+
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+
+    if (!decided) {
+      if (Math.abs(dx) < MIN_DECIDE && Math.abs(dy) < MIN_DECIDE) return;
+      decided = true;
+
+      // Если вертикальное движение больше — отменяем (это скролл)
+      if (Math.abs(dy) > Math.abs(dx) * 1.2) {
+        tracking = false;
+        return;
+      }
+      isHorizontal = true;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    if (!tracking || !decided || !isHorizontal) {
+      tracking = false;
+      decided = false;
+      isHorizontal = false;
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    if (!touch) { tracking = false; return; }
+
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+
+    tracking = false;
+    decided = false;
+    isHorizontal = false;
+
+    // Проверка порогов
+    if (Math.abs(dx) < MIN_DX) return;
+    if (Math.abs(dy) > MAX_DY) return;
+
+    const currentIdx = TABS.indexOf(currentTab);
+    if (currentIdx === -1) return;
+
+    // Свайп влево (dx < 0) → следующая; вправо (dx > 0) → предыдущая
+    let nextIdx = currentIdx + (dx < 0 ? 1 : -1);
+    if (nextIdx < 0 || nextIdx >= TABS.length) return;
+
+    vibro(15);
+    goToTab(TABS[nextIdx]);
+  }, { passive: true });
+
+  document.addEventListener('touchcancel', () => {
+    tracking = false;
+    decided = false;
+    isHorizontal = false;
+  }, { passive: true });
+})();
 </script>
