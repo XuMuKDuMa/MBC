@@ -3070,6 +3070,10 @@ body.dark .bb-item.bb-today .bb-today-orb{border-color:#1a2430}
   gap: 7px !important;
   margin: 0 10px 12px !important;
 }
+#screen4 .slot-grid .route-time-block {
+  grid-column: 1 / -1;
+  margin: 0 !important;
+}
 #screen4 .slot-btn {
   min-height: 68px !important;
   padding: 9px 12px 8px 15px !important;
@@ -4077,13 +4081,9 @@ btn.innerHTML = `
     mapBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); vibro(12); }, { passive: true });
 
     grid.appendChild(btn);
-  });
-  app.appendChild(grid);
-
-  if (_openSlotId) {
-    const t = ROUTE_TIMES.find(x => x.id === _openSlotId);
-    if (t) {
-      const list = routeState.lists[t.id] || [];
+    
+    // ─── Если слот открыт — вставляем карточки СРАЗУ после него ───
+    if (isOpen) {
       const block = document.createElement('div');
       block.className = 'route-time-block';
       block.dataset.timeId = t.id;
@@ -4123,12 +4123,18 @@ btn.innerHTML = `
       });
       body.appendChild(addBtn);
       block.appendChild(body);
-      app.appendChild(block);
+
+      grid.appendChild(block);
     }
-  }
+  });
+
+    app.appendChild(grid);
 }
 
 updateDrawerRoutes();
+
+
+
 
 const ZK_COEF = 0.10;
 const SECTIONS1 = [
@@ -6271,20 +6277,6 @@ function checkDayReset1() {
 checkDayReset1();
 checkQuickReportReset();
 setTimeout(checkMonthlyReport, 1500);
-setTimeout(checkQuickReportReminder, 3000);
-
-// проверка смены месяца в МВС
-(function() {
-  const now = new Date();
-  const currentMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  const lastMonthKey = localStorage.getItem(LAST_MONTH_KEY2);
-  if (!lastMonthKey) {
-    localStorage.setItem(LAST_MONTH_KEY2, currentMonthKey);
-  } else if (lastMonthKey !== currentMonthKey) {
-    checkAutoReset2();
-    render2();
-  }
-})();
 setTimeout(checkQuickReportReminder, 3000);
 
 // проверка смены месяца в МВС
