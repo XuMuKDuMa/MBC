@@ -3996,10 +3996,13 @@ function renderRouteIfChanged() {
 }
 function renderRoute() {
   const app = document.getElementById('app4');
-  app.innerHTML = '';
-const hash = JSON.stringify(routeState.lists) + '|' + _openSlotId;
+  const hash = JSON.stringify(routeState.lists) + '|' + _openSlotId;
   const c = getRouteCounts();
+
+  const frag = document.createDocumentFragment();   // ← собираем всё сюда
+
   const stats = document.createElement('div');
+
 stats.className = 'route-stats';
 stats.innerHTML = `
   <div class="route-stat clickable" id="statAll"><div class="rs-label">Всего</div><div class="rs-value">${c.total}</div></div>
@@ -4007,10 +4010,10 @@ stats.innerHTML = `
   <div class="route-stat done"><div class="rs-label">Пров.</div><div class="rs-value">${c.done}</div></div>
   <div class="route-stat ndz"><div class="rs-label">НДЗ</div><div class="rs-value">${c.ndz}</div></div>
   <div class="route-stat perenos"><div class="rs-label">ПР/ОТ</div><div class="rs-value">${c.perenos}</div></div>`;
-app.appendChild(stats);
+frag.appendChild(stats);
 
 // Тап на «Всего» → открывает панель «Все активности»
-const statAll = document.getElementById('statAll');
+const statAll = stats.querySelector('#statAll');
 if (statAll && !statAll.dataset.wired) {
   statAll.dataset.wired = '1';
   statAll.addEventListener('click', () => {
@@ -4028,7 +4031,7 @@ if (statAll && !statAll.dataset.wired) {
         <div class="activity-hint-title">Активности на сегодня</div>
         <div class="activity-hint-sub">Добавляй адреса по времени и отмечай статус выполнения</div>
       </div>`;
-    app.appendChild(activityHint);
+    frag.appendChild(activityHint);
   }
 
   const grid = document.createElement('div');
@@ -4127,11 +4130,15 @@ btn.innerHTML = `
       grid.appendChild(block);
     }
   });
+  frag.appendChild(grid);
 
-    app.appendChild(grid);
+  app.innerHTML = '';
+  app.appendChild(frag);
 }
 
 updateDrawerRoutes();
+
+
 
 
 
