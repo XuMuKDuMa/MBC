@@ -4122,7 +4122,7 @@ const APPS1 = [
 const B2C1 = [
   { id: 'b2c_total', name: 'B2C назначено встреч', mode: 'numeric' },
   { id: 'b2b_total', name: 'B2B назначено встреч', mode: 'numeric' },
-  { id: 'reasons', name: 'Причины не доставок', mode: 'text' },
+  { id: 'reasons', name: 'Причины не доставок', mode: 'text', placeholder: '— если всё доставлено' },
 ];
 const STORAGE_KEY1 = 'report_day_v1';
 const HISTORY_KEY1 = 'report_day_history';
@@ -4232,11 +4232,12 @@ function render1() {
   b2cSec.className = 'section';
   b2cSec.innerHTML = `<div class="section-title sec-b2c">Встречи</div>`;
   B2C1.forEach(m => {
-    const row = document.createElement('div');
-    row.className = 'manual';
-    row.innerHTML = `<div class="name">${m.name}</div><input type="text" inputmode="${m.mode || 'numeric'}" data-manual="${m.id}" value="${getManual1(m.id)}">`;
-    b2cSec.appendChild(row);
-  });
+  const row = document.createElement('div');
+  row.className = 'manual';
+  const ph = m.placeholder ? ` placeholder="${m.placeholder}"` : '';
+  row.innerHTML = `<div class="name">${m.name}</div><input type="text" inputmode="${m.mode || 'numeric'}" data-manual="${m.id}"${ph} value="${getManual1(m.id)}">`;
+  b2cSec.appendChild(row);
+});
   app.appendChild(b2cSec);
 
   const zkInp = document.getElementById('zkInput1');
@@ -4251,12 +4252,13 @@ function render1() {
 
   const btnReport1El = document.getElementById('btnReport1');
   if (btnReport1El) {
-    btnReport1El.addEventListener('click', async () => {
-      const text = buildReportText1();
-      saveDayToHistory();
-      localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
-      await copyText(text);
-    });
+btnReport1El.addEventListener('click', async () => {
+  const text = buildReportText1();
+  saveDayToHistory();
+  localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
+  await copyText(text);
+  showSuccessNotification('Отчёт готов', 'done');
+});
   }
 }
 
@@ -4289,7 +4291,17 @@ document.addEventListener('click', (e) => {
 });
 document.addEventListener('input', (e) => {
   const inp = e.target.closest('#app1 input[data-manual]');
-  if (inp) { setManual1(inp.dataset.manual, inp.value); return; }
+if (inp) {
+  setManual1(inp.dataset.manual, inp.value);
+  // Пересчитать состояние кнопки «Отчёт» в МВС
+  const btn = document.getElementById('btnReport2');
+  if (btn) {
+    const upDay = getT2('up_day').trim();
+    const reasons = getManual1('reasons').trim();
+    btn.disabled = upDay === '' || reasons === '';
+  }
+  return;
+}
   const en = e.target.closest('#app1 input[data-extra-name]');
   if (en) { state1.extra[Number(en.dataset.extraName)].name = en.value; saveState1(state1); renderTotals1(); return; }
   const eu = e.target.closest('#app1 input[data-extra-up]');
@@ -5474,13 +5486,14 @@ function render2() {
   // Обработчик «Утр.отчёт»
   const btnMorning = document.getElementById('btnMorningReport2');
   if (btnMorning) {
-    btnMorning.addEventListener('click', async () => {
-      const text = buildMorningReport2();
-      await copyText(text);
-      localStorage.setItem(MORNING_REPORT_SENT_KEY, new Date().toDateString());
-      localStorage.setItem(QUICK_REPORT_REMIND_KEY, new Date().toDateString());
-      localStorage.setItem(QUICK_REPORT_SENT_KEY, new Date().toDateString());
-    });
+  btnMorning.addEventListener('click', async () => {
+  const text = buildMorningReport2();
+  await copyText(text);
+  localStorage.setItem(MORNING_REPORT_SENT_KEY, new Date().toDateString());
+  localStorage.setItem(QUICK_REPORT_REMIND_KEY, new Date().toDateString());
+  localStorage.setItem(QUICK_REPORT_SENT_KEY, new Date().toDateString());
+  showSuccessNotification('Утренний отчёт готов', 'done');
+});
   }
 
   // Обработчик «Отчёт»
@@ -5509,9 +5522,10 @@ function render2() {
       state2.today.pk = '';
       saveState2(state2);
       const text = buildReport2();
-      localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
-      await copyText(text);
-      render2();
+localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
+await copyText(text);
+showSuccessNotification('Отчёт готов', 'done');
+render2();
     });
   }
 
@@ -5585,7 +5599,11 @@ function renderTotals2() {
   const el3p = document.getElementById('pct_slotm2');
   if (el3p) el3p.textContent = pct2(slUsp, slNag);
   const btn = document.getElementById('btnReport2');
-  if (btn) btn.disabled = getT2('up_day').trim() === '';
+if (btn) {
+  const upDay = getT2('up_day').trim();
+  const reasons = getManual1('reasons').trim();
+  btn.disabled = upDay === '' || reasons === '';
+}
 }
 function buildMorningReport2() {
   const today = new Date().toLocaleDateString('ru-RU');
