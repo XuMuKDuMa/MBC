@@ -2412,7 +2412,17 @@ body.dark .slot-btn.active[data-slot-id="t16_18"] {
   background: rgba(255,255,255,.2);
   border: 1px solid rgba(255,255,255,.14);
 }
+/* ─── Когда слот открыт — остальные слоты приглушаются ─── */
+#screen4 .slot-grid.has-open .slot-btn:not(.active) {
+  opacity: 0.35;
+  filter: saturate(0.6);
+  transition: opacity 0.25s, filter 0.25s;
+  pointer-events: none;
+}
 
+#screen4 .slot-grid .slot-btn {
+  transition: opacity 0.25s, filter 0.25s;
+}
 #screen4 .r3-header-right {
   display: flex;
   align-items: center;
@@ -3479,6 +3489,12 @@ function updateBottomBarActive(n) {
 function goToTab(n, animate = true) {
   if (n < 1 || n > 5) return;
   if (n === currentTab) return;
+
+  // Если уходим с вкладки «Активности» — закрываем открытый слот
+  if (currentTab === 4 && n !== 4) {
+    _openSlotId = null;
+  }
+
   currentTab = n;
   document.body.classList.remove('tab-1', 'tab-2', 'tab-3', 'tab-4');
   document.body.classList.add('tab-' + n);
@@ -4030,7 +4046,7 @@ frag.appendChild(stats);
   }
 
   const grid = document.createElement('div');
-  grid.className = 'slot-grid';
+grid.className = 'slot-grid' + (_openSlotId ? ' has-open' : '');
 
   ROUTE_TIMES.forEach(t => {
     sortRouteList(t.id);
