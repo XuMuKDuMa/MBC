@@ -3084,11 +3084,19 @@ body.dark .aap-item::after {
   font-weight: 800;
 }
 .map-popup-btn-nav {
-  background: #1a5276;
-  margin-top: 6px;
+  background: transparent;
+  color: #1a5276;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 10px;
+  margin-top: 4px;
+  cursor: pointer;
 }
 .map-popup-btn-nav:active {
-  background: #154360;
+  opacity: 0.7;
+}
+body.dark .map-popup-btn-nav {
+  color: #5dade2;
 }
 
 body.dark #screen5{background:#121a22}
@@ -3496,12 +3504,15 @@ function goToTab(n, animate = true) {
   // при возврате на вкладку «Активности» — заново определить слот по времени
 }
 if (n === 4) {
-  const h = new Date().getHours();
-  if (h >= 10 && h < 12) _openSlotId = 't10_12';
-  else if (h >= 12 && h < 14) _openSlotId = 't12_14';
-  else if (h >= 14 && h < 16) _openSlotId = 't14_16';
-  else if (h >= 16 && h < 18) _openSlotId = 't16_18';
-  else _openSlotId = null;
+  // Если слот уже задан вручную (например, из карты) — не перезаписываем
+  if (!_openSlotId) {
+    const h = new Date().getHours();
+    if (h >= 10 && h < 12) _openSlotId = 't10_12';
+    else if (h >= 12 && h < 14) _openSlotId = 't12_14';
+    else if (h >= 14 && h < 16) _openSlotId = 't14_16';
+    else if (h >= 16 && h < 18) _openSlotId = 't16_18';
+    else _openSlotId = null;
+  }
 }
 
   currentTab = n;
@@ -6587,8 +6598,7 @@ if (tooltipText) {
     <div class="map-popup-time">${act.timeLabel}</div>
     ${act.note ? `<div class="map-popup-status">📝 ${escapeHtml(act.note)}</div>` : ''}
     <div class="map-popup-status">Статус: ${statusText}</div>
-    <button class="map-popup-btn" onclick="openActivityFromMap('${act.timeId}', '${encodeURIComponent(act.addr || '')}')">⚡ Открыть</button>
-    <button class="map-popup-btn map-popup-btn-nav" onclick="openNavigator('${encodeURIComponent(group.addr || '')}')">🧭 Навигатор</button>
+    <button class="map-popup-btn map-popup-btn-nav" onclick="event.stopPropagation(); openNavigator('${encodeURIComponent(group.addr || '')}')">Маршрут</button>
   </div>
 `;
     });
@@ -6596,7 +6606,7 @@ if (tooltipText) {
     const addrKey = (group.addr || '').trim().toLowerCase();
 const totalInHouse = addrCounts[addrKey] || 1;
 const popupContent = `
-  <div class="map-popup">
+  <div class="map-popup" onclick="openActivityFromMap('${group.items[0].timeId}', '${encodeURIComponent(group.addr || '')}')">
     <div class="map-popup-addr">${escapeHtml(group.addr)}</div>
     <div class="map-popup-status">Встреч в этом доме: <b>${totalInHouse}</b></div>
     ${itemsHtml}
@@ -6643,11 +6653,15 @@ window.openActivityFromMap = function(timeId, addrEncoded) {
 
   const targetAddr = decodeURIComponent(addrEncoded || '').trim();
 
-  // 1. Запоминаем слот — он раскроется в renderRoute
-  _openSlotId = timeId;
+  // 1. Запоминаем целевой слот во временную переменную
+  const forcedSlot = timeId;
 
-  // 2. Переключаемся на вкладку «Активности»
+  // 2. Уходим на вкладку «Активности» (БЕЗ сброса слота)
   goToTab(4);
+
+  // 3. После перехода — устанавливаем слот и перерисовываем
+  _openSlotId = forcedSlot;
+  renderRoute();
 
   // 3. Ждём отрисовки: двойной rAF + таймаут для WebView
   requestAnimationFrame(() => {
