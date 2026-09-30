@@ -5893,11 +5893,29 @@ setInterval(checkReminder, 60 * 1000);
   });
 })();
 (function initCityField() {
-  const input = document.getElementById('myCityInput');
-  if (!input) return;
-  input.value = getMyCity();
-  input.addEventListener('input', () => { setMyCity(input.value); });
-  input.addEventListener('blur', () => { setMyCity(input.value); });
+  const oldInput = document.getElementById('myCityInput');
+  const newInput = document.getElementById('myCityInput4');
+
+  const city = getMyCity();
+  if (oldInput) oldInput.value = city;
+  if (newInput) newInput.value = city;
+
+  function handleInput(e) {
+    const v = e.target.value;
+    setMyCity(v);
+    if (oldInput && e.target !== oldInput) oldInput.value = v;
+    if (newInput && e.target !== newInput) newInput.value = v;
+    if (typeof updateMapCityLabel === 'function') updateMapCityLabel();
+  }
+
+  if (oldInput) {
+    oldInput.addEventListener('input', handleInput);
+    oldInput.addEventListener('blur', handleInput);
+  }
+  if (newInput) {
+    newInput.addEventListener('input', handleInput);
+    newInput.addEventListener('blur', handleInput);
+  }
 })();
 function updateAllDates() {
   const d = new Date().toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
