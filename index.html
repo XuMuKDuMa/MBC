@@ -3063,7 +3063,23 @@ body.dark .aap-item::after {
 .map-popup-time{font-size:12px;font-weight:900;color:#168553;margin-bottom:4px}
 .map-popup-addr{font-size:14px;font-weight:800;color:#263944;line-height:1.25}
 .map-popup-status{font-size:11px;color:#71808b;margin-top:5px}
-.map-popup-btn{margin-top:8px;width:100%;border:0;border-radius:9px;background:#20a36a;color:#fff;padding:8px;font-weight:800}
+.map-popup-btn {
+  margin-top: 8px;
+  width: 100%;
+  border: 0;
+  border-radius: 9px;
+  background: #20a36a;
+  color: #fff;
+  padding: 8px;
+  font-weight: 800;
+}
+.map-popup-btn-nav {
+  background: #1a5276;
+  margin-top: 6px;
+}
+.map-popup-btn-nav:active {
+  background: #154360;
+}
 
 body.dark #screen5{background:#121a22}
 body.dark .map-toolbar{background:rgba(28,39,51,.96)}
@@ -6392,7 +6408,14 @@ async function renderMapMarkers() {
     ? activities
     : activities.filter(a => a.timeId === currentMapFilter);
 
-// НЕ группируем — каждая встреча = отдельный маркер
+// Считаем, сколько встреч по каждому адресу (для счётчика в попапе)
+const addrCounts = {};
+filtered.forEach(act => {
+  const key = (act.addr || '').trim().toLowerCase();
+  addrCounts[key] = (addrCounts[key] || 0) + 1;
+});
+
+// Каждая встреча — отдельный маркер
 const groups = {};
 filtered.forEach((act, i) => {
   groups['item_' + i] = { addr: act.addr, items: [act] };
@@ -6464,22 +6487,25 @@ if (tooltipText) {
       const statusText = STATUS_LABELS[act.status] || '—';
       const borderTop = i > 0 ? 'border-top:1px solid #eee;padding-top:8px;margin-top:6px;' : '';
       itemsHtml += `
-        <div style="${borderTop}">
-          <div class="map-popup-time">${act.timeLabel}</div>
-          ${act.note ? `<div class="map-popup-status">📝 ${escapeHtml(act.note)}</div>` : ''}
-          <div class="map-popup-status">Статус: ${statusText}</div>
-          <button class="map-popup-btn" onclick="openActivityFromMap('${act.timeId}', '${encodeURIComponent(act.addr || '')}')">⚡ Открыть</button>
-        </div>
-      `;
+  <div style="${borderTop}">
+    <div class="map-popup-time">${act.timeLabel}</div>
+    ${act.note ? `<div class="map-popup-status">📝 ${escapeHtml(act.note)}</div>` : ''}
+    <div class="map-popup-status">Статус: ${statusText}</div>
+    <button class="map-popup-btn" onclick="openActivityFromMap('${act.timeId}', '${encodeURIComponent(act.addr || '')}')">⚡ Открыть</button>
+    <button class="map-popup-btn map-popup-btn-nav" onclick="openNavigator('${encodeURIComponent(group.addr || '')}')">🧭 Навигатор</button>
+  </div>
+`;
     });
 
-    const popupContent = `
-      <div class="map-popup">
-        <div class="map-popup-addr">${escapeHtml(group.addr)}</div>
-        <div class="map-popup-status">Встреч в этом доме: <b>${count}</b></div>
-        ${itemsHtml}
-      </div>
-    `;
+    const addrKey = (group.addr || '').trim().toLowerCase();
+const totalInHouse = addrCounts[addrKey] || 1;
+const popupContent = `
+  <div class="map-popup">
+    <div class="map-popup-addr">${escapeHtml(group.addr)}</div>
+    <div class="map-popup-status">Встреч в этом доме: <b>${totalInHouse}</b></div>
+    ${itemsHtml}
+  </div>
+`;
 
     marker.bindPopup(popupContent, { maxWidth: 280 });
     mapMarkers.push(marker);
@@ -6560,6 +6586,32 @@ window.openActivityFromMap = function(timeId, addrEncoded) {
       }, 150);
     });
   });
+};
+
+window.openNavigator = function(addrEncoded) {
+  vibro(15);
+  const addr = decodeURIComponent(addrEncoded || '').trim();
+  if (!addr) {
+    showToast('⚠️ Нет адреса');
+    return;
+  }
+  const fullAddr = applyCity(addr);
+  const encoded = encodeURIComponent(fullAddr);
+
+  // Пытаемся открыть Яндекс.Навигатор, если не установлен — откроется веб-версия
+  const navUrl = 'yandexnavi://build_route_on_map?to=' + encoded;
+  const webUrl = 'https://yandex.ru/maps/?text=' + encoded;
+
+  const now = Date.now();
+  const timer = setTimeout(() => {
+    // Если приложение не открылось за 1.2с — открываем веб-версию
+    if (Date.now() - now < 1500) {
+      window.location.href = webUrl;
+    }
+  }, 1200);
+
+  window.location.href = navUrl;
+  setTimeout(() => clearTimeout(timer), 2000);
 };
 
 document.querySelectorAll('.map-filter').forEach(btn => {
