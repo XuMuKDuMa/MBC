@@ -4097,11 +4097,31 @@ btn.innerHTML = `
   </div>
 `;
     btn.addEventListener('click', (e) => {
-      if (e.target.closest('[data-map-btn]')) return;
-      vibro(12);
-      _openSlotId = (_openSlotId === t.id) ? null : t.id;
-      renderRoute();
+  if (e.target.closest('[data-map-btn]')) return;
+  vibro(12);
+  const wasOpen = (_openSlotId === t.id);
+  _openSlotId = wasOpen ? null : t.id;
+  renderRoute();
+
+  // Если открыли слот — прокрутить к его началу
+  if (!wasOpen) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const block = document.querySelector(`#app4 .route-time-block[data-time-id="${t.id}"]`);
+          const screen4 = document.getElementById('screen4');
+          if (block && screen4) {
+            // Позиция блока относительно верха скролла
+            const blockTop = block.getBoundingClientRect().top + screen4.scrollTop;
+            // Отступ сверху — чтобы шапка и статистика не перекрывали
+            const offset = 130;   // примерная высота шапки + route-stats
+            screen4.scrollTo({ top: blockTop - offset, behavior: 'smooth' });
+          }
+        }, 80);
+      });
     });
+  }
+});
 const mapBtn = btn.querySelector('[data-map-btn]');
 if (mapBtn) {
   mapBtn.addEventListener('click', (e) => {
