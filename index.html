@@ -4062,11 +4062,9 @@ grid.className = 'slot-grid' + (_openSlotId ? ' has-open' : '');
 const done = list.filter(x => x.status === 'done').length;
 const ndz = list.filter(x => x.status === 'ndz').length;
 const perenos = list.filter(x => x.status === 'perenos').length;
-
 btn.innerHTML = `
   <div class="slot-head">
     <div class="slot-time">${t.label}</div>
-    <span class="slot-map-btn" data-map-btn="${t.id}" title="Открыть маршрут в Яндекс.Картах">${PIN_SVG}</span>
   </div>
   <div class="slot-summary">
     <span class="slot-summary-main">${cnt ? `${cnt} ${cnt === 1 ? 'встреча' : (cnt < 5 ? 'встречи' : 'встреч')}` : 'Нет встреч'}</span>
@@ -4076,24 +4074,22 @@ btn.innerHTML = `
       ndz ? `${ndz} НДЗ` : '',
       perenos ? `${perenos} отмена` : ''
     ].filter(Boolean).join(' · ') : 'Добавить встречу'}</span>
-    <span class="slot-chev">▼</span>
   </div>
 `;
-
     btn.addEventListener('click', (e) => {
       if (e.target.closest('[data-map-btn]')) return;
       vibro(12);
       _openSlotId = (_openSlotId === t.id) ? null : t.id;
       renderRoute();
     });
-
-    const mapBtn = btn.querySelector('[data-map-btn]');
-    mapBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openSlotRoute(t.id);
-    });
-    mapBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); vibro(12); }, { passive: true });
-
+const mapBtn = btn.querySelector('[data-map-btn]');
+if (mapBtn) {
+  mapBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openSlotRoute(t.id);
+  });
+  mapBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); vibro(12); }, { passive: true });
+}
     grid.appendChild(btn);
     
     // ─── Если слот открыт — вставляем карточки СРАЗУ после него ───
