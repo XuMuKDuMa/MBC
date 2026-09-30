@@ -5585,8 +5585,6 @@ function render2() {
   const text = buildMorningReport2();
   await copyText(text);
   localStorage.setItem(MORNING_REPORT_SENT_KEY, new Date().toDateString());
-  localStorage.setItem(QUICK_REPORT_REMIND_KEY, new Date().toDateString());
-  localStorage.setItem(QUICK_REPORT_SENT_KEY, new Date().toDateString());
   showSuccessNotification('Утренний отчёт готов', 'done');
 });
   }
