@@ -4334,6 +4334,12 @@ function render1() {
   const btnReport1El = document.getElementById('btnReport1');
   if (btnReport1El) {
 btnReport1El.addEventListener('click', async () => {
+  // Защита: не отправлять без причин
+  const reasons = getManual1('reasons').trim();
+  if (!reasons) {
+    showToast('⚠️ Заполните «Причины не доставок»');
+    return;
+  }
   const text = buildReportText1();
   saveDayToHistory();
   localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
@@ -4372,17 +4378,27 @@ document.addEventListener('click', (e) => {
 });
 document.addEventListener('input', (e) => {
   const inp = e.target.closest('#app1 input[data-manual]');
-if (inp) {
-  setManual1(inp.dataset.manual, inp.value);
-  // Пересчитать состояние кнопки «Отчёт» в МВС
-  const btn = document.getElementById('btnReport2');
-  if (btn) {
-    const upDay = getT2('up_day').trim();
-    const reasons = getManual1('reasons').trim();
-    btn.disabled = upDay === '' || reasons === '';
+  if (inp) {
+    setManual1(inp.dataset.manual, inp.value);
+
+    // Пересчитать кнопку «Отчёт» в МВС
+    const btn2 = document.getElementById('btnReport2');
+    if (btn2) {
+      const upDay = getT2('up_day').trim();
+      const reasons = getManual1('reasons').trim();
+      btn2.disabled = upDay === '' || reasons === '';
+    }
+
+    // Пересчитать кнопку «Отчёт» на «Сегодня»
+    const btn1 = document.getElementById('btnReport1');
+    if (btn1) {
+      const b2cTotal = getManual1('b2c_total').trim();
+      const reasons = getManual1('reasons').trim();
+      btn1.disabled = b2cTotal === '' || reasons === '';
+    }
+
+    return;
   }
-  return;
-}
   const en = e.target.closest('#app1 input[data-extra-name]');
   if (en) { state1.extra[Number(en.dataset.extraName)].name = en.value; saveState1(state1); renderTotals1(); return; }
   const eu = e.target.closest('#app1 input[data-extra-up]');
@@ -4414,7 +4430,7 @@ function renderTotals1() {
   document.getElementById('totalB2C1').textContent = `${t.b2cTotal}/${t.meetings}`;
   document.getElementById('totalB2B1').textContent = `${t.b2bTotal}/${t.bizMeetings}`;
   const btn = document.getElementById('btnReport1');
-  btn.disabled = getManual1('b2c_total').trim() === '';
+btn.disabled = getManual1('b2c_total').trim() === '' || getManual1('reasons').trim() === '';
   const dUP = document.getElementById('drawerTotalUP');
   const dOD = document.getElementById('drawerTotalOD');
   const dUPFD = document.getElementById('drawerTotalUPFD');
