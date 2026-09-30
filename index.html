@@ -3330,6 +3330,7 @@ body.dark #screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,25
 
 <div class="menu" id="menu3">
   <button id="btnResetTotalsMenu">🗑 Сбросить итоги за месяц</button>
+  <button id="btnFixDupHistory">🔧 Исправить дубли в истории</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -4517,8 +4518,8 @@ B2C слот ЕКП: ${b2cLine}
 
 Причины не доставок: ${m('reasons')}`;
 }
-function saveDayToHistory() {
-  const today = new Date().toLocaleDateString('ru-RU');
+function saveDayToHistory(dateOverride) {
+  const today = dateOverride || new Date().toLocaleDateString('ru-RU');
   const t = calcTotals1();
   const bd = buildSalesBreakdownToday();
   const meetingsBd = buildMeetingsBreakdownToday();
@@ -5392,8 +5393,34 @@ document.getElementById('menuBtn3').addEventListener('click', (e) => {
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#menu3') && !e.target.closest('#menuBtn3')) menu3.classList.remove('show');
 });
+document.getElementById('btnFixDupHistory')?.addEventListener('click', () => {
+  document.getElementById('menu3')?.classList.remove('show');
+
+  const h = JSON.parse(localStorage.getItem('report_day_history') || '{}');
+  const dates = Object.keys(h).sort((a, b) => {
+    const [da, ma, ya] = a.split('.').map(Number);
+    const [db, mb, yb] = b.split('.').map(Number);
+    return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+  });
+
+  let fixed = 0;
+  for (let i = 1; i < dates.length; i++) {
+    const prev = dates[i - 1];
+    const cur = dates[i];
+    if (h[prev] && h[cur] && h[prev].up === h[cur].up && h[prev].up > 0) {
+      delete h[cur];
+      fixed++;
+    }
+  }
+
+  localStorage.setItem('report_day_history', JSON.stringify(h));
+  showToast(fixed > 0 ? `🔧 Удалено дублей: ${fixed}` : '✅ Дублей не найдено');
+
+  if (typeof renderTotals3 === 'function') renderTotals3();
+});
+
 document.getElementById('btnResetTotalsMenu').addEventListener('click', () => {
-  menu3.classList.remove('show');
+  document.getElementById('menu3')?.classList.remove('show');
   if (!confirm('Сбросить итоги ТЕКУЩЕГО месяца?\n\nИстория по месяцам сохранится.')) return;
 
   // 1. Сохраняем текущий месяц в историю
@@ -6147,8 +6174,11 @@ function checkDayReset1() {
                  || (state1.extra && state1.extra.length > 0)
                  || (state1.zk && state1.zk.trim() !== '');
     if (hasData) {
-      saveDayToHistory();
-    }
+  // Сохраняем под ВЧЕРАШНЮЮ дату (данные же за прошлый день)
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  saveDayToHistory(yesterday.toLocaleDateString('ru-RU'));
+}
     state1 = { counts: {}, manual: {}, extra: [], zk: '' };
     saveState1(state1);
     localStorage.setItem(DAY_RESET_KEY1, todayKey);
