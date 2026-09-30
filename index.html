@@ -6598,20 +6598,9 @@ window.openNavigator = function(addrEncoded) {
   const fullAddr = applyCity(addr);
   const encoded = encodeURIComponent(fullAddr);
 
-  // Пытаемся открыть Яндекс.Навигатор, если не установлен — откроется веб-версия
-  const navUrl = 'yandexnavi://build_route_on_map?to=' + encoded;
-  const webUrl = 'https://yandex.ru/maps/?text=' + encoded;
-
-  const now = Date.now();
-  const timer = setTimeout(() => {
-    // Если приложение не открылось за 1.2с — открываем веб-версию
-    if (Date.now() - now < 1500) {
-      window.location.href = webUrl;
-    }
-  }, 1200);
-
-  window.location.href = navUrl;
-  setTimeout(() => clearTimeout(timer), 2000);
+  // Маршрут: «Моё местоположение → адрес»
+  const url = 'https://yandex.ru/maps/?rtext=~' + encoded + '&rtt=auto';
+  window.open(url, '_blank');
 };
 
 document.querySelectorAll('.map-filter').forEach(btn => {
