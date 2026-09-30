@@ -3492,8 +3492,17 @@ function goToTab(n, animate = true) {
 
   // Если уходим с вкладки «Активности» — закрываем открытый слот
   if (currentTab === 4 && n !== 4) {
-    _openSlotId = null;
-  }
+  _openSlotId = null;
+  // при возврате на вкладку «Активности» — заново определить слот по времени
+}
+if (n === 4) {
+  const h = new Date().getHours();
+  if (h >= 10 && h < 12) _openSlotId = 't10_12';
+  else if (h >= 12 && h < 14) _openSlotId = 't12_14';
+  else if (h >= 14 && h < 16) _openSlotId = 't14_16';
+  else if (h >= 16 && h < 18) _openSlotId = 't16_18';
+  else _openSlotId = null;
+}
 
   currentTab = n;
   document.body.classList.remove('tab-1', 'tab-2', 'tab-3', 'tab-4');
@@ -3821,7 +3830,18 @@ function getSlotDominantStatus(timeId) {
   return 'empty';
 }
 
-let _openSlotId = 't10_12';
+// Слот по умолчанию — null, дальше определим по текущему времени
+let _openSlotId = null;
+
+// При старте — раскрыть слот, соответствующий текущему часу
+(function autoOpenCurrentSlot() {
+  const h = new Date().getHours();
+  if (h >= 10 && h < 12) _openSlotId = 't10_12';
+  else if (h >= 12 && h < 14) _openSlotId = 't12_14';
+  else if (h >= 14 && h < 16) _openSlotId = 't14_16';
+  else if (h >= 16 && h < 18) _openSlotId = 't16_18';
+  // До 10:00 или после 18:00 — ничего не открываем
+})();
 
 function buildRouteCard(item, timeId) {
   const card = document.createElement('div');
