@@ -3334,6 +3334,143 @@ body.dark #screen4 .route-mic-inline.listening {
   color: #e57373;
   background: rgba(192,57,43,.2);
 }
+/* ─── Кнопка «Начать» / индикатор «в процессе» ─── */
+.route-status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  width: 100%;
+}
+.route-status-line .status-badge {
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+.route-start-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  border: 1px solid #c8e6d5;
+  background: linear-gradient(135deg, #eafaf1, #d5f5e3);
+  color: #168653;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.route-start-btn:active {
+  transform: scale(0.94);
+  background: linear-gradient(135deg, #d5f5e3, #a9ebc5);
+}
+.route-start-btn .rsb-icon { font-size: 11px; line-height: 1; }
+
+body.dark .route-start-btn {
+  background: linear-gradient(135deg, #1a3a29, #143224);
+  border-color: #2e6b48;
+  color: #62d999;
+}
+body.dark .route-start-btn:active {
+  background: linear-gradient(135deg, #143224, #0f2d1c);
+}
+
+/* ─── Индикатор «в процессе» ─── */
+.route-live {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(243,156,18,.12);
+  border: 1px solid rgba(243,156,18,.35);
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #b9770e;
+  flex-shrink: 0;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+body.dark .route-live {
+  background: rgba(243,156,18,.18);
+  border-color: rgba(243,156,18,.4);
+  color: #f5b041;
+}
+.route-live.over-3h {
+  background: rgba(231,76,60,.14);
+  border-color: rgba(231,76,60,.4);
+  color: #c0392b;
+}
+body.dark .route-live.over-3h {
+  background: rgba(231,76,60,.22);
+  border-color: rgba(231,76,60,.5);
+  color: #e57373;
+}
+.route-live .rl-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f39c12;
+  box-shadow: 0 0 0 0 rgba(243,156,18,.7);
+  animation: rlPulse 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.route-live.over-3h .rl-dot {
+  background: #e74c3c;
+  box-shadow: 0 0 0 0 rgba(231,76,60,.7);
+}
+@keyframes rlPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(243,156,18,.7); transform: scale(1); }
+  50%  { box-shadow: 0 0 0 6px rgba(243,156,18,0); transform: scale(1.15); }
+  100% { box-shadow: 0 0 0 0 rgba(243,156,18,0); transform: scale(1); }
+}
+.route-live.over-3h .rl-dot {
+  animation-name: rlPulseRed;
+}
+@keyframes rlPulseRed {
+  0%   { box-shadow: 0 0 0 0 rgba(231,76,60,.7); transform: scale(1); }
+  50%  { box-shadow: 0 0 0 6px rgba(231,76,60,0); transform: scale(1.15); }
+  100% { box-shadow: 0 0 0 0 rgba(231,76,60,0); transform: scale(1); }
+}
+
+/* ─── Красный badge на иконке «Активности» ─── */
+.bb-item { position: relative; }
+.bb-badge {
+  position: absolute;
+  top: -2px;
+  right: 2px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(231,76,60,.5), 0 0 0 2px #fff;
+  z-index: 10;
+  pointer-events: none;
+  line-height: 1;
+  animation: bbBadgePop 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+body.dark .bb-badge {
+  box-shadow: 0 2px 6px rgba(231,76,60,.6), 0 0 0 2px #1a2430;
+}
+@keyframes bbBadgePop {
+  0%   { transform: scale(0); }
+  70%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
 /* ─── Бейдж статуса ─── */
 .status-badge {
   display: inline-flex;
@@ -3764,7 +3901,40 @@ function updateBottomBarActive(n) {
     item.classList.toggle('active', Number(item.dataset.bbTab) === n);
   });
 }
+function countActiveActivities() {
+  let n = 0;
+  ROUTE_TIMES.forEach(t => {
+    (routeState.lists[t.id] || []).forEach(item => {
+      if (item && item.startedAt) n++;
+    });
+  });
+  return n;
+}
 
+function updateActivitiesBadge() {
+  const count = countActiveActivities();
+  const btn = document.querySelector('.bb-item[data-bb-tab="4"]');
+  if (!btn) return;
+
+  let badge = btn.querySelector('.bb-badge');
+  if (count === 0) {
+    if (badge) badge.remove();
+    return;
+  }
+
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'bb-badge';
+    btn.appendChild(badge);
+  }
+  const newText = String(count);
+  if (badge.textContent !== newText) {
+    badge.textContent = newText;
+    badge.style.animation = 'none';
+    void badge.offsetWidth;
+    badge.style.animation = '';
+  }
+}
 function goToTab(n, animate = true) {
   if (n < 1 || n > 5) return;
   if (n === currentTab) return;
@@ -4044,6 +4214,30 @@ function checkRouteAutoReset() {
   }
   return false;
 }
+
+// ─── Автосброс «в процессе» при смене дня ───
+function clearStartedAtOnNewDay() {
+  const KEY = 'route_started_last_day';
+  const last = localStorage.getItem(KEY);
+  const today = getTodayKey23();
+  if (last === today) return;
+
+  let changed = false;
+  ROUTE_TIMES.forEach(t => {
+    (routeState.lists[t.id] || []).forEach(item => {
+      if (item && item.startedAt) {
+        item.startedAt = null;
+        changed = true;
+      }
+    });
+  });
+  if (changed) {
+    saveRouteState(routeState);
+    renderRoute();
+    updateActivitiesBadge();
+  }
+  localStorage.setItem(KEY, today);
+}
 let routeState = loadRouteState();
 checkRouteAutoReset();
 routeState = loadRouteState();
@@ -4168,24 +4362,30 @@ function showStatusMenu(anchor, item, timeId) {
       const action = btn.dataset.action;
 
       if (action === 'delete') {
-        const list = routeState.lists[timeId] || [];
-        const idx = list.indexOf(item);
-        if (idx >= 0) {
-          list.splice(idx, 1);
-          saveRouteState(routeState);
-          renderRoute();
-          updateDrawerRoutes();
-          if (map) renderMapMarkers();
-          vibro(25);
-        }
+  const list = routeState.lists[timeId] || [];
+  const idx = list.indexOf(item);
+  if (idx >= 0) {
+    list.splice(idx, 1);
+    saveRouteState(routeState);
+    renderRoute();
+    updateDrawerRoutes();
+    updateActivitiesBadge();
+    if (map) renderMapMarkers();
+    vibro(25);
+  }
       } else if (status) {
-        const wasSame = item.status === status;
-        item.status = status;
-        saveRouteState(routeState);
-        renderRoute();
-        updateDrawerRoutes();
-        if (map) renderMapMarkers();
-        vibro(15);
+  const wasSame = item.status === status;
+  item.status = status;
+  // Любой явный статус снимает «в процессе»
+  if (status === 'done' || status === 'ndz' || status === 'perenos') {
+    item.startedAt = null;
+  }
+  saveRouteState(routeState);
+  renderRoute();
+  updateDrawerRoutes();
+  updateActivitiesBadge();
+  if (map) renderMapMarkers();
+  vibro(15);
         if (!wasSame) {
           if (status === 'wait')    showSuccessNotification('Встреча в ожидании', 'wait');
           if (status === 'done')    showSuccessNotification('Встреча проведена', 'done');
@@ -4375,7 +4575,52 @@ statusBadge.addEventListener('click', (e) => {
 statusBadge.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
 
 card.appendChild(topRow);
-card.appendChild(statusBadge);
+
+// ─── Строка со статусом и кнопкой «Начать» / индикатором ───
+const statusLine = document.createElement('div');
+statusLine.className = 'route-status-line';
+statusLine.appendChild(statusBadge);
+
+if (item.startedAt) {
+  // Уже в процессе — показываем индикатор
+  const elapsed = Date.now() - item.startedAt;
+  const over3h = elapsed > 3 * 60 * 60 * 1000;
+  const startTime = new Date(item.startedAt).toLocaleTimeString('ru-RU', {
+    hour: '2-digit', minute: '2-digit'
+  });
+  const hours = Math.floor(elapsed / (60 * 60 * 1000));
+  const mins  = Math.floor((elapsed % (60 * 60 * 1000)) / (60 * 1000));
+  let timeText;
+  if (hours > 0) timeText = `${hours}ч ${mins}м`;
+  else           timeText = `${mins}м`;
+
+  const live = document.createElement('div');
+  live.className = 'route-live' + (over3h ? ' over-3h' : '');
+  live.innerHTML = `
+    <span class="rl-dot"></span>
+    <span>идёт с ${startTime} (${timeText})</span>
+  `;
+  statusLine.appendChild(live);
+} else {
+  // Ещё не начата — показываем кнопку «Начать»
+  const startBtn = document.createElement('button');
+  startBtn.type = 'button';
+  startBtn.className = 'route-start-btn';
+  startBtn.innerHTML = `<span class="rsb-icon">▶</span><span>Начать</span>`;
+  startBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    item.startedAt = Date.now();
+    saveRouteState(routeState);
+    vibro(20);
+    showToast('⏱ Встреча начата');
+    renderRoute();
+    updateActivitiesBadge();
+  });
+  startBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+  statusLine.appendChild(startBtn);
+}
+
+card.appendChild(statusLine);
 
   // Авто-высота для textarea — после вставки в DOM
   requestAnimationFrame(() => autoGrow(addrInput));
@@ -6382,6 +6627,9 @@ document.getElementById('btnCloseReminder').addEventListener('click', () => {
 // Будильник утреннего отчёта (8:00–9:00)
 setTimeout(checkMorningReportReminder, 2000);
 setInterval(checkMorningReportReminder, 60 * 1000);
+clearStartedAtOnNewDay();
+setInterval(clearStartedAtOnNewDay, 60 * 1000);
+
 
 // Будильник отчёта за день (17:00–18:00)
 setTimeout(checkReminder, 800);
@@ -6764,6 +7012,7 @@ setInterval(checkMonthlyReport, 5 * 60 * 1000);
 setInterval(checkQuickReportReminder, 60 * 1000);
 setInterval(() => { if (checkAutoReset2()) render2(); }, 60 * 1000);
 renderRoute();
+updateActivitiesBadge();
 requestAnimationFrame(() => {
   const w = window.innerWidth;
   screensTrack.style.transition = 'none';
