@@ -2734,8 +2734,8 @@ body.dark #screen4 .route-add-btn {
 /* ─── Отступ справа у поля адреса под ДВЕ иконки ─── */
 #screen4 .route-addr-input {
   width: 100%;
-  min-height: 44px;
-  padding: 8px 68px 8px 10px;
+  min-height: 38px;
+  padding: 8px 40px 8px 12px;
   border: 1px solid #e5ebef;
   border-radius: 9px;
   background: #fbfcfd;
@@ -4222,12 +4222,17 @@ addrInput.className = 'route-addr-input';
 addrInput.placeholder = 'Адрес доставки';
 addrInput.value = item.addr || '';
 addrInput.rows = 1;
+
+// Функция авто-высоты
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
 addrInput.addEventListener('input', () => {
   item.addr = addrInput.value;
   saveRouteState(routeState);
-  // Авто-высота
-  addrInput.style.height = 'auto';
-  addrInput.style.height = addrInput.scrollHeight + 'px';
+  autoGrow(addrInput);
 });
 
 // ─── Кнопка микрофона внутри поля адреса ───
@@ -4316,7 +4321,13 @@ statusBadge.addEventListener('touchstart', (e) => e.stopPropagation(), { passive
 
 card.appendChild(topRow);
 card.appendChild(statusBadge);
-return card;
+
+  // Авто-высота для textarea — после вставки в DOM
+  requestAnimationFrame(() => autoGrow(addrInput));
+  setTimeout(() => autoGrow(addrInput), 100);
+  setTimeout(() => autoGrow(addrInput), 300);
+
+  return card;
 }
 
 function sortRouteList(timeId) {
