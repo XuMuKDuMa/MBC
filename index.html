@@ -2589,8 +2589,22 @@ body.dark #screen4 .activity-hint-sub{color:#81929d}
 #screen4 .route-side-btn.mic { background: #3a3a3a !important; color: #ffffff !important; border-color: #4a4a4a !important; }
 #screen4 .route-side-btn.mic svg { width: 18px !important; height: 18px !important; display: block !important; }
 #screen4 .route-side-btn.mic.listening { background: #c0392b !important; color: #ffffff !important; border-color: #922b21 !important; }
-#screen4 .route-side-btn.yamap { background: #3a3a3a !important; color: #ffffff !important; border-color: #4a4a4a !important; }
-#screen4 .route-side-btn.yamap svg { width: 18px !important; height: 18px !important; display: block !important; }
+#screen4 .route-side-btn.yamap {
+  background: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(30,45,55,.08) !important;
+  width: 42px !important;
+  height: 42px !important;
+  color: #e74c3c !important;
+}
+#screen4 .route-side-btn.yamap svg {
+  width: 22px !important;
+  height: 22px !important;
+  display: block !important;
+  fill: #e74c3c !important;
+  stroke: none !important;
+}
 #screen4 .route-side-btn.del { background: #fdecec !important; color: #c0392b !important; border-color: #f5c6c6 !important; }
 
 #screen4 .route-status-row { gap: 5px !important; margin-top: 4px !important; }
@@ -3183,16 +3197,29 @@ body.dark #screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,25
   align-items: flex-start;
 }
 #screen4 .route-time-col {
-  font-size: 15px;
+  min-width: 50px;
+  padding-top: 6px;
+  flex-shrink: 0;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+#screen4 .route-time-col .rtc-start {
+  font-size: 16px;
   font-weight: 850;
   color: #263944;
-  min-width: 44px;
-  padding-top: 8px;
-  flex-shrink: 0;
   letter-spacing: -0.2px;
+  line-height: 1;
 }
-body.dark #screen4 .route-time-col { color: #e5edf1; }
-
+#screen4 .route-time-col .rtc-end {
+  font-size: 11px;
+  font-weight: 600;
+  color: #82919b;
+  line-height: 1;
+}
+body.dark #screen4 .route-time-col .rtc-start { color: #e5edf1; }
+body.dark #screen4 .route-time-col .rtc-end   { color: #81929d; }
 /* ─── Поле адреса + встроенный микрофон ─── */
 #screen4 .route-addr-wrap {
   position: relative;
@@ -3952,9 +3979,8 @@ function getRouteCounts() {
   });
   return { total, wait, done, perenos, ndz };
 }
-const YAMAP_SVG = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-  <circle cx="12" cy="10" r="3"/>
+const YAMAP_SVG = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/>
 </svg>`;
 const MIC_SVG = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <rect x="9" y="2" width="6" height="12" rx="3"/>
@@ -4143,7 +4169,14 @@ topRow.className = 'route-top-row';
 // ─── Время слева ───
 const timeCol = document.createElement('div');
 timeCol.className = 'route-time-col';
-timeCol.textContent = (timeLabel || '').split('–')[0].trim() || '—';
+// timeLabel = '10:00–12:00' → разбиваем на две части
+const parts = (timeLabel || '').split('–');
+const startTime = parts[0] ? parts[0].trim() : '';
+const endTime   = parts[1] ? parts[1].trim() : '';
+timeCol.innerHTML = `
+  <div class="rtc-start">${startTime || '—'}</div>
+  <div class="rtc-end">${endTime || ''}</div>
+`;
 topRow.appendChild(timeCol);
 
 // ─── Поля: адрес + заметка ───
