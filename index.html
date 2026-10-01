@@ -2389,6 +2389,57 @@ body.dark .slot-btn.active[data-slot-id="t16_18"] {
   body.dark .monthly-report .mt-diff.same { background: #263340; color: #b0bec5; }
   body.dark .monthly-report .monthly-section-title .mst-sum { background: #263340; color: #b0bec5; }
   body.dark .monthly-report .monthly-empty { background: #16202a; color: #81929d; }
+  /* ─── График УП по дням ─── */
+.up-chart-body {
+  padding: 10px 12px 12px;
+}
+.up-chart-wrap { width: 100%; }
+.up-chart-svg {
+  width: 100%;
+  height: 140px;
+  display: block;
+}
+.up-chart-empty {
+  text-align: center;
+  padding: 24px 12px;
+  color: #888;
+  font-size: 13px;
+}
+.up-chart-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+.ucs-item {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 6px 4px;
+  text-align: center;
+}
+.ucs-item .ucs-label {
+  display: block;
+  font-size: 9px;
+  color: #71808c;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+.ucs-item .ucs-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: #2c3e50;
+}
+.ucs-item .ucs-val.green { color: #27ae60; }
+.ucs-item .ucs-val.red   { color: #c0392b; }
+
+body.dark .ucs-item { background: #2c3a48; }
+body.dark .ucs-item .ucs-val { color: #e8eef5; }
+body.dark .ucs-item .ucs-val.green { color: #4ade80; }
+body.dark .ucs-item .ucs-val.red   { color: #e57373; }
+body.dark .up-chart-svg line { stroke: #2c3a48; }
+body.dark .up-chart-empty { color: #90a4ae; }
 </style>
 
 <style id="activities-redesign">
@@ -5120,11 +5171,16 @@ const monthsSorted = Object.keys(monthTotals).sort().reverse();const meetRows = 
   const trBlock = `<div class="section"><div class="section-title sec-tr">📊 Встречи TR (из Отчёта 2)</div><div class="tr-block"><div class="tr-item ${pctClass(trPct)}"><div class="tr-title">TR мес</div><div class="tr-row"><span>Назначено / Успешных:</span><span class="val">${trNag} / ${trUsp}<span class="tr-pct-inline">(${pctText(trPct)})</span></span></div></div><div class="tr-item ${pctClass(slPct)}"><div class="tr-title">TR слот мес</div><div class="tr-row"><span>Назначено / Успешных:</span><span class="val">${slNag} / ${slUsp}<span class="tr-pct-inline">(${pctText(slPct)})</span></span></div></div></div></div>`;
 
   const daysBlock = `<div class="section"><div class="section-title sec-days">📅 Рабочие дни (${getMonthNameLocal()})</div><div class="days-block"><div class="days-row"><span class="label">Всего в месяце:</span><span class="val">${wdStats.total}</span></div><div class="days-row"><span class="label">Прошло:</span><span class="val">${wdStats.past}</span></div><div class="days-row highlight"><span class="label">Осталось:</span><span class="val">${wdStats.remaining}</span></div>${plan > 0 && remains > 0 && wdStats.remaining > 0 ? `<div class="forecast-block"><div class="forecast-label">📊 Нужно УП в день</div><div class="forecast-value">${forecastUP.toFixed(2)} УП</div></div>` : ''}<button class="days-toggle" id="daysToggle">▼ Показать календарь</button>${buildCalendarHtml(wdStats)}</div></div>`;
-
+  const chartBlock = `
+    <div class="section">
+      <div class="section-title" style="background:#16a085;">📈 Динамика УП по дням</div>
+      <div class="up-chart-body">${buildUpChartSvg(monthDays, plan)}</div>
+    </div>`;
   app.innerHTML = `
     <div class="section"><div class="section-title sec-plan">🎯 План на месяц</div><div class="row" style="padding:14px 12px;"><div class="name" style="font-size:15px;font-weight:600;">УП план:</div><input class="plan-input" id="planInput" type="text" inputmode="decimal" value="${getPlanUP()}" placeholder="0"></div></div>
     <div class="section"><div class="section-title sec-total">${getMonthNameLocal()} — ${days} ${days === 1 ? 'день' : 'дней'}</div><div class="total-grid"><div class="total-card full"><div class="label">УП за месяц</div><div class="value">${monthUP.toFixed(2)}</div></div><div class="total-card"><div class="label">УП за сегодня</div><div class="value">${todayUP.toFixed(2)}</div></div>${plan > 0 ? (remains <= 0 ? `<div class="total-card ok"><div class="label">План выполнен</div><div class="value">🎉</div></div>` : `<div class="total-card"><div class="label">Осталось</div><div class="value">${remains.toFixed(2)}</div></div>`) : '<div class="total-card"><div class="label">Осталось</div><div class="value">—</div></div>'}<div class="total-card btn-sales" id="btnSalesChart"><div class="label">📊 Продажи</div><div class="value">→</div></div><div class="total-card btn-meetings" id="btnMeetingsChart"><div class="label">👥 B2C/B2B</div><div class="value">→</div></div>${plan > 0 ? `<div class="progress-bar"><div class="fill" style="width:${progress}%;"></div><div class="text">${progress.toFixed(1)}%</div></div>` : ''}</div></div>
-    ${daysBlock}
+        ${daysBlock}
+    ${chartBlock}
     ${trBlock}
     ${plan > 0 && remains > 0 ? `<div class="section"><div class="section-title sec-meet-analysis">👥 Встречи для плана (${remains.toFixed(2)} УП)</div>${meetRows.map(r => `<div class="analysis-row"><div class="label">${r.label}</div><div class="count">${r.count.toFixed(2)}</div></div>`).join('')}</div><div class="section"><div class="section-title sec-sales-analysis">💰 Продажи для плана (${remains.toFixed(2)} УП)</div>${salesRows.map(r => `<div class="analysis-row"><div class="label">${r.label}</div><div class="count">${r.count.toFixed(2)}</div></div>`).join('')}</div>` : ''}
     ${plan > 0 && remains <= 0 ? `<div class="plan-done">🎉 План выполнен! 🎉</div>` : ''}
@@ -5208,7 +5264,101 @@ const monthsSorted = Object.keys(monthTotals).sort().reverse();const meetRows = 
   const btnMeetings = document.getElementById('btnMeetingsChart');
   if (btnMeetings) btnMeetings.addEventListener('click', () => { vibro(15); openMeetingsModal(); });
 }
+function buildUpChartSvg(monthDays, planUP) {
+  if (!monthDays || monthDays.length === 0) {
+    return `<div class="up-chart-empty">Пока нет данных за этот месяц</div>`;
+  }
 
+  // Сортируем по дню
+  const sorted = [...monthDays].sort((a, b) => {
+    const [da] = a.date.split('.').map(Number);
+    const [db] = b.date.split('.').map(Number);
+    return da - db;
+  });
+
+  const W = 320, H = 140;
+  const PAD_L = 28, PAD_R = 8, PAD_T = 10, PAD_B = 22;
+  const innerW = W - PAD_L - PAD_R;
+  const innerH = H - PAD_T - PAD_B;
+
+  const values = sorted.map(d => d.up);
+  const maxVal = Math.max(...values, planUP || 0, 1);
+  const minVal = 0;
+
+  const n = sorted.length;
+  const stepX = n > 1 ? innerW / (n - 1) : 0;
+
+  const toX = (i) => PAD_L + i * stepX;
+  const toY = (v) => PAD_T + innerH - ((v - minVal) / (maxVal - minVal)) * innerH;
+
+  // Полилиния
+  let pathD = '';
+  sorted.forEach((d, i) => {
+    const x = toX(i);
+    const y = toY(d.up);
+    pathD += (i === 0 ? 'M' : 'L') + x + ' ' + y + ' ';
+  });
+
+  // Точки
+  let dots = '';
+  sorted.forEach((d, i) => {
+    const x = toX(i);
+    const y = toY(d.up);
+    dots += `<circle cx="${x}" cy="${y}" r="3" fill="#27ae60" stroke="#fff" stroke-width="1.5"/>`;
+  });
+
+  // Линия среднего темпа
+  let avgLine = '';
+  if (planUP > 0) {
+    const wdStats = getWorkingDaysStats();
+    const avg = wdStats.total > 0 ? planUP / wdStats.total : 0;
+    if (avg > 0 && avg <= maxVal) {
+      const yAvg = toY(avg);
+      avgLine = `<line x1="${PAD_L}" y1="${yAvg}" x2="${W - PAD_R}" y2="${yAvg}"
+        stroke="#e67e22" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.8"/>`;
+    }
+  }
+
+  // Подписи по Y
+  const yLabels = `
+    <text x="${PAD_L - 4}" y="${PAD_T + 4}" text-anchor="end" font-size="9" fill="#888">${maxVal.toFixed(1)}</text>
+    <text x="${PAD_L - 4}" y="${PAD_T + innerH + 3}" text-anchor="end" font-size="9" fill="#888">0</text>
+  `;
+
+  // Подписи по X
+  const firstDay = sorted[0].date.split('.')[0];
+  const lastDay  = sorted[sorted.length - 1].date.split('.')[0];
+  const xLabels = `
+    <text x="${PAD_L}" y="${H - 6}" text-anchor="start" font-size="9" fill="#888">${firstDay}</text>
+    <text x="${W - PAD_R}" y="${H - 6}" text-anchor="end" font-size="9" fill="#888">${lastDay}</text>
+  `;
+
+  // Статистика
+  const sum = values.reduce((s, v) => s + v, 0);
+  const avg = sum / values.length;
+  const maxDay = sorted.reduce((a, b) => a.up > b.up ? a : b);
+  const minDay = sorted.reduce((a, b) => a.up < b.up ? a : b);
+
+  return `
+    <div class="up-chart-wrap">
+      <svg viewBox="0 0 ${W} ${H}" class="up-chart-svg" preserveAspectRatio="none">
+        <line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${PAD_T + innerH}" stroke="#e0e4e8" stroke-width="1"/>
+        <line x1="${PAD_L}" y1="${PAD_T + innerH}" x2="${W - PAD_R}" y2="${PAD_T + innerH}" stroke="#e0e4e8" stroke-width="1"/>
+        ${avgLine}
+        <path d="${pathD}" fill="none" stroke="#27ae60" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${dots}
+        ${yLabels}
+        ${xLabels}
+      </svg>
+      <div class="up-chart-stats">
+        <div class="ucs-item"><span class="ucs-label">Среднее</span><span class="ucs-val">${avg.toFixed(2)}</span></div>
+        <div class="ucs-item"><span class="ucs-label">Макс</span><span class="ucs-val green">${maxDay.up.toFixed(2)}</span></div>
+        <div class="ucs-item"><span class="ucs-label">Мин</span><span class="ucs-val red">${minDay.up.toFixed(2)}</span></div>
+        <div class="ucs-item"><span class="ucs-label">Дней</span><span class="ucs-val">${sorted.length}</span></div>
+      </div>
+    </div>
+  `;
+}
 function buildCalendarHtml(wdStats) {
   const now = new Date();
   const year = now.getFullYear();
