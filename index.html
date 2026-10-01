@@ -2537,11 +2537,15 @@ body.dark #screen4 .activity-hint-sub{color:#81929d}
   background: rgba(255,255,255,.72) !important;
 }
 #screen4 .route-card {
-  padding: 8px 10px !important;
-  gap: 5px !important;
-  border-bottom: 1px solid rgba(45,65,80,.075) !important;
+  padding: 10px 12px 12px !important;
+  gap: 6px !important;
+  border-bottom: none !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,.6) !important;
+  margin: 0 0 8px 0 !important;
+  box-shadow: 0 1px 3px rgba(20,35,50,.04) !important;
 }
-#screen4 .route-card:last-child { border-bottom: 0 !important; }
+#screen4 .route-card:last-child { margin-bottom: 0 !important; }
 #screen4 .route-top-row { gap: 5px !important; }
 #screen4 .route-fields { gap: 3px !important; }
 #screen4 .route-addr-input {
@@ -3170,6 +3174,163 @@ body.dark #screen4 .slot-summary-main { color:#e5edf1; }
 body.dark #screen4 .slot-summary-status { color:#81929d; }
 body.dark #screen4 .slot-btn.active .slot-summary-main,
 body.dark #screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,255,.9) !important; }
+
+
+/* ─── Время слева от карточки ─── */
+#screen4 .route-top-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+#screen4 .route-time-col {
+  font-size: 15px;
+  font-weight: 850;
+  color: #263944;
+  min-width: 44px;
+  padding-top: 8px;
+  flex-shrink: 0;
+  letter-spacing: -0.2px;
+}
+body.dark #screen4 .route-time-col { color: #e5edf1; }
+
+/* ─── Поле адреса + встроенный микрофон ─── */
+#screen4 .route-addr-wrap {
+  position: relative;
+  width: 100%;
+}
+#screen4 .route-addr-input {
+  padding-right: 38px !important;
+}
+#screen4 .route-mic-inline {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #687883;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+#screen4 .route-mic-inline svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+#screen4 .route-mic-inline:active { background: rgba(0,0,0,.06); }
+#screen4 .route-mic-inline.listening {
+  color: #c0392b;
+  background: rgba(192,57,43,.1);
+  animation: micPulse 1s ease-in-out infinite;
+}
+body.dark #screen4 .route-mic-inline { color: #a8b8c4; }
+body.dark #screen4 .route-mic-inline:active { background: rgba(255,255,255,.08); }
+body.dark #screen4 .route-mic-inline.listening {
+  color: #e57373;
+  background: rgba(192,57,43,.2);
+}
+/* ─── Бейдж статуса ─── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s, color .15s, transform .1s;
+  margin-top: 6px;
+}
+.status-badge:active { transform: scale(.96); }
+.status-badge.status-wait    { background: #eaf3fb; color: #2980b9; }
+.status-badge.status-done    { background: #e7f7ef; color: #168653; }
+.status-badge.status-perenos { background: #eef2f6; color: #5a6b7a; }
+.status-badge.status-ndz     { background: #fdeaf2; color: #c2185b; }
+.status-badge.status-none    { background: #f4f6f8; color: #95a5a6; }
+.status-badge .sb-chev { font-size: 9px; opacity: 0.7; }
+
+body.dark .status-badge.status-wait    { background: #1a2a3a; color: #5dade2; }
+body.dark .status-badge.status-done    { background: #183a29; color: #4ade80; }
+body.dark .status-badge.status-perenos { background: #2c3a48; color: #b0bec5; }
+body.dark .status-badge.status-ndz     { background: #3a1f2a; color: #ec5a9c; }
+body.dark .status-badge.status-none    { background: #263340; color: #82919b; }
+
+/* ─── Выпадающее меню статуса ─── */
+.status-menu {
+  position: fixed;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.25);
+  overflow: hidden;
+  z-index: 2500;
+  min-width: 160px;
+  padding: 4px 0;
+  animation: smPop .15s ease-out;
+}
+@keyframes smPop {
+  from { transform: scale(.95); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.status-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #263944;
+  cursor: pointer;
+}
+.status-menu button:active { background: #f0f4f8; }
+.status-menu .sm-icon {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+  flex-shrink: 0;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.18);
+}
+
+/* ─── Цвета как у карточек ─── */
+.status-menu button[data-status="wait"]    .sm-icon { background: linear-gradient(135deg, #5dade2, #2471a3); }
+.status-menu button[data-status="done"]    .sm-icon { background: linear-gradient(135deg, #2ecc71, #1e8449); }
+.status-menu button[data-status="perenos"] .sm-icon { background: linear-gradient(135deg, #95a5a6, #5a6b7a); }
+.status-menu button[data-status="ndz"]     .sm-icon { background: linear-gradient(135deg, #c2185b, #922b21); }
+.status-menu .sm-del .sm-icon { background: linear-gradient(135deg, #e74c3c, #a93226); }
+.status-menu .sm-del {
+  color: #c0392b;
+  border-top: 1px solid #eee;
+  margin-top: 4px;
+  padding-top: 12px;
+}
+.status-menu .sm-del:active { background: #fdecec; }
+
+body.dark .status-menu { background: #1c2733; }
+body.dark .status-menu button { color: #e8eef5; }
+body.dark .status-menu button:active { background: #263340; }
+body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
+
 </style>
 
 </head>
@@ -3352,6 +3513,7 @@ body.dark #screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,25
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="status-menu" id="statusMenu" style="display:none;"></div>
 
 <div class="success-notification" id="successNotif">
   <svg class="success-check" viewBox="0 0 52 52">
@@ -3854,7 +4016,100 @@ let _openSlotId = null;
   // До 10:00 или после 18:00 — ничего не открываем
 })();
 
-function buildRouteCard(item, timeId) {
+/* ═══════════════════════════════════════════════
+   ВЫПАДАЮЩЕЕ МЕНЮ СТАТУСА
+   ═══════════════════════════════════════════════ */
+let _statusMenuOpen = null;
+
+function showStatusMenu(anchor, item, timeId) {
+  const menu = document.getElementById('statusMenu');
+
+  // Если то же меню уже открыто — закрыть
+  if (_statusMenuOpen === anchor) {
+    menu.style.display = 'none';
+    _statusMenuOpen = null;
+    return;
+  }
+
+  // Показать меню с новыми кнопками
+  menu.innerHTML = `
+    <button data-status="wait"><span class="sm-icon">+</span>Ждёт</button>
+    <button data-status="done"><span class="sm-icon">✓</span>Готово</button>
+    <button data-status="perenos"><span class="sm-icon">−</span>Отмена</button>
+    <button data-status="ndz"><span class="sm-icon">О</span>НДЗ</button>
+    <button class="sm-del" data-action="delete"><span class="sm-icon">🗑</span>Удалить</button>
+  `;
+
+  // Позиционирование
+  const rect = anchor.getBoundingClientRect();
+  const menuWidth = 180;
+  let left = rect.left;
+  if (left + menuWidth > window.innerWidth - 8) {
+    left = window.innerWidth - menuWidth - 8;
+  }
+  menu.style.left = left + 'px';
+  menu.style.top = (rect.bottom + 6) + 'px';
+  menu.style.display = 'block';
+  _statusMenuOpen = anchor;
+
+  // Обработчики
+  menu.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const status = btn.dataset.status;
+      const action = btn.dataset.action;
+
+      if (action === 'delete') {
+        const list = routeState.lists[timeId] || [];
+        const idx = list.indexOf(item);
+        if (idx >= 0) {
+          list.splice(idx, 1);
+          saveRouteState(routeState);
+          renderRoute();
+          updateDrawerRoutes();
+          if (map) renderMapMarkers();
+          vibro(25);
+        }
+      } else if (status) {
+        const wasSame = item.status === status;
+        item.status = status;
+        saveRouteState(routeState);
+        renderRoute();
+        updateDrawerRoutes();
+        if (map) renderMapMarkers();
+        vibro(15);
+        if (!wasSame) {
+          if (status === 'wait')    showSuccessNotification('Встреча в ожидании', 'wait');
+          if (status === 'done')    showSuccessNotification('Встреча проведена', 'done');
+          if (status === 'perenos') showSuccessNotification('Встреча отменена', 'perenos');
+          if (status === 'ndz')     showSuccessNotification('Недозвон', 'ndz');
+        }
+      }
+
+      menu.style.display = 'none';
+      _statusMenuOpen = null;
+    });
+  });
+}
+
+// Закрытие меню при тапе вне
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('statusMenu');
+  if (menu && menu.style.display === 'block' && !menu.contains(e.target)) {
+    menu.style.display = 'none';
+    _statusMenuOpen = null;
+  }
+});
+// Закрытие меню при скролле
+document.addEventListener('scroll', () => {
+  const menu = document.getElementById('statusMenu');
+  if (menu && menu.style.display === 'block') {
+    menu.style.display = 'none';
+    _statusMenuOpen = null;
+  }
+}, { passive: true, capture: true });
+
+function buildRouteCard(item, timeId, timeLabel) {
   const card = document.createElement('div');
   card.className = 'route-card';
   if (item.status === 'wait') card.classList.add('status-wait');
@@ -3883,70 +4138,83 @@ function buildRouteCard(item, timeId) {
   }
 
   const topRow = document.createElement('div');
-  topRow.className = 'route-top-row';
+topRow.className = 'route-top-row';
 
-  const btnMic = document.createElement('button');
-  btnMic.className = 'route-side-btn mic';
-  btnMic.innerHTML = MIC_SVG;
-  btnMic.title = 'Голосовой ввод адреса';
-  btnMic.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { showToast('🎤 Голосовой ввод не поддерживается'); return; }
-    const rec = new SR();
-    rec.lang = 'ru-RU';
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    vibro(15);
-            btnMic.classList.add('listening');
-        btnMic.innerHTML = MIC_SVG;
-    showToast('🎤 Говорите адрес...');
-    rec.onresult = (e) => {
-      const text = e.results[0][0].transcript.trim();
-      const clean = text.replace(/\.$/, '');
-      if (clean) {
-        const existing = (item.addr || '').trim();
-        item.addr = existing ? existing + ', ' + clean : clean;
-        saveRouteState(routeState);
-        addrInput.value = item.addr;
-        showToast('✅ Добавлено: ' + clean);
-      }
-    };
-    rec.onerror = (e) => {
-      if (e.error === 'not-allowed') showToast('❌ Нет доступа к микрофону');
-      else if (e.error === 'no-speech') showToast('⚠️ Ничего не услышано');
-      else if (e.error !== 'aborted') showToast('❌ Ошибка: ' + e.error);
-    };
-    rec.onend = () => { btnMic.classList.remove('listening'); btnMic.innerHTML = MIC_SVG; };
-    try { rec.start(); } catch (err) {
-      showToast('❌ Не удалось запустить распознавание');
-      btnMic.classList.remove('listening');
-      btnMic.innerHTML = MIC_SVG;
+// ─── Время слева ───
+const timeCol = document.createElement('div');
+timeCol.className = 'route-time-col';
+timeCol.textContent = (timeLabel || '').split('–')[0].trim() || '—';
+topRow.appendChild(timeCol);
+
+// ─── Поля: адрес + заметка ───
+const fields = document.createElement('div');
+fields.className = 'route-fields';
+
+const addrWrap = document.createElement('div');
+addrWrap.className = 'route-addr-wrap';
+
+const addrInput = document.createElement('input');
+addrInput.type = 'text';
+addrInput.className = 'route-addr-input';
+addrInput.placeholder = 'Адрес доставки';
+addrInput.value = item.addr || '';
+addrInput.addEventListener('input', () => { item.addr = addrInput.value; saveRouteState(routeState); });
+
+// ─── Кнопка микрофона внутри поля адреса ───
+const btnMic = document.createElement('button');
+btnMic.type = 'button';
+btnMic.className = 'route-mic-inline';
+btnMic.innerHTML = MIC_SVG;
+btnMic.title = 'Голосовой ввод адреса';
+btnMic.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('🎤 Голосовой ввод не поддерживается'); return; }
+  const rec = new SR();
+  rec.lang = 'ru-RU';
+  rec.continuous = false;
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  vibro(15);
+  btnMic.classList.add('listening');
+  showToast('🎤 Говорите адрес...');
+  rec.onresult = (e) => {
+    const text = e.results[0][0].transcript.trim();
+    const clean = text.replace(/\.$/, '');
+    if (clean) {
+      const existing = (item.addr || '').trim();
+      item.addr = existing ? existing + ', ' + clean : clean;
+      saveRouteState(routeState);
+      addrInput.value = item.addr;
+      showToast('✅ Добавлено: ' + clean);
     }
-  });
-  topRow.appendChild(btnMic);
+  };
+  rec.onerror = (e) => {
+    if (e.error === 'not-allowed') showToast('❌ Нет доступа к микрофону');
+    else if (e.error === 'no-speech') showToast('⚠️ Ничего не услышано');
+    else if (e.error !== 'aborted') showToast('❌ Ошибка: ' + e.error);
+  };
+  rec.onend = () => { btnMic.classList.remove('listening'); };
+  try { rec.start(); } catch (err) {
+    showToast('❌ Не удалось запустить распознавание');
+    btnMic.classList.remove('listening');
+  }
+});
+btnMic.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
 
-  const fields = document.createElement('div');
-  fields.className = 'route-fields';
+addrWrap.appendChild(addrInput);
+addrWrap.appendChild(btnMic);
+fields.appendChild(addrWrap);
 
-  const addrInput = document.createElement('input');
-  addrInput.type = 'text';
-  addrInput.className = 'route-addr-input';
-  addrInput.placeholder = 'Адрес доставки';
-  addrInput.value = item.addr || '';
-  addrInput.addEventListener('input', () => { item.addr = addrInput.value; saveRouteState(routeState); });
+const noteInput = document.createElement('input');
+noteInput.type = 'text';
+noteInput.className = 'route-note-input';
+noteInput.placeholder = 'кв, этаж, код домофона…';
+noteInput.value = item.note || '';
+noteInput.addEventListener('input', () => { item.note = noteInput.value; saveRouteState(routeState); });
 
-  const noteInput = document.createElement('input');
-  noteInput.type = 'text';
-  noteInput.className = 'route-note-input';
-  noteInput.placeholder = 'кв, этаж, код домофона…';
-  noteInput.value = item.note || '';
-  noteInput.addEventListener('input', () => { item.note = noteInput.value; saveRouteState(routeState); });
-
-  fields.appendChild(addrInput);
-  fields.appendChild(noteInput);
-  topRow.appendChild(fields);
+fields.appendChild(noteInput);
+topRow.appendChild(fields);
 
   const btnMap = document.createElement('button');
   btnMap.className = 'route-side-btn yamap';
@@ -3963,64 +4231,36 @@ function buildRouteCard(item, timeId) {
   });
   topRow.appendChild(btnMap);
 
-  const btnDel = document.createElement('button');
-  btnDel.className = 'route-side-btn del';
-  btnDel.textContent = '✕';
-  btnDel.title = 'Удалить';
-  btnDel.addEventListener('click', (e) => {
-    e.stopPropagation();
-    vibro(25);
-    const list = routeState.lists[timeId] || [];
-    const idx = list.indexOf(item);
-    if (idx >= 0) {
-      list.splice(idx, 1);
-      saveRouteState(routeState);
-      renderRoute();
-      updateDrawerRoutes();
-      if (map) renderMapMarkers();
-    }
-  });
-  topRow.appendChild(btnDel);
 
-  const statusRow = document.createElement('div');
-  statusRow.className = 'route-status-row';
+  // ─── Бейдж статуса ───
+const STATUS_BADGE_LABELS = {
+  wait:    { icon: '+', label: 'Ждёт' },
+  done:    { icon: '✓', label: 'Готово' },
+  perenos: { icon: '−', label: 'Отмена' },
+  ndz:     { icon: 'О', label: 'НДЗ' },
+  none:    { icon: '⚪', label: 'Статус' },
+};
 
-  const statusBtns = [
-    { key: 'wait',    icon: '+', label: 'Ждёт',   cls: 'btn-plus',    title: 'Ждёт' },
-    { key: 'done',    icon: '✓', label: 'Готово', cls: 'btn-done',    title: 'Проведена' },
-    { key: 'perenos', icon: '−', label: 'Отмена', cls: 'btn-perenos', title: 'Отмена / отказ' },
-    { key: 'ndz',     icon: 'О', label: 'НДЗ',    cls: 'btn-ndz',     title: 'Недозвон' },
-  ];
+const statusKey = item.status || 'none';
+const sb = STATUS_BADGE_LABELS[statusKey];
 
-  statusBtns.forEach(sb => {
-    const btn = document.createElement('button');
-    btn.className = 'route-status-btn ' + sb.cls;
-    btn.title = sb.title;
-    btn.innerHTML = `<span class="rs-icon">${sb.icon}</span><span class="rs-label">${sb.label}</span>`;
-    if (item.status === sb.key) btn.classList.add('active');
-    btn.addEventListener('touchstart', (e) => { e.stopPropagation(); vibro(12); }, { passive: true });
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const wasSame = item.status === sb.key;
-      item.status = sb.key;
-      saveRouteState(routeState);
-      renderRoute();
-      updateDrawerRoutes();
-      if (map) renderMapMarkers();
-      vibro(15);
-      if (!wasSame) {
-        if (sb.key === 'wait')    showSuccessNotification('Встреча в ожидании', 'wait');
-        if (sb.key === 'done')    showSuccessNotification('Встреча проведена', 'done');
-        if (sb.key === 'perenos') showSuccessNotification('Встреча отменена', 'perenos');
-        if (sb.key === 'ndz')     showSuccessNotification('Недозвон', 'ndz');
-      }
-    });
-    statusRow.appendChild(btn);
-  });
+const statusBadge = document.createElement('div');
+statusBadge.className = 'status-badge status-' + statusKey;
+statusBadge.innerHTML = `
+  <span class="sb-icon">${sb.icon}</span>
+  <span class="sb-label">${sb.label}</span>
+  <span class="sb-chev">▼</span>
+`;
+statusBadge.addEventListener('click', (e) => {
+  e.stopPropagation();
+  vibro(12);
+  showStatusMenu(statusBadge, item, timeId);
+});
+statusBadge.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
 
-  card.appendChild(topRow);
-  card.appendChild(statusRow);
-  return card;
+card.appendChild(topRow);
+card.appendChild(statusBadge);
+return card;
 }
 
 function sortRouteList(timeId) {
@@ -4165,7 +4405,7 @@ if (mapBtn) {
         empty.textContent = 'Нет адресов';
         body.appendChild(empty);
       } else {
-        list.forEach(item => body.appendChild(buildRouteCard(item, t.id)));
+        list.forEach(item => body.appendChild(buildRouteCard(item, t.id, t.label)));
       }
       const addBtn = document.createElement('button');
       addBtn.className = 'route-add-btn';
