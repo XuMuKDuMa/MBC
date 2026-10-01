@@ -4253,7 +4253,7 @@ btnMic.addEventListener('click', (e) => {
   vibro(15);
   btnMic.classList.add('listening');
   showToast('🎤 Говорите адрес...');
-  rec.onresult = (e) => {
+    rec.onresult = (e) => {
     const text = e.results[0][0].transcript.trim();
     const clean = text.replace(/\.$/, '');
     if (clean) {
@@ -4261,6 +4261,10 @@ btnMic.addEventListener('click', (e) => {
       item.addr = existing ? existing + ', ' + clean : clean;
       saveRouteState(routeState);
       addrInput.value = item.addr;
+      // ← ГЛАВНОЕ: пересчитать высоту после голосового ввода
+      autoGrow(addrInput);
+      requestAnimationFrame(() => autoGrow(addrInput));
+      setTimeout(() => autoGrow(addrInput), 100);
       showToast('✅ Добавлено: ' + clean);
     }
   };
@@ -4326,6 +4330,8 @@ card.appendChild(statusBadge);
   requestAnimationFrame(() => autoGrow(addrInput));
   setTimeout(() => autoGrow(addrInput), 100);
   setTimeout(() => autoGrow(addrInput), 300);
+    addrInput.addEventListener('change', () => autoGrow(addrInput));
+  addrInput.addEventListener('blur', () => autoGrow(addrInput));
 
   return card;
 }
