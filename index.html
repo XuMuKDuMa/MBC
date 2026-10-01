@@ -3210,13 +3210,15 @@ body.dark #screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,25
   font-weight: 850;
   color: #263944;
   letter-spacing: -0.2px;
-  line-height: 1;
+  line-height: 1.1;
 }
 #screen4 .route-time-col .rtc-end {
-  font-size: 11px;
-  font-weight: 600;
-  color: #82919b;
-  line-height: 1;
+  font-size: 16px;
+  font-weight: 800;
+  color: #263944;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
+}
 }
 body.dark #screen4 .route-time-col .rtc-start { color: #e5edf1; }
 body.dark #screen4 .route-time-col .rtc-end   { color: #81929d; }
@@ -3267,30 +3269,41 @@ body.dark #screen4 .route-mic-inline.listening {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 9px;
-  font-size: 12px;
+  gap: 8px;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
   font-weight: 800;
+  color: #263944;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background .15s, color .15s, transform .1s;
-  margin-top: 6px;
+  transition: transform .1s;
+  margin-top: 10px;
 }
 .status-badge:active { transform: scale(.96); }
-.status-badge.status-wait    { background: #eaf3fb; color: #2980b9; }
-.status-badge.status-done    { background: #e7f7ef; color: #168653; }
-.status-badge.status-perenos { background: #eef2f6; color: #5a6b7a; }
-.status-badge.status-ndz     { background: #fdeaf2; color: #c2185b; }
-.status-badge.status-none    { background: #f4f6f8; color: #95a5a6; }
-.status-badge .sb-chev { font-size: 9px; opacity: 0.7; }
 
-body.dark .status-badge.status-wait    { background: #1a2a3a; color: #5dade2; }
-body.dark .status-badge.status-done    { background: #183a29; color: #4ade80; }
-body.dark .status-badge.status-perenos { background: #2c3a48; color: #b0bec5; }
-body.dark .status-badge.status-ndz     { background: #3a1f2a; color: #ec5a9c; }
-body.dark .status-badge.status-none    { background: #263340; color: #82919b; }
+.status-badge .sb-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.status-badge.status-wait    .sb-dot { background: #cbd5dc; }
+.status-badge.status-done    .sb-dot { background: #27ae60; }
+.status-badge.status-perenos .sb-dot { background: #95a5a6; }
+.status-badge.status-ndz     .sb-dot { background: #c2185b; }
+.status-badge.status-none    .sb-dot { background: #e0e4e8; }
+.status-badge .sb-chev { font-size: 10px; opacity: 0.5; color: #82919b; }
+
+body.dark .status-badge { color: #e5edf1; }
+body.dark .status-badge.status-wait    .sb-dot { background: #4a5563; }
+body.dark .status-badge.status-done    .sb-dot { background: #27ae60; }
+body.dark .status-badge.status-perenos .sb-dot { background: #95a5a6; }
+body.dark .status-badge.status-ndz     .sb-dot { background: #c2185b; }
+body.dark .status-badge.status-none    .sb-dot { background: #3a4a5a; }
 
 /* ─── Выпадающее меню статуса ─── */
 .status-menu {
@@ -4280,7 +4293,7 @@ const sb = STATUS_BADGE_LABELS[statusKey];
 const statusBadge = document.createElement('div');
 statusBadge.className = 'status-badge status-' + statusKey;
 statusBadge.innerHTML = `
-  <span class="sb-icon">${sb.icon}</span>
+  <span class="sb-dot"></span>
   <span class="sb-label">${sb.label}</span>
   <span class="sb-chev">▼</span>
 `;
