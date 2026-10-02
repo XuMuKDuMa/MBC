@@ -1429,6 +1429,11 @@ body.dark .bb-item.active .bb-text { color: #4ade80; }
   }
   .quick-actions .q-cancel { background: #ecf0f1; color: #2c3e50; }
   .quick-actions .q-send { background: #27ae60; color: #fff; flex: 2; }
+.quick-actions .q-send:disabled {
+  background: #c5c9cc;
+  color: #f0f0f0;
+  cursor: not-allowed;
+}
 
   .sales-modal {
     background: #fff;
@@ -3878,6 +3883,8 @@ body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
   <div class="quick-modal">
     <h2>📋 Предварительный отчёт</h2>
     <div class="quick-field"><label>УП план на день</label><input class="quick-input" id="qPlanDay" type="text" inputmode="decimal" placeholder="например, 3.4"></div>
+    <div class="quick-field"><label>B2C назначено встреч</label><input class="quick-input" id="qB2cNag" type="text" inputmode="numeric" placeholder="например, 6"></div>
+    <div class="quick-field"><label>B2B назначено встреч</label><input class="quick-input" id="qB2bNag" type="text" inputmode="numeric" placeholder="— если нет"></div>
     <div class="quick-field"><label>B2C «точно будет сделано»</label><input class="quick-input" id="qWillDo" type="text" inputmode="numeric" placeholder="например, 12"></div>
     <div class="quick-field"><label>B2B «точно будет сделано»</label><input class="quick-input" id="qWillDoB2B" type="text" inputmode="numeric" placeholder="например, 5"></div>
     <div class="quick-field"><label>ФД, которые не состоятся (заметки)</label><textarea class="quick-textarea" id="qFdNotes" placeholder="Введите заметки по ФД, которые не состоятся..."></textarea></div>
@@ -5480,8 +5487,17 @@ renderTotals1();
 function loadQuickReport() {
   try {
     const q = JSON.parse(localStorage.getItem(QUICK_REPORT_KEY)) || {};
-    return { planDay: q.planDay || '', willDo: q.willDo || '', willDoB2B: q.willDoB2B || '', fdNotes: q.fdNotes || '' };
-  } catch (e) { return { planDay: '', willDo: '', willDoB2B: '', fdNotes: '' }; }
+    return {
+      planDay: q.planDay || '',
+      b2cNag: q.b2cNag || '',
+      b2bNag: q.b2bNag || '',
+      willDo: q.willDo || '',
+      willDoB2B: q.willDoB2B || '',
+      fdNotes: q.fdNotes || ''
+    };
+  } catch (e) {
+    return { planDay: '', b2cNag: '', b2bNag: '', willDo: '', willDoB2B: '', fdNotes: '' };
+  }
 }
 function saveQuickReport(q) { localStorage.setItem(QUICK_REPORT_KEY, JSON.stringify(q)); }
 
@@ -5521,18 +5537,36 @@ function buildQuickProductsList() {
 function buildQuickReportText() {
   const q = loadQuickReport();
   const t = calcTotals1();
+
   const planDay = q.planDay || '—';
   const upToday = t.up.toFixed(2);
-  const b2cNag  = t.b2cTotal;
+
+  // B2C — из нового поля, если не введено — из общего
+  const b2cNag = (q.b2cNag && q.b2cNag.trim()) ? q.b2cNag.trim() : (t.b2cTotal || '—');
   const b2cDone = t.meetings;
   const b2cWill = q.willDo || '—';
-  const b2bNag  = t.b2bTotal;
+
+  // B2B — из нового поля, если пусто — прочерк
+  const b2bNagRaw = (q.b2bNag || '').trim();
+  const b2bNag = b2bNagRaw || '—';
   const b2bDone = t.bizMeetings;
-  const b2bWill = q.willDoB2B || '—';
+  const b2bWillRaw = (q.willDoB2B || '').trim();
+  const b2bWill = b2bWillRaw || '—';
+
   const fdNotes = (q.fdNotes || '').trim();
   const products = buildQuickProductsList();
   const productsText = products.length > 0 ? products.join('\n') : '';
-  const parts = [`${planDay}/${upToday}`, `${b2cNag}/${b2cDone}/${b2cWill}`, `${b2bNag}/${b2bDone}/${b2bWill}`];
+
+  // B2B-строка: если назначено 0 или прочерк — показываем с прочерком
+  const b2bLine = (b2bNagRaw === '' || b2bNagRaw === '0')
+    ? `—/${b2bDone}/${b2bWill}`
+    : `${b2bNag}/${b2bDone}/${b2bWill}`;
+
+  const parts = [
+    `${planDay}/${upToday}`,
+    `${b2cNag}/${b2cDone}/${b2cWill}`,
+    b2bLine
+  ];
   if (fdNotes) parts.push(fdNotes);
   if (productsText) parts.push(productsText);
   return parts.join('\n');
@@ -5541,10 +5575,13 @@ function openQuickReport() {
   checkQuickReportReset();
   const q = loadQuickReport();
   document.getElementById('qPlanDay').value   = q.planDay || '';
+  document.getElementById('qB2cNag').value    = q.b2cNag || '';
+  document.getElementById('qB2bNag').value    = q.b2bNag || '';
   document.getElementById('qWillDo').value    = q.willDo || '';
   document.getElementById('qWillDoB2B').value = q.willDoB2B || '';
   document.getElementById('qFdNotes').value   = q.fdNotes || '';
   updateQuickPreview();
+  updateQuickSendBtn();
   document.getElementById('quickReportModal').classList.add('show');
 }
 function closeQuickReport() {
@@ -5557,6 +5594,12 @@ function closeQuickReport() {
     updateQuickPreview();
   }
 }
+function updateQuickSendBtn() {
+  const btn = document.getElementById('qSend');
+  if (!btn) return;
+  const b2cNag = document.getElementById('qB2cNag').value.trim();
+  btn.disabled = b2cNag === '';
+}
 function updateQuickPreview() { document.getElementById('qPreview').textContent = buildQuickReportText(); }
 
 document.getElementById('r1Totals').addEventListener('click', (e) => {
@@ -5564,6 +5607,8 @@ document.getElementById('r1Totals').addEventListener('click', (e) => {
   openQuickReport();
 });
 document.getElementById('qPlanDay').addEventListener('input', (e) => { const q = loadQuickReport(); q.planDay = e.target.value; saveQuickReport(q); updateQuickPreview(); });
+document.getElementById('qB2cNag').addEventListener('input', (e) => { const q = loadQuickReport(); q.b2cNag = e.target.value; saveQuickReport(q); updateQuickPreview(); updateQuickSendBtn(); });
+document.getElementById('qB2bNag').addEventListener('input', (e) => { const q = loadQuickReport(); q.b2bNag = e.target.value; saveQuickReport(q); updateQuickPreview(); });
 document.getElementById('qWillDo').addEventListener('input', (e) => { const q = loadQuickReport(); q.willDo = e.target.value; saveQuickReport(q); updateQuickPreview(); });
 document.getElementById('qWillDoB2B').addEventListener('input', (e) => { const q = loadQuickReport(); q.willDoB2B = e.target.value; saveQuickReport(q); updateQuickPreview(); });
 document.getElementById('qFdNotes').addEventListener('input', (e) => { const q = loadQuickReport(); q.fdNotes = e.target.value; saveQuickReport(q); updateQuickPreview(); });
