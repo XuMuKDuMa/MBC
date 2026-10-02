@@ -5007,11 +5007,37 @@ const SECTIONS1 = [
     { id: 'fd_meet_dbo', name: 'Встреча ФД ДБО', up: 0.35, od: 0, type: 'meeting' },
   ]},
 
-  // ─── БИЗНЕС (фиолетовый) — как было ───
+  // ─── БИЗНЕС (фиолетовый) ───
   { title: 'Бизнес', color: 'sec-biz', items: [
     { id: 'biz_rko',  name: 'РКО',              up: 0.48, od: 0, type: 'biz' },
     { id: 'biz_ip',   name: 'Идентификация ИП', up: 0.25, od: 0, type: 'biz' },
     { id: 'biz_card', name: 'Бизнес карта',     up: 0.20, od: 0, type: 'biz' },
+  ]},
+
+  // ─── СИМ (жёлтый) ───
+  { title: 'Сим', color: 'sec-sim', items: [
+    { id: 'sim_my',      name: 'Сим по промокоду для своих', up: 0.10, od: 165, group: 'Сим' },
+    { id: 'sim_vydacha', name: 'Выдача',                     up: 0.05, od: 50,  group: 'Сим' },
+    { id: 'sim_pay',     name: 'Активация',                  up: 0.20, od: 416, group: 'Сим' },
+    { id: 'sim_topup',   name: 'Тариф с пополнением',        up: 0.25, od: 500, group: 'Сим' },
+    { id: 'perenos_sim', name: 'Перенос номера',             up: 0.30, od: 220, group: 'Сим' },
+  ]},
+
+  // ─── ПРАЙМ (салатовый) ───
+  { title: 'Прайм', color: 'sec-prime', items: [
+    { id: 'prime_m',      name: 'Прайм мес.',  up: 0.25, od: 625,  group: 'Прайм' },
+    { id: 'prime_y',      name: 'Прайм год',   up: 0.35, od: 625,  group: 'Прайм' },
+    { id: 'prime_plus_m', name: 'Прайм+ мес.', up: 0.50, od: 1060, group: 'Прайм' },
+    { id: 'prime_plus_y', name: 'Прайм+ год',  up: 0.60, od: 1060, group: 'Прайм' },
+  ]},
+
+  // ─── ПРЕМЬЕР (мажента) ───
+  { title: 'Премьер', color: 'sec-premier', items: [
+    { id: 'premier_free', name: 'Бесплатный уровень',        up: 0.10, od: 0,    group: 'Премьер' },
+    { id: 'premier_save', name: 'Бесплатный + «Сохранение»', up: 0.50, od: 0,    group: 'Премьер' },
+    { id: 'premier_lvl1', name: '1 уровень (1990/мес.)',     up: 1.00, od: 1990, group: 'Премьер' },
+    { id: 'premier_lvl2', name: '2 уровень (3990/мес.)',     up: 1.50, od: 3990, group: 'Премьер' },
+    { id: 'premier_lvl3', name: '3 уровень (9990/мес.)',     up: 2.00, od: 9990, group: 'Премьер' },
   ]},
 
   // ─── НАКОПЛЕНИЯ (синий) ───
@@ -5059,32 +5085,6 @@ const SECTIONS1 = [
     { id: 'sz_199',  name: 'СЗ 199 руб.',  up: 0.03, od: 0,    group: 'СЗ' },
     { id: 'sz_499',  name: 'СЗ 499 руб.',  up: 0.10, od: 0,    group: 'СЗ' },
     { id: 'sz_5299', name: 'СЗ 5299 руб.', up: 0.90, od: 2650, group: 'СЗ' },
-  ]},
-
-  // ─── СИМ (жёлтый) ───
-  { title: 'Сим', color: 'sec-sim', items: [
-  { id: 'sim_my',      name: 'Сим по промокоду для своих', up: 0.10, od: 165, group: 'Сим' },
-  { id: 'sim_vydacha', name: 'Выдача',                     up: 0.05, od: 50,  group: 'Сим' },
-  { id: 'sim_pay',     name: 'Активация',                  up: 0.20, od: 416, group: 'Сим' },
-  { id: 'sim_topup',   name: 'Тариф с пополнением',        up: 0.25, od: 500, group: 'Сим' },
-  { id: 'perenos_sim', name: 'Перенос номера',             up: 0.30, od: 220, group: 'Сим' },
-]},
-
-  // ─── ПРАЙМ (салатовый) ───
-  { title: 'Прайм', color: 'sec-prime', items: [
-    { id: 'prime_m',      name: 'Прайм мес.',  up: 0.25, od: 625,  group: 'Прайм' },
-    { id: 'prime_y',      name: 'Прайм год',   up: 0.35, od: 625,  group: 'Прайм' },
-    { id: 'prime_plus_m', name: 'Прайм+ мес.', up: 0.50, od: 1060, group: 'Прайм' },
-    { id: 'prime_plus_y', name: 'Прайм+ год',  up: 0.60, od: 1060, group: 'Прайм' },
-  ]},
-
-  // ─── ПРЕМЬЕР (мажента) ───
-  { title: 'Премьер', color: 'sec-premier', items: [
-    { id: 'premier_free', name: 'Бесплатный уровень',        up: 0.10, od: 0,    group: 'Премьер' },
-    { id: 'premier_save', name: 'Бесплатный + «Сохранение»', up: 0.50, od: 0,    group: 'Премьер' },
-    { id: 'premier_lvl1', name: '1 уровень (1990/мес.)',     up: 1.00, od: 1990, group: 'Премьер' },
-    { id: 'premier_lvl2', name: '2 уровень (3990/мес.)',     up: 1.50, od: 3990, group: 'Премьер' },
-    { id: 'premier_lvl3', name: '3 уровень (9990/мес.)',     up: 2.00, od: 9990, group: 'Премьер' },
   ]},
 ];
 const APPS1 = [
