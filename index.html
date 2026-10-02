@@ -2562,10 +2562,8 @@ body.dark #screen4 .activity-hint-sub{color:#81929d}
 #screen4 .route-time-block {
   margin: 8px 10px 12px !important;
   border-radius: 14px !important;
-  overflow: hidden !important;
-  background: rgba(255,255,255,.82) !important;
-  border: 1px solid rgba(32,52,66,.08) !important;
-  box-shadow: 0 6px 18px rgba(25,45,60,.07) !important;
+  overflow: visible !important;   /* ← чтобы пульсация не обрезалась */
+  ...
 }
 #screen4 .route-time-header {
   min-height: 26px !important;
@@ -3428,29 +3426,33 @@ body.dark .route-live.over-3h {
 }
 /* ─── Пульсация активной карточки (3 вспышки зелёным) ─── */
 @keyframes activeCardPulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(32,163,106,.0);
-  }
-  20% {
-    box-shadow: 0 0 0 4px rgba(32,163,106,.55), 0 6px 20px rgba(32,163,106,.35);
-  }
-  40% {
-    box-shadow: 0 0 0 2px rgba(32,163,106,.25), 0 4px 14px rgba(32,163,106,.15);
-  }
-  60% {
-    box-shadow: 0 0 0 4px rgba(32,163,106,.55), 0 6px 20px rgba(32,163,106,.35);
-  }
-  80% {
-    box-shadow: 0 0 0 2px rgba(32,163,106,.25), 0 4px 14px rgba(32,163,106,.15);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(32,163,106,.0);
-  }
+  0%   { outline: 0 solid rgba(32,163,106,0); outline-offset: 0; }
+  25%  { outline: 4px solid rgba(32,163,106,.9); outline-offset: 3px; }
+  50%  { outline: 0 solid rgba(32,163,106,0); outline-offset: 0; }
+  75%  { outline: 4px solid rgba(32,163,106,.9); outline-offset: 3px; }
+  100% { outline: 0 solid rgba(32,163,106,0); outline-offset: 0; }
+}
+
+.route-card.active-pulse {
+  animation: activeCardPulse 1.6s ease-in-out !important;
+  z-index: 2;
+  position: relative;
+  border-radius: 12px;
 }
 
 .route-card.active-pulse {
   animation: activeCardPulse 1.6s ease-in-out;
   z-index: 2;
+  position: relative;
+}
+
+@keyframes activeCardPulse {
+  0%   { box-shadow: inset 6px 0 0 #f39c12, 0 0 0 0 rgba(32,163,106,0); }
+  20%  { box-shadow: inset 6px 0 0 #f39c12, 0 0 0 6px rgba(32,163,106,.65), 0 8px 24px rgba(32,163,106,.45); }
+  40%  { box-shadow: inset 6px 0 0 #f39c12, 0 0 0 3px rgba(32,163,106,.3), 0 5px 16px rgba(32,163,106,.2); }
+  60%  { box-shadow: inset 6px 0 0 #f39c12, 0 0 0 6px rgba(32,163,106,.65), 0 8px 24px rgba(32,163,106,.45); }
+  80%  { box-shadow: inset 6px 0 0 #f39c12, 0 0 0 3px rgba(32,163,106,.3), 0 5px 16px rgba(32,163,106,.2); }
+  100% { box-shadow: inset 6px 0 0 #f39c12, 0 0 0 0 rgba(32,163,106,0); }
 }
 @keyframes rlPulse {
   0%   { box-shadow: 0 0 0 0 rgba(243,156,18,.7); transform: scale(1); }
@@ -4006,38 +4008,42 @@ function updateActivitiesBadge() {
     badge.style.animation = '';
   }
 }
+/* ═══════════════════════════════════════════════
+   ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+   ═══════════════════════════════════════════════ */
 function goToTab(n, animate = true) {
   if (n < 1 || n > 5) return;
   if (n === currentTab) return;
 
   // Если уходим с вкладки «Активности» — закрываем открытый слот
   if (currentTab === 4 && n !== 4) {
-  _openSlotId = null;
-  // при возврате на вкладку «Активности» — заново определить слот по времени
-}
-if (n === 4) {
-  // Приоритет 1: если есть встреча «в процессе» — открываем её слот
-  const activeSlot = findSlotWithActiveActivity();
-  let scrollToActive = false;
-  if (activeSlot) {
-    _openSlotId = activeSlot;
-    scrollToActive = true;
-  }
-  // Приоритет 2: если слот уже задан вручную (например, из карты) — не перезаписываем
-  else if (!_openSlotId) {
-    const h = new Date().getHours();
-    if (h >= 10 && h < 12) _openSlotId = 't10_12';
-    else if (h >= 12 && h < 14) _openSlotId = 't12_14';
-    else if (h >= 14 && h < 16) _openSlotId = 't14_16';
-    else if (h >= 16 && h < 18) _openSlotId = 't16_18';
-    else _openSlotId = null;
+    _openSlotId = null;
   }
 
-  // Если нашли активную встречу — скроллим и подсвечиваем ПОСЛЕ рендера
-  if (scrollToActive) {
-    setTimeout(scrollToActiveActivity, 350);
+  if (n === 4) {
+    // Приоритет 1: если есть встреча «в процессе» — открываем её слот
+    const activeSlot = findSlotWithActiveActivity();
+    let scrollToActive = false;
+
+    if (activeSlot) {
+      _openSlotId = activeSlot;
+      scrollToActive = true;
+    }
+    // Приоритет 2: если слот уже задан вручную (например, из карты) — не перезаписываем
+    else if (!_openSlotId) {
+      const h = new Date().getHours();
+      if (h >= 10 && h < 12) _openSlotId = 't10_12';
+      else if (h >= 12 && h < 14) _openSlotId = 't12_14';
+      else if (h >= 14 && h < 16) _openSlotId = 't14_16';
+      else if (h >= 16 && h < 18) _openSlotId = 't16_18';
+      else _openSlotId = null;
+    }
+
+    // Если нашли активную встречу — скроллим и подсвечиваем ПОСЛЕ рендера
+    if (scrollToActive) {
+      setTimeout(scrollToActiveActivity, 600);
+    }
   }
-}
 
   currentTab = n;
   document.body.classList.remove('tab-1', 'tab-2', 'tab-3', 'tab-4');
@@ -4045,14 +4051,14 @@ if (n === 4) {
   updateBottomBarActive(n);
 
   // ─── Рендерим контент СРАЗУ, до анимации ───
-if (n === 3) renderTotals3();
-if (n === 4) renderRoute();            // ← всегда рендерим при переходе
-if (n === 5) initMap();
+  if (n === 3) renderTotals3();
+  if (n === 4) renderRoute();
+  if (n === 5) initMap();
 
   // ─── Мгновенное переключение (без анимации — не мигает в APK) ───
-const w = window.innerWidth;
-screensTrack.style.transition = 'none';
-screensTrack.style.transform = `translateX(-${(n - 1) * w}px)`;
+  const w = window.innerWidth;
+  screensTrack.style.transition = 'none';
+  screensTrack.style.transform = `translateX(-${(n - 1) * w}px)`;
 
   // Скролл наверх
   const screenEl = document.getElementById('screen' + n);
@@ -4061,6 +4067,59 @@ screensTrack.style.transform = `translateX(-${(n - 1) * w}px)`;
       screenEl.scrollTo({ top: 0, behavior: 'smooth' });
     }, 320);
   }
+}
+
+/* ═══════════════════════════════════════════════
+   ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ — СНАРУЖИ goToTab
+   ═══════════════════════════════════════════════ */
+
+
+function scrollToActiveActivity() {
+  const screen4 = document.getElementById('screen4');
+  if (!screen4) {
+    console.warn('scrollToActiveActivity: нет screen4');
+    return;
+  }
+
+  const liveEl = document.querySelector('#app4 .route-card .route-live');
+  if (!liveEl) {
+    console.warn('scrollToActiveActivity: .route-live не найдено');
+    return;
+  }
+
+  const card = liveEl.closest('.route-card');
+  if (!card) {
+    console.warn('scrollToActiveActivity: .route-card не найден');
+    return;
+  }
+
+  console.log('✅ Нашли активную карточку, скроллим');
+
+// Пульсация — ЗАПУСКАЕМ ПЕРВОЙ, до скролла
+setTimeout(() => {
+  card.classList.add('active-pulse');
+  console.log('✅ active-pulse добавлен');
+  setTimeout(() => {
+    card.classList.remove('active-pulse');
+  }, 1700);
+}, 100);
+
+// Скролл — отдельно, в try/catch, чтобы не уронить пульсацию
+try {
+  const block = card.closest('.route-time-block');
+  const topAnchor = block || card;
+  const top = topAnchor.getBoundingClientRect().top + screen4.scrollTop - 130;
+  screen4.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+} catch (e) {
+  console.warn('scrollTo failed:', e);
+  // фолбэк — мгновенный скролл
+  try {
+    const block = card.closest('.route-time-block');
+    const topAnchor = block || card;
+    const top = topAnchor.getBoundingClientRect().top + screen4.scrollTop - 130;
+    screen4.scrollTop = Math.max(0, top);
+  } catch (e2) {}
+}
 }
 
 let _vibroLock = 0;
