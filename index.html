@@ -561,6 +561,71 @@ body.dark #btnMorningReport2:active {
   }
   .toast.show { opacity: 1; }
 
+  /* ═══════════════════════════════════════════
+   ПРЕДУПРЕЖДЕНИЕ О VPN
+   ═══════════════════════════════════════════ */
+.vpn-warning {
+  position: fixed;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(243,156,18,.5);
+  z-index: 2100;
+  opacity: 0;
+  transition:
+    top 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.4s ease;
+  max-width: 92vw;
+  min-width: 260px;
+  pointer-events: none;
+}
+.vpn-warning.show {
+  top: 20px;
+  opacity: 1;
+}
+.vpn-warning.hiding {
+  top: -120px;
+  opacity: 0;
+  transition:
+    top 0.5s cubic-bezier(0.55, 0, 0.68, 0.19),
+    opacity 0.45s ease;
+}
+.vpn-warning-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  animation: vpnPulse 1.8s ease-in-out infinite;
+}
+@keyframes vpnPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
+}
+.vpn-warning-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.25;
+}
+.vpn-warning-text b {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+.vpn-warning-text span {
+  font-size: 12px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+body.dark .vpn-warning {
+  background: linear-gradient(135deg, #d68910, #b9770e);
+  box-shadow: 0 8px 24px rgba(214,137,16,.55);
+}
   .success-notification {
     position: fixed;
     top: -120px;
@@ -3807,7 +3872,13 @@ body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
   </svg>
   <div class="success-text">Отчёт сформирован</div>
 </div>
-
+<div class="vpn-warning" id="vpnWarning">
+  <div class="vpn-warning-icon">📡</div>
+  <div class="vpn-warning-text">
+    <b>Выключи VPN</b>
+    <span>Карта и геолокация работают точнее без VPN</span>
+  </div>
+</div>
 <div class="modal-overlay" id="reminderModal">
   <div class="modal">
     <div class="emoji">📋</div>
@@ -4053,7 +4124,10 @@ function goToTab(n, animate = true) {
   // ─── Рендерим контент СРАЗУ, до анимации ───
   if (n === 3) renderTotals3();
   if (n === 4) renderRoute();
-  if (n === 5) initMap();
+  if (n === 5) {
+  initMap();
+  checkVpnAndWarn();   // ← проверка VPN при входе на карту
+}
 
   // ─── Мгновенное переключение (без анимации — не мигает в APK) ───
   const w = window.innerWidth;
@@ -4148,6 +4222,11 @@ document.querySelectorAll('.bb-item').forEach(item => {
       }
       return;
     }
+    // Если тапнули на "Карта" — сразу проверяем VPN
+if (tab === 5) {
+  checkVpnAndWarn();
+}
+goToTab(tab);
     goToTab(tab);
   });
 });
@@ -7179,6 +7258,65 @@ let userLocation = null;
 let currentMapFilter = 'all';
 
 // Загрузка Leaflet (если ещё не загружен)
+/* ═══════════════════════════════════════════════
+   ПРОВЕРКА VPN ПЕРЕД ОТКРЫТИЕМ КАРТЫ
+   ═══════════════════════════════════════════════ */
+let _vpnCheckDone = false;   // проверяем 1 раз за сессию
+let _vpnWarningTimeout = null;
+
+function showVpnWarning() {
+  const el = document.getElementById('vpnWarning');
+  if (!el) return;
+
+  clearTimeout(_vpnWarningTimeout);
+  el.classList.remove('show', 'hiding');
+
+  void el.offsetWidth;   // force reflow
+  el.classList.add('show');
+
+  // Автоскрытие через 6 секунд
+  _vpnWarningTimeout = setTimeout(() => {
+    el.classList.add('hiding');
+    setTimeout(() => {
+      el.classList.remove('show', 'hiding');
+    }, 600);
+  }, 6000);
+}
+
+async function checkVpnAndWarn() {
+  // Уже проверяли в этой сессии — выходим
+  if (_vpnCheckDone) return;
+  _vpnCheckDone = true;
+
+  try {
+    const r = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+
+    // Проверки:
+    // 1. Страна не Россия → вероятно VPN
+    const country = (d.country_code || '').toUpperCase();
+    if (country && country !== 'RU') {
+      showVpnWarning();
+      console.log('📡 VPN detected: country =', country);
+      return;
+    }
+
+    // 2. ISP содержит "vpn", "hosting", "cloud", "proxy", "server"
+    const isp = ((d.org || '') + ' ' + (d.asn || '')).toLowerCase();
+    const vpnKeywords = ['vpn', 'hosting', 'cloud', 'proxy', 'server', 'datacenter', 'digitalocean', 'linode', 'hetzner', 'ovh'];
+    if (vpnKeywords.some(k => isp.includes(k))) {
+      showVpnWarning();
+      console.log('📡 VPN detected: ISP =', isp);
+      return;
+    }
+
+    console.log('✅ VPN не обнаружен (country:', country, ', ISP:', isp, ')');
+  } catch (e) {
+    // Ошибка сети — просто пропускаем проверку, карта должна работать
+    console.log('⚠️ VPN check failed:', e.message);
+  }
+}
 function loadLeaflet(callback) {
   if (window.L) { callback(); return; }
   
