@@ -1118,6 +1118,21 @@ body.dark .bb-item.active .bb-text { color: #4ade80; }
     margin-left: 10px;
     white-space: nowrap;
   }
+  /* Заголовок аккордеона (Встречи/Продажи для плана) */
+.accordion-title {
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+.accordion-title:active {
+  filter: brightness(0.92);
+}
+.acc-arrow {
+  font-size: 12px;
+  opacity: 0.85;
+  flex-shrink: 0;
+  display: inline-block;
+}
   body.dark .analysis-row .count { color: #e57373; }
 
   .tr-block { padding: 12px 14px; }
@@ -5740,7 +5755,25 @@ const monthsSorted = Object.keys(monthTotals).sort().reverse();const meetRows = 
         ${daysBlock}
     ${chartBlock}
     ${trBlock}
-    ${plan > 0 && remains > 0 ? `<div class="section"><div class="section-title sec-meet-analysis">👥 Встречи для плана (${remains.toFixed(2)} УП)</div>${meetRows.map(r => `<div class="analysis-row"><div class="label">${r.label}</div><div class="count">${r.count.toFixed(2)}</div></div>`).join('')}</div><div class="section"><div class="section-title sec-sales-analysis">💰 Продажи для плана (${remains.toFixed(2)} УП)</div>${salesRows.map(r => `<div class="analysis-row"><div class="label">${r.label}</div><div class="count">${r.count.toFixed(2)}</div></div>`).join('')}</div>` : ''}
+    ${plan > 0 && remains > 0 ? `
+<div class="section">
+  <div class="section-title sec-meet-analysis accordion-title" id="meetPlanToggle" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+    <span>👥 Встречи для плана (${remains.toFixed(2)} УП)</span>
+    <span class="acc-arrow" id="meetPlanArrow" style="transition:transform 0.2s;font-size:12px;">▼</span>
+  </div>
+  <div id="meetPlanBody" style="display:none;">
+    ${meetRows.map(r => `<div class="analysis-row"><div class="label">${r.label}</div><div class="count">${r.count.toFixed(2)}</div></div>`).join('')}
+  </div>
+</div>
+<div class="section">
+  <div class="section-title sec-sales-analysis accordion-title" id="salesPlanToggle" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+    <span>💰 Продажи для плана (${remains.toFixed(2)} УП)</span>
+    <span class="acc-arrow" id="salesPlanArrow" style="transition:transform 0.2s;font-size:12px;">▼</span>
+  </div>
+  <div id="salesPlanBody" style="display:none;">
+    ${salesRows.map(r => `<div class="analysis-row"><div class="label">${r.label}</div><div class="count">${r.count.toFixed(2)}</div></div>`).join('')}
+  </div>
+</div>` : ''}
     ${plan > 0 && remains <= 0 ? `<div class="plan-done">🎉 План выполнен! 🎉</div>` : ''}
     <div class="section">
       <div class="section-title sec-months history-toggle" id="daysHistoryToggle" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
@@ -5761,13 +5794,31 @@ const monthsSorted = Object.keys(monthTotals).sort().reverse();const meetRows = 
       </div>
     </div>`;
 
-  document.querySelectorAll('#app3 .month-history-row').forEach(row => {
-    row.addEventListener('click', () => {
-      const y = parseInt(row.dataset.year);
-      const m = parseInt(row.dataset.month) - 1;
-      openMonthlyReportForMonth(y, m);
-    });
+  // Аккордеон «Встречи для плана»
+const meetPlanToggle = document.getElementById('meetPlanToggle');
+const meetPlanBody = document.getElementById('meetPlanBody');
+const meetPlanArrow = document.getElementById('meetPlanArrow');
+if (meetPlanToggle && meetPlanBody && meetPlanArrow) {
+  meetPlanToggle.addEventListener('click', () => {
+    const isOpen = meetPlanBody.style.display !== 'none';
+    meetPlanBody.style.display = isOpen ? 'none' : 'block';
+    meetPlanArrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+    vibro(10);
   });
+}
+
+// Аккордеон «Продажи для плана»
+const salesPlanToggle = document.getElementById('salesPlanToggle');
+const salesPlanBody = document.getElementById('salesPlanBody');
+const salesPlanArrow = document.getElementById('salesPlanArrow');
+if (salesPlanToggle && salesPlanBody && salesPlanArrow) {
+  salesPlanToggle.addEventListener('click', () => {
+    const isOpen = salesPlanBody.style.display !== 'none';
+    salesPlanBody.style.display = isOpen ? 'none' : 'block';
+    salesPlanArrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+    vibro(10);
+  });
+}
 
   const planInput = document.getElementById('planInput');
   if (planInput) {
