@@ -351,23 +351,22 @@ body.dark .drawer-totals-panel .dtp-value.magenta {
     letter-spacing: 0.4px; color: #fff;
     padding: 9px 12px; font-weight: 600; background: #7f8c8d;
   }
-  .section-title.sec-meet   { background: #2c3e50; }
-  .section-title.sec-sim    { background: #2980b9; }
-  .section-title.sec-biz    { background: #8e44ad; }
-  .section-title.sec-cards  { background: #16a085; }
-  .section-title.sec-other  { background: #7f8c8d; }
-  .section-title.sec-prime  { background: #d35400; }
-  .section-title.sec-health { background: #c0392b; }
-  .section-title.sec-apps   { background: #34495e; }
-  .section-title.sec-extra  { background: #b8860b; }
-  .section-title.sec-b2c    { background: #1a5276; }
-  .section-title.sec-total  { background: #27ae60; }
-  .section-title.sec-plan   { background: #8e44ad; }
-  .section-title.sec-months { background: #2c3e50; }
-  .section-title.sec-meet-analysis { background: #16a085; }
-  .section-title.sec-sales-analysis { background: #e67e22; }
-  .section-title.sec-tr     { background: #c0392b; }
-  .section-title.sec-days   { background: #2980b9; }
+  .section-title.sec-meet      { background: #2c3e50; }   /* Встречи — тёмно-синий */
+.section-title.sec-savings   { background: #2980b9; }   /* Накопления — синий */
+.section-title.sec-cards     { background: #27ae60; }   /* Карты — зелёный */
+.section-title.sec-credits   { background: #e67e22; }   /* Кредиты — оранжевый */
+.section-title.sec-apps      { background: #7f8c8d; }   /* Приложения — серый */
+.section-title.sec-insurance { background: #5dade2; }   /* Страхование — голубой */
+.section-title.sec-health    { background: #c0392b; }   /* СЗ — красный */
+.section-title.sec-sim       { background: #f39c12; }   /* Сим — жёлтый */
+.section-title.sec-prime     { background: #2ecc71; }   /* Прайм — салатовый */
+.section-title.sec-premier   { background: #e91e63; }   /* Премьер — мажента */
+
+/* Оставляем для совместимости — на случай, если где-то остались */
+.section-title.sec-biz    { background: #8e44ad; }
+.section-title.sec-other  { background: #7f8c8d; }
+.section-title.sec-extra  { background: #b8860b; }
+.section-title.sec-b2c    { background: #1a5276; }
 
   .row {
     display: flex; align-items: center;
@@ -3489,27 +3488,7 @@ body.dark .route-live.over-3h {
   background: #e74c3c;
   box-shadow: 0 0 0 0 rgba(231,76,60,.7);
 }
-/* ─── Пульсация активной карточки (3 вспышки зелёным) ─── */
-@keyframes activeCardPulse {
-  0%   { outline: 0 solid rgba(32,163,106,0); outline-offset: 0; }
-  25%  { outline: 4px solid rgba(32,163,106,.9); outline-offset: 3px; }
-  50%  { outline: 0 solid rgba(32,163,106,0); outline-offset: 0; }
-  75%  { outline: 4px solid rgba(32,163,106,.9); outline-offset: 3px; }
-  100% { outline: 0 solid rgba(32,163,106,0); outline-offset: 0; }
-}
 
-.route-card.active-pulse {
-  animation: activeCardPulse 1.6s ease-in-out !important;
-  z-index: 2;
-  position: relative;
-  border-radius: 12px;
-}
-
-.route-card.active-pulse {
-  animation: activeCardPulse 1.6s ease-in-out;
-  z-index: 2;
-  position: relative;
-}
 
 @keyframes activeCardPulse {
   0%   { box-shadow: inset 6px 0 0 #f39c12, 0 0 0 0 rgba(32,163,106,0); }
@@ -4029,32 +4008,7 @@ function findSlotWithActiveActivity() {
   }
   return null;
 }
-function scrollToActiveActivity() {
-  const screen4 = document.getElementById('screen4');
-  if (!screen4) return;
 
-  // Ищем карточку с индикатором «идёт с…» (у активных встреч есть .route-live)
-  const liveCard = document.querySelector('#app4 .route-card .route-live');
-  if (!liveCard) return;
-
-  const card = liveCard.closest('.route-card');
-  if (!card) return;
-
-  // Плавный скролл к карточке
-  const block = card.closest('.route-time-block');
-  const topAnchor = block || card;
-  const top = topAnchor.getBoundingClientRect().top + screen4.scrollTop - 130;
-
-  screen4.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-
-    // Подсветка — 3 пульсации зелёным
-  setTimeout(() => {
-    card.classList.add('active-pulse');
-    setTimeout(() => {
-      card.classList.remove('active-pulse');
-    }, 1700);  // чуть больше длительности анимации (1.6s)
-  }, 400);
-}
 function updateActivitiesBadge() {
   const count = countActiveActivities();
   const btn = document.querySelector('.bb-item[data-bb-tab="4"]');
@@ -4227,7 +4181,7 @@ if (tab === 5) {
   checkVpnAndWarn();
 }
 goToTab(tab);
-    goToTab(tab);
+  
   });
 });
 
@@ -5039,49 +4993,91 @@ updateDrawerRoutes();
 
 const ZK_COEF = 0.10;
 const SECTIONS1 = [
+  // ─── ВСТРЕЧИ (не трогаем) ───
   { title: 'Встречи', color: 'sec-meet', items: [
-    { id: 'fd_meet_02', name: 'Встреча ФД обычная', up: 0.20, od: 0, type: 'meeting' },
+    { id: 'fd_meet_02',  name: 'Встреча ФД обычная', up: 0.20, od: 0, type: 'meeting' },
     { id: 'fd_meet_035', name: 'Встреча ФД детская с верификацией', up: 0.35, od: 0, type: 'meeting' },
     { id: 'fd_meet_dbo', name: 'Встреча ФД ДБО', up: 0.35, od: 0, type: 'meeting' },
   ]},
-  { title: 'СИМ', color: 'sec-sim', items: [
-    { id: 'sim_my', name: 'Сим по промокоду для своих', up: 0.10, od: 165, group: 'Сим' },
-    { id: 'sim_100', name: 'Сим по промокоду КАРТА 100', up: 0.05, od: 50, group: 'Сим' },
-    { id: 'sim_pay', name: 'Сим оплата (активация)', up: 0.25, od: 416, group: 'Сим' },
-    { id: 'sim_topup', name: 'Пополнение СИМ', up: 0.25, od: 500, group: 'Сим' },
-    { id: 'perenos_sim', name: 'Перенос номера', up: 0.30, od: 220, group: 'Сим' },
-  ]},
+
+  // ─── БИЗНЕС (фиолетовый) — как было ───
   { title: 'Бизнес', color: 'sec-biz', items: [
-    { id: 'biz_rko', name: 'РКО', up: 0.48, od: 0, type: 'biz' },
-    { id: 'biz_ip', name: 'Идентификация ИП', up: 0.25, od: 0, type: 'biz' },
-    { id: 'biz_card', name: 'Бизнес карта', up: 0.20, od: 0, type: 'biz' },
+    { id: 'biz_rko',  name: 'РКО',              up: 0.48, od: 0, type: 'biz' },
+    { id: 'biz_ip',   name: 'Идентификация ИП', up: 0.25, od: 0, type: 'biz' },
+    { id: 'biz_card', name: 'Бизнес карта',     up: 0.20, od: 0, type: 'biz' },
   ]},
-  { title: 'Карты и кредиты', color: 'sec-cards', items: [
-    { id: 'kk', name: 'КК (кредитная карта)', up: 0.56, od: 3007, group: 'КК' },
-    { id: 'pk', name: 'ПК', up: 0.95, od: 7023, group: 'ПК' },
+
+  // ─── НАКОПЛЕНИЯ (синий) ───
+  { title: 'Накопления', color: 'sec-savings', items: [
+    { id: 'vklad',      name: 'Вклад',             up: 0.35, od: 702 },
+    { id: 'ops_pds',    name: 'Перевод ОПС в ПДС', up: 0.43, od: 926, group: 'ПДС' },
+    { id: 'pds',        name: 'ПДС',               up: 1.00, od: 645, group: 'ПДС' },
   ]},
-  { title: 'Прочее', color: 'sec-other', items: [
-    { id: 'vklad', name: 'Вклад / накоп. счёт', up: 0.35, od: 702 },
-    { id: 'app_upd', name: 'Обновление МП', up: 0.06, od: 350 },
-    { id: 'app_inst', name: 'Установка МП', up: 0.06, od: 637 },
-    { id: 'notif', name: 'Уведомления', up: 0.02, od: 407 },
-    { id: 'sberkids', name: 'Установка СберКидс', up: 0.07, od: 637 },
-    { id: 'zls_tick', name: 'ЗЛС Клещ', up: 0.20, od: 225 },
-    { id: 'kids_card', name: 'Детская карта моментальная', up: 0.11, od: 829 },
-    { id: 'kids_order', name: 'Заказ детской карты', up: 0.18, od: 504 },
-    { id: 'ops', name: 'ОПС', up: 0.30, od: 0 },
-    { id: 'ops_pds', name: 'ОПС в ПДС перевод', up: 0.30, od: 926, group: 'ПДС' },
-    { id: 'pds', name: 'ПДС', up: 1.00, od: 645, group: 'ПДС' },
-    { id: 'zls_1000', name: 'ЗЛС от 1000 рублей', up: 0.24, od: 3682 },
+
+  // ─── КАРТЫ (зелёный) ───
+  { title: 'Карты', color: 'sec-cards', items: [
+    { id: 'sbercard',       name: 'Сберкарта',             up: 0.11, od: 0 },
+    { id: 'kids_card',      name: 'Детская мом',           up: 0.13, od: 829 },
+    { id: 'pension_sber',   name: 'Перевод пенсии в Сбер', up: 0.25, od: 0 },
+    { id: 'first_sbercard', name: 'Первая Сберкарта',      up: 0.40, od: 0 },
+    { id: 'kk',             name: 'Кредитная карта',       up: 0.56, od: 3007, group: 'КК' },
+    { id: 'salary_sber',    name: 'Перевод ЗП в Сбер',     up: 0.74, od: 0 },
   ]},
+
+  // ─── КРЕДИТЫ (оранжевый) ───
+  { title: 'Кредиты', color: 'sec-credits', items: [
+    { id: 'ipoteka',   name: 'Ипотека',                up: 1.40, od: 0 },
+    { id: 'potreb',    name: 'Потребительский кредит', up: 0.95, od: 7023, group: 'ПК' },
+    { id: 'obraz',     name: 'Образовательный кредит', up: 0.95, od: 0 },
+    { id: 'transh_ok', name: 'Транш по ОК',            up: 0.10, od: 0 },
+  ]},
+
+  // ─── ПРИЛОЖЕНИЯ (серый) ───
+  { title: 'Приложения', color: 'sec-apps', items: [
+    { id: 'app_upd',  name: 'Обновление', up: 0.06, od: 350 },
+    { id: 'sberkids', name: 'СберKIDS',   up: 0.07, od: 637 },
+    { id: 'app_inst', name: 'Установка',  up: 0.12, od: 637 },
+  ]},
+
+  // ─── СТРАХОВАНИЕ (голубой) ───
+  { title: 'Страхование', color: 'sec-insurance', items: [
+    { id: 'dsj_kk',   name: 'ДСЖ КК',          up: 0.05, od: 0 },
+    { id: 'zls_1000', name: 'ЗЛС <1000 руб.',  up: 0.08, od: 0 },
+    { id: 'zls_tick', name: 'ЗЛС >1000 руб.',  up: 0.24, od: 3682 },
+    { id: 'osago',    name: 'ОСАГО',           up: 0.31, od: 0 },
+  ]},
+
+  // ─── СЗ (красный) ───
+  { title: 'СЗ', color: 'sec-health', items: [
+    { id: 'sz_199',  name: 'СЗ 199 руб.',  up: 0.03, od: 0,    group: 'СЗ' },
+    { id: 'sz_499',  name: 'СЗ 499 руб.',  up: 0.10, od: 0,    group: 'СЗ' },
+    { id: 'sz_5299', name: 'СЗ 5299 руб.', up: 0.90, od: 2650, group: 'СЗ' },
+  ]},
+
+  // ─── СИМ (жёлтый) ───
+  { title: 'Сим', color: 'sec-sim', items: [
+    { id: 'sim_vydacha', name: 'Выдача',              up: 0.05, od: 50,  group: 'Сим' },
+    { id: 'sim_pay',     name: 'Активация',           up: 0.20, od: 416, group: 'Сим' },
+    { id: 'sim_topup',   name: 'Тариф с пополнением', up: 0.25, od: 500, group: 'Сим' },
+    { id: 'perenos_sim', name: 'Перенос номера',      up: 0.30, od: 220, group: 'Сим' },
+  ]},
+
+  // ─── ПРАЙМ (салатовый) ───
   { title: 'Прайм', color: 'sec-prime', items: [
-    { id: 'prime_y', name: 'Прайм год/месяц', up: 0.20, od: 625, group: 'Прайм' },
-    { id: 'prime_m', name: 'Ежемесячный прайм +', up: 0.35, od: 1060, group: 'Прайм' },
-    { id: 'prime_1', name: 'Сберпрайм за 1 рубль', up: 0.10, od: 147, group: 'Прайм' },
+    { id: 'prime_m',      name: 'Прайм мес.',  up: 0.25, od: 625,  group: 'Прайм' },
+    { id: 'prime_y',      name: 'Прайм год',   up: 0.35, od: 625,  group: 'Прайм' },
+    { id: 'prime_plus_m', name: 'Прайм+ мес.', up: 0.50, od: 1060, group: 'Прайм' },
+    { id: 'prime_plus_y', name: 'Прайм+ год',  up: 0.60, od: 1060, group: 'Прайм' },
   ]},
-  { title: 'Здоровье', color: 'sec-health', items: [
-    { id: 'sz', name: 'Сберздоровье (СЗ)', up: 0.60, od: 2650, group: 'СЗ' },
-  ]}
+
+  // ─── ПРЕМЬЕР (мажента) ───
+  { title: 'Премьер', color: 'sec-premier', items: [
+    { id: 'premier_free', name: 'Бесплатный уровень',        up: 0.10, od: 0,    group: 'Премьер' },
+    { id: 'premier_save', name: 'Бесплатный + «Сохранение»', up: 0.50, od: 0,    group: 'Премьер' },
+    { id: 'premier_lvl1', name: '1 уровень (1990/мес.)',     up: 1.00, od: 1990, group: 'Премьер' },
+    { id: 'premier_lvl2', name: '2 уровень (3990/мес.)',     up: 1.50, od: 3990, group: 'Премьер' },
+    { id: 'premier_lvl3', name: '3 уровень (9990/мес.)',     up: 2.00, od: 9990, group: 'Премьер' },
+  ]},
 ];
 const APPS1 = [
   { id: 'kk_requests', name: 'КК заявки', mode: 'numeric' },
@@ -5331,19 +5327,52 @@ btn.disabled = getManual1('b2c_total').trim() === '' || getManual1('reasons').tr
 }
 
 const GROUP_STYLE = {
-  'Сим':   { icon: '📱', color: '#2ecc71' },
-  'КК':    { icon: '💳', color: '#e74c3c' },
-  'ПК':    { icon: '🏦', color: '#16a085' },
-  'Прайм': { icon: '⭐', color: '#f39c12' },
-  'ПДС':   { icon: '🔄', color: '#9b59b6' },
-  'СЗ':    { icon: '🏥', color: '#e91e63' },
-  'other': { icon: '📦', color: '#95a5a6' },
+  'Сим':      { icon: '📱', color: '#f39c12' },
+  'КК':       { icon: '💳', color: '#e74c3c' },
+  'ПК':       { icon: '🏦', color: '#e67e22' },
+  'Прайм':    { icon: '⭐', color: '#2ecc71' },
+  'ПДС':      { icon: '🔄', color: '#9b59b6' },
+  'СЗ':       { icon: '🏥', color: '#c0392b' },
+  'Премьер':  { icon: '💎', color: '#e91e63' },
+  'other':    { icon: '📦', color: '#95a5a6' },
 };
 const PRODUCT_ICONS = {
-  'Вклад / накоп. счёт': '💰', 'Обновление МП': '⬆️', 'Установка МП': '📲',
-  'Уведомления': '🔔', 'Установка СберКидс': '🧸', 'ЗЛС Клещ': '🛡',
-  'Детская карта моментальная': '👶', 'Заказ детской карты': '🎁',
-  'ОПС': '📄', 'ОПС в ПДС перевод': '🔁', 'ПДС': '🔄', 'ЗЛС от 1000 рублей': '💵',
+  'Вклад': '💰',
+  'Перевод ОПС в ПДС': '🔁',
+  'ПДС': '🔄',
+  'Сберкарта': '💳',
+  'Детская мом': '👶',
+  'Перевод пенсии в Сбер': '👴',
+  'Первая Сберкарта': '🎁',
+  'Кредитная карта': '💳',
+  'Перевод ЗП в Сбер': '💼',
+  'Ипотека': '🏠',
+  'Потребительский кредит': '💵',
+  'Образовательный кредит': '🎓',
+  'Транш по ОК': '📄',
+  'Обновление': '⬆️',
+  'СберKIDS': '🧸',
+  'Установка': '📲',
+  'ДСЖ КК': '🛡',
+  'ЗЛС <1000 руб.': '🛡',
+  'ЗЛС >1000 руб.': '💵',
+  'ОСАГО': '🚗',
+  'СЗ 199 руб.': '🏥',
+  'СЗ 499 руб.': '🏥',
+  'СЗ 5299 руб.': '🏥',
+  'Выдача': '📱',
+  'Активация': '📱',
+  'Тариф с пополнением': '📱',
+  'Перенос номера': '🔄',
+  'Прайм мес.': '⭐',
+  'Прайм год': '⭐',
+  'Прайм+ мес.': '🌟',
+  'Прайм+ год': '🌟',
+  'Бесплатный уровень': '💎',
+  'Бесплатный + «Сохранение»': '💎',
+  '1 уровень (1990/мес.)': '💎',
+  '2 уровень (3990/мес.)': '💎',
+  '3 уровень (9990/мес.)': '💎',
 };
 function getStyleForItem(item) {
   if (PRODUCT_ICONS[item.name]) return { icon: PRODUCT_ICONS[item.name], color: GROUP_STYLE['other'].color };
@@ -5556,17 +5585,24 @@ const ANALYSIS_MEETINGS = [
   { label: 'ЗК (зарплатная карта) 0.10', coef: 0.10 },
 ];
 const ANALYSIS_SALES = [
-  { label: 'Сим по промокоду для своих (0.10)', coef: 0.10 },
-  { label: 'Сим по промокоду КАРТА 100 (0.05)', coef: 0.05 },
-  { label: 'Сим оплата (активация) (0.25)', coef: 0.25 },
-  { label: 'Пополнение СИМ (0.25)', coef: 0.25 },
-  { label: 'Перенос номера (0.30)', coef: 0.30 },
-  { label: 'КК (кредитная карта) (0.56)', coef: 0.56 },
-  { label: 'ПК (0.95)', coef: 0.95 },
-  { label: 'ПДС (1.00)', coef: 1.00 },
-  { label: 'Прайм год/месяц (0.20)', coef: 0.20 },
-  { label: 'Ежемесячный прайм + (0.35)', coef: 0.35 },
-  { label: 'Сберпрайм за 1 рубль (0.10)', coef: 0.10 },
+  { label: 'ПДС (1.00)',                    coef: 1.00 },
+  { label: 'Перевод ОПС в ПДС (0.43)',      coef: 0.43 },
+  { label: 'Вклад (0.35)',                  coef: 0.35 },
+  { label: 'Кредитная карта (0.56)',        coef: 0.56 },
+  { label: 'Ипотека (1.40)',                coef: 1.40 },
+  { label: 'Потребительский кредит (0.95)', coef: 0.95 },
+  { label: 'Образовательный кредит (0.95)', coef: 0.95 },
+  { label: 'Первая Сберкарта (0.40)',       coef: 0.40 },
+  { label: 'Перевод ЗП в Сбер (0.74)',      coef: 0.74 },
+  { label: 'Прайм мес. (0.25)',             coef: 0.25 },
+  { label: 'Прайм год (0.35)',              coef: 0.35 },
+  { label: 'Прайм+ мес. (0.50)',            coef: 0.50 },
+  { label: 'Прайм+ год (0.60)',             coef: 0.60 },
+  { label: 'Премьер 1 ур. (1.00)',          coef: 1.00 },
+  { label: 'Премьер 2 ур. (1.50)',          coef: 1.50 },
+  { label: 'Премьер 3 ур. (2.00)',          coef: 2.00 },
+  { label: 'ОСАГО (0.31)',                  coef: 0.31 },
+  { label: 'СЗ 5299 (0.90)',                coef: 0.90 },
 ];
 function getPlanUP() { return localStorage.getItem(PLAN_KEY) || ''; }
 function setPlanUP(v) { localStorage.setItem(PLAN_KEY, v); }
