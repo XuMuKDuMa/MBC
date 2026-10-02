@@ -7321,39 +7321,113 @@ function showVpnWarning() {
   }, 6000);
 }
 
+/* ─── Универсальный HTTP-запрос (fetch → fallback на XHR) ─── */
+function httpGetJson(url, timeout = 5000) {
+  if (typeof fetch === 'function') {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('timeout')), timeout);
+      fetch(url, { cache: 'no-store', mode: 'cors' })
+        .then(r => {
+          clearTimeout(timer);
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(resolve)
+        .catch(reject);
+    });
+  }
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.timeout = timeout;
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch (e) { reject(e); }
+        } else {
+          reject(new Error('HTTP ' + xhr.status));
+        }
+      }
+    };
+    xhr.onerror = () => reject(new Error('network'));
+    xhr.ontimeout = () => reject(new Error('timeout'));
+    try { xhr.send(); } catch (e) { reject(e); }
+  });
+}
+
+/* ─── Разбор ответа любого API ─── */
+function checkVpnData(country, org, asn) {
+  const c = String(country || '').toUpperCase();
+  if (c && c !== 'RU') {
+    showVpnWarning();
+    console.log('📡 VPN detected: country =', c);
+    return true;
+  }
+  const isp = String((org || '') + ' ' + (asn || '')).toLowerCase();
+  const vpnKeywords = [
+    'vpn', 'hosting', 'cloud', 'proxy', 'server', 'datacenter',
+    'digitalocean', 'linode', 'hetzner', 'ovh', 'amazon', 'aws',
+    'google cloud', 'azure', 'm247', 'choopa'
+  ];
+  if (vpnKeywords.some(k => isp.includes(k))) {
+    showVpnWarning();
+    console.log('📡 VPN detected: ISP =', isp);
+    return true;
+  }
+  return false;
+}
+
+/* ─── Проверка VPN через несколько API (для WebView в APK) ─── */
 async function checkVpnAndWarn() {
-  // Уже проверяли в этой сессии — выходим
   if (_vpnCheckDone) return;
   _vpnCheckDone = true;
 
-  try {
-    const r = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
-    if (!r.ok) return;
-    const d = await r.json();
+  const apis = [
+    'https://ipapi.co/json/',
+    'https://ipwho.is/',
+    'https://ipinfo.io/json',
+    'https://api.country.is/'
+  ];
 
-    // Проверки:
-    // 1. Страна не Россия → вероятно VPN
-    const country = (d.country_code || '').toUpperCase();
-    if (country && country !== 'RU') {
-      showVpnWarning();
-      console.log('📡 VPN detected: country =', country);
-      return;
+  for (const url of apis) {
+    try {
+      const d = await httpGetJson(url, 5000);
+      if (!d) continue;
+
+      // ipapi.co — {country_code, org, asn}
+      if (d.country_code !== undefined && d.org !== undefined) {
+        if (checkVpnData(d.country_code, d.org, d.asn)) return;
+        console.log('✅ VPN не обнаружен (ipapi.co, country:', d.country_code, ')');
+        return;
+      }
+
+      // ipwho.is — {country_code, connection: {isp, asn}}
+      if (d.country_code !== undefined && d.connection) {
+        if (checkVpnData(d.country_code, d.connection.isp, d.connection.asn)) return;
+        console.log('✅ VPN не обнаружен (ipwho.is, country:', d.country_code, ')');
+        return;
+      }
+
+      // ipinfo.io — {country, org}
+      if (d.country !== undefined && d.org !== undefined) {
+        if (checkVpnData(d.country, d.org)) return;
+        console.log('✅ VPN не обнаружен (ipinfo.io, country:', d.country, ')');
+        return;
+      }
+
+      // api.country.is — {country}
+      if (d.country !== undefined) {
+        if (checkVpnData(d.country)) return;
+        console.log('✅ VPN не обнаружен (country.is, country:', d.country, ')');
+        return;
+      }
+    } catch (e) {
+      console.warn('⚠️ API failed:', url, e.message);
     }
-
-    // 2. ISP содержит "vpn", "hosting", "cloud", "proxy", "server"
-    const isp = ((d.org || '') + ' ' + (d.asn || '')).toLowerCase();
-    const vpnKeywords = ['vpn', 'hosting', 'cloud', 'proxy', 'server', 'datacenter', 'digitalocean', 'linode', 'hetzner', 'ovh'];
-    if (vpnKeywords.some(k => isp.includes(k))) {
-      showVpnWarning();
-      console.log('📡 VPN detected: ISP =', isp);
-      return;
-    }
-
-    console.log('✅ VPN не обнаружен (country:', country, ', ISP:', isp, ')');
-  } catch (e) {
-    // Ошибка сети — просто пропускаем проверку, карта должна работать
-    console.log('⚠️ VPN check failed:', e.message);
   }
+
+  console.log('⚠️ Ни один API не ответил — VPN check пропущен');
 }
 function loadLeaflet(callback) {
   if (window.L) { callback(); return; }
