@@ -3426,6 +3426,32 @@ body.dark .route-live.over-3h {
   background: #e74c3c;
   box-shadow: 0 0 0 0 rgba(231,76,60,.7);
 }
+/* ─── Пульсация активной карточки (3 вспышки зелёным) ─── */
+@keyframes activeCardPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(32,163,106,.0);
+  }
+  20% {
+    box-shadow: 0 0 0 4px rgba(32,163,106,.55), 0 6px 20px rgba(32,163,106,.35);
+  }
+  40% {
+    box-shadow: 0 0 0 2px rgba(32,163,106,.25), 0 4px 14px rgba(32,163,106,.15);
+  }
+  60% {
+    box-shadow: 0 0 0 4px rgba(32,163,106,.55), 0 6px 20px rgba(32,163,106,.35);
+  }
+  80% {
+    box-shadow: 0 0 0 2px rgba(32,163,106,.25), 0 4px 14px rgba(32,163,106,.15);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(32,163,106,.0);
+  }
+}
+
+.route-card.active-pulse {
+  animation: activeCardPulse 1.6s ease-in-out;
+  z-index: 2;
+}
 @keyframes rlPulse {
   0%   { box-shadow: 0 0 0 0 rgba(243,156,18,.7); transform: scale(1); }
   50%  { box-shadow: 0 0 0 6px rgba(243,156,18,0); transform: scale(1.15); }
@@ -3496,6 +3522,17 @@ body.dark .bb-badge {
   border-radius: 50%;
   flex-shrink: 0;
   transition: background .15s;
+}
+/* ─── Красный пульсирующий кружок «Статус», когда встреча в процессе ─── */
+.status-badge.live .sb-dot {
+  background: #e74c3c;
+  box-shadow: 0 0 0 0 rgba(231,76,60,.7);
+  animation: sbDotLive 1.4s ease-in-out infinite;
+}
+@keyframes sbDotLive {
+  0%   { box-shadow: 0 0 0 0 rgba(231,76,60,.7);   transform: scale(1); }
+  50%  { box-shadow: 0 0 0 8px rgba(231,76,60,0);  transform: scale(1.25); }
+  100% { box-shadow: 0 0 0 0 rgba(231,76,60,0);    transform: scale(1); }
 }
 .status-badge.status-wait    .sb-dot { background: #cbd5dc; }
 .status-badge.status-done    .sb-dot { background: #27ae60; }
@@ -3910,7 +3947,41 @@ function countActiveActivities() {
   });
   return n;
 }
+function findSlotWithActiveActivity() {
+  for (const t of ROUTE_TIMES) {
+    const list = routeState.lists[t.id] || [];
+    if (list.some(item => item && item.startedAt)) {
+      return t.id;
+    }
+  }
+  return null;
+}
+function scrollToActiveActivity() {
+  const screen4 = document.getElementById('screen4');
+  if (!screen4) return;
 
+  // Ищем карточку с индикатором «идёт с…» (у активных встреч есть .route-live)
+  const liveCard = document.querySelector('#app4 .route-card .route-live');
+  if (!liveCard) return;
+
+  const card = liveCard.closest('.route-card');
+  if (!card) return;
+
+  // Плавный скролл к карточке
+  const block = card.closest('.route-time-block');
+  const topAnchor = block || card;
+  const top = topAnchor.getBoundingClientRect().top + screen4.scrollTop - 130;
+
+  screen4.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+
+    // Подсветка — 3 пульсации зелёным
+  setTimeout(() => {
+    card.classList.add('active-pulse');
+    setTimeout(() => {
+      card.classList.remove('active-pulse');
+    }, 1700);  // чуть больше длительности анимации (1.6s)
+  }, 400);
+}
 function updateActivitiesBadge() {
   const count = countActiveActivities();
   const btn = document.querySelector('.bb-item[data-bb-tab="4"]');
@@ -3945,14 +4016,26 @@ function goToTab(n, animate = true) {
   // при возврате на вкладку «Активности» — заново определить слот по времени
 }
 if (n === 4) {
-  // Если слот уже задан вручную (например, из карты) — не перезаписываем
-  if (!_openSlotId) {
+  // Приоритет 1: если есть встреча «в процессе» — открываем её слот
+  const activeSlot = findSlotWithActiveActivity();
+  let scrollToActive = false;
+  if (activeSlot) {
+    _openSlotId = activeSlot;
+    scrollToActive = true;
+  }
+  // Приоритет 2: если слот уже задан вручную (например, из карты) — не перезаписываем
+  else if (!_openSlotId) {
     const h = new Date().getHours();
     if (h >= 10 && h < 12) _openSlotId = 't10_12';
     else if (h >= 12 && h < 14) _openSlotId = 't12_14';
     else if (h >= 14 && h < 16) _openSlotId = 't14_16';
     else if (h >= 16 && h < 18) _openSlotId = 't16_18';
     else _openSlotId = null;
+  }
+
+  // Если нашли активную встречу — скроллим и подсвечиваем ПОСЛЕ рендера
+  if (scrollToActive) {
+    setTimeout(scrollToActiveActivity, 350);
   }
 }
 
@@ -4562,6 +4645,12 @@ const sb = STATUS_BADGE_LABELS[statusKey];
 
 const statusBadge = document.createElement('div');
 statusBadge.className = 'status-badge status-' + statusKey;
+
+// Если встреча в процессе — кружок красный и пульсирует
+if (item.startedAt) {
+  statusBadge.classList.add('live');
+}
+
 statusBadge.innerHTML = `
   <span class="sb-dot"></span>
   <span class="sb-label">${sb.label}</span>
