@@ -5056,11 +5056,12 @@ const SECTIONS1 = [
 
   // ─── СИМ (жёлтый) ───
   { title: 'Сим', color: 'sec-sim', items: [
-    { id: 'sim_vydacha', name: 'Выдача',              up: 0.05, od: 50,  group: 'Сим' },
-    { id: 'sim_pay',     name: 'Активация',           up: 0.20, od: 416, group: 'Сим' },
-    { id: 'sim_topup',   name: 'Тариф с пополнением', up: 0.25, od: 500, group: 'Сим' },
-    { id: 'perenos_sim', name: 'Перенос номера',      up: 0.30, od: 220, group: 'Сим' },
-  ]},
+  { id: 'sim_my',      name: 'Сим по промокоду для своих', up: 0.10, od: 165, group: 'Сим' },
+  { id: 'sim_vydacha', name: 'Выдача',                     up: 0.05, od: 50,  group: 'Сим' },
+  { id: 'sim_pay',     name: 'Активация',                  up: 0.20, od: 416, group: 'Сим' },
+  { id: 'sim_topup',   name: 'Тариф с пополнением',        up: 0.25, od: 500, group: 'Сим' },
+  { id: 'perenos_sim', name: 'Перенос номера',             up: 0.30, od: 220, group: 'Сим' },
+]},
 
   // ─── ПРАЙМ (салатовый) ───
   { title: 'Прайм', color: 'sec-prime', items: [
@@ -5337,6 +5338,7 @@ const GROUP_STYLE = {
   'other':    { icon: '📦', color: '#95a5a6' },
 };
 const PRODUCT_ICONS = {
+  'Сим по промокоду для своих': '📱',
   'Вклад': '💰',
   'Перевод ОПС в ПДС': '🔁',
   'ПДС': '🔄',
