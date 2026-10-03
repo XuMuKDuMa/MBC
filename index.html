@@ -1133,6 +1133,8 @@ body.dark .bb-item.active .bb-text { color: #4ade80; }
   flex-shrink: 0;
   display: inline-block;
 }
+
+
   body.dark .analysis-row .count { color: #e57373; }
 
   .tr-block { padding: 12px 14px; }
@@ -4098,11 +4100,15 @@ function goToTab(n, animate = true) {
   updateBottomBarActive(n);
 
   // ─── Рендерим контент СРАЗУ, до анимации ───
-  if (n === 3) renderTotals3();
-  if (n === 4) renderRoute();
-  if (n === 5) {
+  if (n === 2) {
+  autofillMvsFromToday();
+  render2();
+}
+if (n === 3) renderTotals3();
+if (n === 4) renderRoute();
+if (n === 5) {
   initMap();
-  checkVpnAndWarn();   // ← проверка VPN при входе на карту
+  checkVpnAndWarn();
 }
 
   // ─── Мгновенное переключение (без анимации — не мигает в APK) ───
@@ -6678,6 +6684,41 @@ function loadState2() {
 }
 function saveState2(state) { localStorage.setItem(STORAGE_KEY2, JSON.stringify(state)); }
 let state2 = loadState2();
+/* ═══════════════════════════════════════════════
+   АВТОПОДСТАНОВКА «СЕГОДНЯ» → «МВС ЗАПАД»
+   ═══════════════════════════════════════════════ */
+function autofillMvsFromToday() {
+  // 1. УП за день — из «Сегодня»
+  const t = calcTotals1();
+  const upDay = t.up.toFixed(2);
+
+  // 2. КК и ПК — из «Сегодня»
+  const kkCount = getCount1('kk') || 0;
+  const pkCount = getCount1('potreb') || 0;
+
+  // 3. TR — считаем из активностей
+  let totalMeetings = 0;
+  let doneMeetings = 0;
+  ROUTE_TIMES.forEach(rt => {
+    (routeState.lists[rt.id] || []).forEach(item => {
+      if (!item) return;
+      totalMeetings++;
+      if (item.status === 'done') doneMeetings++;
+    });
+  });
+  // 4. ВСЕГДА подставляем актуальные значения
+  state2.today.up_day   = upDay;
+  state2.today.kk_fact  = String(kkCount);
+  state2.today.pk       = String(pkCount);
+  state2.today.tr_nag   = String(totalMeetings);
+  state2.today.tr_usp   = String(doneMeetings);
+  state2.today.slot_nag = String(totalMeetings);
+  state2.today.slot_usp = String(doneMeetings);
+  
+  saveState2(state2);
+  return true;
+}
+
 (function checkNewDay2() {
   const today = new Date().toDateString();
   if (state2.lastDay && state2.lastDay !== today) state2.savedToday = false;
