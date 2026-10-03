@@ -5920,10 +5920,20 @@ if (salesPlanToggle && salesPlanBody && salesPlanArrow) {
       vibro(10);
     });
   }
-  const btnSales = document.getElementById('btnSalesChart');
+    const btnSales = document.getElementById('btnSalesChart');
   if (btnSales) btnSales.addEventListener('click', () => { vibro(15); openSalesModal(); });
   const btnMeetings = document.getElementById('btnMeetingsChart');
   if (btnMeetings) btnMeetings.addEventListener('click', () => { vibro(15); openMeetingsModal(); });
+
+  // Обработчик клика по месяцу в истории
+  document.querySelectorAll('#app3 .month-history-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const y = Number(row.dataset.year);
+      const m = Number(row.dataset.month) - 1;
+      vibro(15);
+      openMonthlyReportForMonth(y, m);
+    });
+  });
 }
 function buildUpChartSvg(monthDays, planUP) {
   if (!monthDays || monthDays.length === 0) {
