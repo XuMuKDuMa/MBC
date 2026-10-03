@@ -455,10 +455,9 @@ body.dark .drawer-totals-panel .dtp-value.magenta {
     border: 1px solid #ddd; border-radius: 8px;
     text-align: center; -webkit-appearance: none;
   }
-
   .r1-totals {
   position: fixed;
-  bottom: calc(158px + env(safe-area-inset-bottom, 0));
+  bottom: calc(100px + env(safe-area-inset-bottom, 0));
   left: 10px;
   right: 10px;
   background: #2c3e50;
@@ -473,13 +472,10 @@ body.dark .drawer-totals-panel .dtp-value.magenta {
   cursor: pointer;
   border-radius: 16px;
   will-change: transform, opacity;
-  transition:
-    transform .35s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity .3s ease;
+  transform: translateY(0);
+  opacity: 1;
 }
 .r1-totals.hidden {
-  transform: translateY(140px);
-  opacity: 0;
   pointer-events: none;
 }
 .r1-totals:active { background: #1a2938; }
@@ -4079,13 +4075,32 @@ function goToTab(n, animate = true) {
   if (n < 1 || n > 5) return;
   if (n === currentTab) return;
 
-    // Сбрасываем состояние аккордеона при уходе с «Сегодня»
+  // Сброс аккордеона при уходе с «Сегодня»
   if (currentTab === 1 && n !== 1) {
     SECTIONS1.forEach(section => {
       if (section.title !== 'Встречи') {
         localStorage.removeItem('section_open_' + section.title);
       }
     });
+  }
+
+  // При возврате на «Сегодня» — плашка итогов в исходном положении
+  if (n === 1) {
+    setTimeout(resetTotalsPosition, 50);
+  }
+
+    // Сброс аккордеона при уходе с «Сегодня»
+  if (currentTab === 1 && n !== 1) {
+    SECTIONS1.forEach(section => {
+      if (section.title !== 'Встречи') {
+        localStorage.removeItem('section_open_' + section.title);
+      }
+    });
+  }
+
+  // При возврате на «Сегодня» — плашка итогов всегда в исходном положении
+  if (n === 1) {
+    setTimeout(resetTotalsPosition, 50);
   }
 
   // Если уходим с вкладки «Активности» — закрываем открытый слот
@@ -4237,6 +4252,42 @@ goToTab(tab);
   
   });
 });
+/* ═══════════════════════════════════════════════
+   ПЛАВНОЕ СКРЫТИЕ/ПОКАЗ ПЛАШКИ ИТОГОВ
+   ═══════════════════════════════════════════════ */
+let _r1TotalsHidden = false;
+let _r1TotalsTimeout = null;
+
+function hideTotalsSmooth() {
+  const el = document.getElementById('r1Totals');
+  if (!el || _r1TotalsHidden) return;
+  _r1TotalsHidden = true;
+  const h = el.offsetHeight + 20;
+  el.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease';
+  el.style.transform = 'translateY(' + h + 'px)';
+  el.style.opacity = '0';
+  el.style.pointerEvents = 'none';
+}
+
+function showTotalsSmooth() {
+  const el = document.getElementById('r1Totals');
+  if (!el || !_r1TotalsHidden) return;
+  _r1TotalsHidden = false;
+  el.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.15, 0.64, 1), opacity 0.4s ease';
+  el.style.transform = 'translateY(0)';
+  el.style.opacity = '1';
+  el.style.pointerEvents = '';
+}
+
+function resetTotalsPosition() {
+  const el = document.getElementById('r1Totals');
+  if (!el) return;
+  _r1TotalsHidden = false;
+  el.style.transition = 'none';
+  el.style.transform = 'translateY(0)';
+  el.style.opacity = '1';
+  el.style.pointerEvents = '';
+}
 
 const drawerTotalsPanel = document.getElementById('drawerTotalsPanel');
 const drawerOverlay = document.getElementById('drawerOverlay');
@@ -7331,25 +7382,25 @@ setInterval(checkReminder, 60 * 1000);
         header.classList.toggle('compact', shouldCompact);
       }
 
-      // плашка итогов — только на вкладке 1
+              // плашка итогов — только на вкладке 1
       if (n === '1' && r1Totals) {
         const y0 = lastScrollY[1];
         const dy = y - y0;
 
         // в самом верху — всегда показываем
         if (y < 60) {
-          r1Totals.classList.remove('hidden');
+          showTotalsSmooth();
           lastScrollY[1] = y;
           return;
         }
 
-        // простая логика: скролл вниз → убираем, скролл вверх → показываем
+        // скролл вниз → плавно уезжает
         if (dy > 10) {
-          // явный скролл вниз больше 10px
-          r1Totals.classList.add('hidden');
-        } else if (dy < -10) {
-          // явный скролл вверх больше 10px
-          r1Totals.classList.remove('hidden');
+          hideTotalsSmooth();
+        }
+        // скролл вверх → плавно выезжает
+        else if (dy < -10) {
+          showTotalsSmooth();
         }
 
         lastScrollY[1] = y;
