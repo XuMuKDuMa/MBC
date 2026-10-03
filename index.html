@@ -3874,6 +3874,8 @@ body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
 <div class="menu" id="menu3">
   <button id="btnResetTotalsMenu">🗑 Сбросить итоги за месяц</button>
   <button id="btnFixDupHistory">🔧 Исправить дубли в истории</button>
+  <button id="btnExportData" style="color:#27ae60;">💾 Сохранить данные</button>
+  <button id="btnImportData" style="color:#2980b9;">📂 Загрузить данные</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -6619,7 +6621,113 @@ document.getElementById('btnFixDupHistory')?.addEventListener('click', () => {
 
   if (typeof renderTotals3 === 'function') renderTotals3();
 });
+/* ═══════════════════════════════════════════════
+   ЭКСПОРТ / ИМПОРТ ДАННЫХ
+   ═══════════════════════════════════════════════ */
+const BACKUP_KEYS = [
+  'report_day_v1', 'report_day_history', 'report_months_history',
+  'report_day_plan_up', 'report_day_sent_today', 'report_day_last_reset',
+  'report2_vaziev_v4', 'report2_history', 'report2_last_month',
+  'routes_v2', 'routes_last_day', 'routes_history', 'route_started_last_day',
+  'quick_report_v2', 'quick_report_last_day', 'quick_report_sent_today',
+  'quick_report_reminder_shown', 'morning_report_sent_today',
+  'monthly_report_last_shown', 'my_city', 'mvs_theme', 'map_geocache'
+];
 
+document.getElementById('btnExportData').addEventListener('click', () => {
+  document.getElementById('menu3')?.classList.remove('show');
+
+  const dump = {
+    _app: 'MVS Reports',
+    _version: 1,
+    _exportedAt: new Date().toISOString(),
+    data: {}
+  };
+  BACKUP_KEYS.forEach(key => {
+    const val = localStorage.getItem(key);
+    if (val !== null) dump.data[key] = val;
+  });
+
+  const json = JSON.stringify(dump, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const filename = `mvs-backup_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.json`;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  vibro(20);
+  showToast('💾 Файл: ' + filename);
+});
+
+document.getElementById('btnImportData').addEventListener('click', () => {
+  document.getElementById('menu3')?.classList.remove('show');
+
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.style.display = 'none';
+  document.body.appendChild(inp);
+
+  inp.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) { document.body.removeChild(inp); return; }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const dump = JSON.parse(ev.target.result);
+        if (!dump || !dump.data || typeof dump.data !== 'object') {
+          showToast('❌ Неверный формат файла');
+          return;
+        }
+        const exported = dump._exportedAt
+          ? new Date(dump._exportedAt).toLocaleString('ru-RU')
+          : 'неизвестно';
+        const keysCount = Object.keys(dump.data).length;
+
+        if (!confirm(
+          `Загрузить данные?\n\n` +
+          `📅 Файл от: ${exported}\n` +
+          `📦 Записей: ${keysCount}\n\n` +
+          `⚠️ ТЕКУЩИЕ ДАННЫЕ БУДУТ ЗАМЕНЕНЫ!`
+        )) return;
+
+        let restored = 0;
+        BACKUP_KEYS.forEach(key => {
+          if (dump.data[key] !== undefined) {
+            localStorage.setItem(key, dump.data[key]);
+            restored++;
+          }
+        });
+
+        vibro([50, 50, 100]);
+        showToast(`✅ Загружено ${restored} записей. Перезагрузка...`);
+        setTimeout(() => location.reload(), 1000);
+      } catch (err) {
+        console.error('Import error:', err);
+        showToast('❌ Ошибка: ' + err.message);
+      } finally {
+        document.body.removeChild(inp);
+      }
+    };
+    reader.onerror = () => {
+      showToast('❌ Не удалось прочитать файл');
+      document.body.removeChild(inp);
+    };
+    reader.readAsText(file);
+  });
+
+  inp.click();
+});
 document.getElementById('btnResetTotalsMenu').addEventListener('click', () => {
   document.getElementById('menu3')?.classList.remove('show');
   if (!confirm('Сбросить итоги ТЕКУЩЕГО месяца?\n\nИстория по месяцам сохранится.')) return;
@@ -7410,11 +7518,11 @@ function checkDayReset1() {
                  || (state1.extra && state1.extra.length > 0)
                  || (state1.zk && state1.zk.trim() !== '');
     if (hasData) {
-  // Сохраняем под ВЧЕРАШНЮЮ дату (данные же за прошлый день)
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  saveDayToHistory()
-}
+      // Сохраняем под ВЧЕРАШНЮЮ дату
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      saveDayToHistory(yesterday.toLocaleDateString('ru-RU'));
+    }
     state1 = { counts: {}, manual: {}, extra: [], zk: '' };
     saveState1(state1);
     localStorage.setItem(DAY_RESET_KEY1, todayKey);
@@ -8140,11 +8248,12 @@ loadGeocache();
     vibro(15);
     goToTab(TABS[nextIdx]);
   }, { passive: true });
-
-  document.addEventListener('touchcancel', () => {
+    document.addEventListener('touchcancel', () => {
     tracking = false;
     decided = false;
     isHorizontal = false;
   }, { passive: true });
 })();
 </script>
+</body>
+</html>
