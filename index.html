@@ -5184,25 +5184,89 @@ function render1() {
   const app = document.getElementById('app1');
   app.innerHTML = '';
   SECTIONS1.forEach(section => {
+    // Секция «Встречи» — всегда открыта
+    const alwaysOpen = (section.title === 'Встречи');
+
+    // Восстанавливаем состояние свёрнутости из localStorage
+    const stateKey = 'section_open_' + section.title;
+    const savedOpen = localStorage.getItem(stateKey);
+    const isOpen = alwaysOpen ? true : (savedOpen === null ? false : savedOpen === '1');
+
     const sec = document.createElement('div');
     sec.className = 'section';
-    sec.innerHTML = `<div class="section-title ${section.color || ''}">${section.title}</div>`;
+    sec.dataset.sectionTitle = section.title;
+
+    // Заголовок — кликабельный
+    const title = document.createElement('div');
+    title.className = 'section-title ' + (section.color || '');
+    title.style.cursor = 'pointer';
+    title.style.display = 'flex';
+    title.style.justifyContent = 'space-between';
+    title.style.alignItems = 'center';
+    title.style.userSelect = 'none';
+
+    // Считаем сумму по секции
+    let sectionCount = 0;
+    section.items.forEach(item => { sectionCount += getCount1(item.id); });
+    if (section.title === 'Встречи') sectionCount += Number(getZK1()) || 0;
+
+    const countBadge = sectionCount > 0
+      ? `<span style="font-size:11px;font-weight:700;background:rgba(255,255,255,0.25);padding:2px 8px;border-radius:10px;margin-left:8px;">${sectionCount}</span>`
+      : '';
+
+    const arrow = alwaysOpen
+      ? '' // у «Встречи» стрелки нет — она всегда открыта
+      : `<span class="section-arrow" style="font-size:12px;opacity:0.85;transition:transform 0.2s;${isOpen ? 'transform:rotate(180deg);' : ''}">▼</span>`;
+
+    title.innerHTML = `<span>${section.title}${countBadge}</span>${arrow}`;
+
+    // Контейнер для содержимого
+    const body = document.createElement('div');
+    body.className = 'section-body';
+    body.style.display = isOpen ? 'block' : 'none';
+
+    // Заполняем строки
     section.items.forEach(item => {
       const row = document.createElement('div');
       row.className = 'row';
       row.dataset.id = item.id;
       row.innerHTML = `<div class="name">${item.name}<span class="coef">${item.up}</span></div><div class="counter"><button data-act="minus">−</button><div class="value ${getCount1(item.id) === 0 ? 'zero' : ''}">${getCount1(item.id)}</div><button data-act="plus">+</button></div>`;
-      sec.appendChild(row);
+      body.appendChild(row);
     });
+
+    // ЗК для «Встречи»
     if (section.title === 'Встречи') {
       const zkRow = document.createElement('div');
       zkRow.className = 'row';
       zkRow.innerHTML = `<div class="name">ЗК (зарплатная карта)<span class="coef">${ZK_COEF}</span></div><input class="zk-input" id="zkInput1" type="text" inputmode="numeric" value="${getZK1()}" placeholder="0">`;
-      sec.appendChild(zkRow);
+      body.appendChild(zkRow);
     }
+
+    sec.appendChild(title);
+    sec.appendChild(body);
+
+    // Обработчик тапа по заголовку (кроме «Встречи»)
+    if (!alwaysOpen) {
+      title.addEventListener('click', () => {
+        const currentlyOpen = body.style.display !== 'none';
+        const newState = !currentlyOpen;
+
+        body.style.display = newState ? 'block' : 'none';
+
+        const arrowEl = title.querySelector('.section-arrow');
+        if (arrowEl) {
+          arrowEl.style.transform = newState ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+
+        // Сохраняем в localStorage
+        localStorage.setItem(stateKey, newState ? '1' : '0');
+
+        vibro(8);
+      });
+    }
+
     app.appendChild(sec);
   });
-
   const appsSec = document.createElement('div');
   appsSec.className = 'section';
   appsSec.innerHTML = `<div class="section-title sec-apps">Заявки</div>`;
