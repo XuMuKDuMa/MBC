@@ -7413,7 +7413,7 @@ function checkDayReset1() {
   // Сохраняем под ВЧЕРАШНЮЮ дату (данные же за прошлый день)
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  saveDayToHistory(yesterday.toLocaleDateString('ru-RU'));
+  saveDayToHistory()
 }
     state1 = { counts: {}, manual: {}, extra: [], zk: '' };
     saveState1(state1);
