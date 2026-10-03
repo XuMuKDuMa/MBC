@@ -4079,6 +4079,15 @@ function goToTab(n, animate = true) {
   if (n < 1 || n > 5) return;
   if (n === currentTab) return;
 
+    // Сбрасываем состояние аккордеона при уходе с «Сегодня»
+  if (currentTab === 1 && n !== 1) {
+    SECTIONS1.forEach(section => {
+      if (section.title !== 'Встречи') {
+        localStorage.removeItem('section_open_' + section.title);
+      }
+    });
+  }
+
   // Если уходим с вкладки «Активности» — закрываем открытый слот
   if (currentTab === 4 && n !== 4) {
     _openSlotId = null;
@@ -4115,6 +4124,7 @@ function goToTab(n, animate = true) {
   updateBottomBarActive(n);
 
   // ─── Рендерим контент СРАЗУ, до анимации ───
+   if (n === 1) render1();
   if (n === 2) {
   autofillMvsFromToday();
   render2();
@@ -5184,14 +5194,12 @@ function render1() {
   const app = document.getElementById('app1');
   app.innerHTML = '';
   SECTIONS1.forEach(section => {
-    // Секция «Встречи» — всегда открыта
+        // Секция «Встречи» — всегда открыта
     const alwaysOpen = (section.title === 'Встречи');
+    
 
-    // Восстанавливаем состояние свёрнутости из localStorage
-    const stateKey = 'section_open_' + section.title;
-    const savedOpen = localStorage.getItem(stateKey);
-    const isOpen = alwaysOpen ? true : (savedOpen === null ? false : savedOpen === '1');
-
+    // Все секции всегда свёрнуты при рендере, кроме «Встречи»
+    const isOpen = alwaysOpen;
     const sec = document.createElement('div');
     sec.className = 'section';
     sec.dataset.sectionTitle = section.title;
@@ -5257,12 +5265,8 @@ function render1() {
         if (arrowEl) {
           arrowEl.style.transform = newState ? 'rotate(180deg)' : 'rotate(0deg)';
         }
-
-        // Сохраняем в localStorage
-        localStorage.setItem(stateKey, newState ? '1' : '0');
-
         vibro(8);
-      });
+            });
     }
 
     app.appendChild(sec);
