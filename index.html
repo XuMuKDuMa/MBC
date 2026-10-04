@@ -2544,13 +2544,13 @@ body.dark .slot-btn.active[data-slot-id="t16_18"] {
 }
 .up-chart-wrap {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: scroll;        
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
-  padding-bottom: 6px;
-}
-.up-chart-wrap::-webkit-scrollbar {
+  padding-bottom: 8px;
+  touch-action: pan-x;             
+}.up-chart-wrap::-webkit-scrollbar {
   height: 4px;
 }
 .up-chart-wrap::-webkit-scrollbar-thumb {
@@ -2567,15 +2567,12 @@ body.dark .up-chart-wrap::-webkit-scrollbar-thumb {
 body.dark .up-chart-wrap::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
 }
-
 .up-chart-svg {
   display: block;
+  width: auto !important;
+  max-width: none !important;
   height: 170px;
-}
-.up-chart-svg {
-  width: 100%;
-  height: 140px;
-  display: block;
+  flex-shrink: 0;
 }
 .up-chart-empty {
   text-align: center;
@@ -6251,7 +6248,7 @@ function buildUpChartSvg(monthDays, planUP) {
   let barW;       // ширина одного столбика
   let minW;       // минимальная общая ширина svg
 
-  if (n <= 5) {
+    if (n <= 5) {
     slotW = 56;
     barW = 20;
     minW = 340;
@@ -6260,15 +6257,14 @@ function buildUpChartSvg(monthDays, planUP) {
     barW = 16;
     minW = 340;
   } else if (n <= 15) {
-    slotW = 42;
+    slotW = 44;   // ← было 42 — чуть шире
     barW = 14;
-    minW = 0;
+    minW = 44 * n + 50;   // ← ВСЕГДА считаем реальную ширину
   } else {
-    slotW = 38;
-    barW = 12;
-    minW = 0;
+    slotW = 42;   // ← было 38 — заметно шире
+    barW = 13;
+    minW = 42 * n + 50;   // ← для 22 дней = 974px
   }
-
   const innerH = H - PAD_T - PAD_B;
 
   // Вычисляем ширину svg
@@ -7277,6 +7273,13 @@ function pct2(fact, plan) { const p = num(plan); if (p <= 0) return '—'; retur
 function render2() {
   const app = document.getElementById('app2');
   app.innerHTML = '';
+    // ─── Проверка скролла графика ───
+  setTimeout(() => {
+    const wrap = document.querySelector('.up-chart-wrap');
+    if (!wrap) return;
+    const needScroll = wrap.scrollWidth > wrap.clientWidth;
+    console.log('📊 График: scrollWidth=', wrap.scrollWidth, 'clientWidth=', wrap.clientWidth, 'needScroll=', needScroll);
+  }, 100);
   const empSec = mkSection2('Сотрудник', 'sec-emp');
   empSec.appendChild(mkPlanField2('fio', 'ФИО', 'text'));
   app.appendChild(empSec);
