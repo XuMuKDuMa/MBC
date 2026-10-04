@@ -2542,7 +2542,36 @@ body.dark .slot-btn.active[data-slot-id="t16_18"] {
 .up-chart-body {
   padding: 10px 12px 12px;
 }
-.up-chart-wrap { width: 100%; }
+.up-chart-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  padding-bottom: 6px;
+}
+.up-chart-wrap::-webkit-scrollbar {
+  height: 4px;
+}
+.up-chart-wrap::-webkit-scrollbar-thumb {
+  background: rgba(39, 174, 96, 0.4);
+  border-radius: 2px;
+}
+.up-chart-wrap::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 2px;
+}
+body.dark .up-chart-wrap::-webkit-scrollbar-thumb {
+  background: rgba(74, 222, 128, 0.4);
+}
+body.dark .up-chart-wrap::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.up-chart-svg {
+  display: block;
+  height: 170px;
+}
 .up-chart-svg {
   width: 100%;
   height: 140px;
@@ -2623,7 +2652,22 @@ body.dark .slot-btn.active[data-slot-id="t16_18"] {
 .up-chart-kpi .uck-val.green  { color: #27ae60; }
 .up-chart-kpi .uck-val.orange { color: #f39c12; }
 .up-chart-kpi .uck-val.red    { color: #c0392b; }
-
+.up-chart-scroll-hint {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #91a0aa;
+  padding: 4px 0 2px;
+  letter-spacing: 0.5px;
+  animation: scrollHintPulse 2s ease-in-out infinite;
+}
+body.dark .up-chart-scroll-hint {
+  color: #6b7a85;
+}
+@keyframes scrollHintPulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
 /* Тёмная тема */
 body.dark .up-chart-legend { color: #90a4ae; }
 body.dark .up-chart-kpi {
@@ -6198,64 +6242,91 @@ function buildUpChartSvg(monthDays, planUP) {
     return da - db;
   });
 
-  const W = 340, H = 170;
-  const PAD_L = 32, PAD_R = 8, PAD_T = 20, PAD_B = 34;
-  const innerW = W - PAD_L - PAD_R;
+  const H = 170;
+  const PAD_L = 32, PAD_R = 12, PAD_T = 20, PAD_B = 34;
+
+  // ─── Ширина каждого дня зависит от количества дней ───
+  const n = sorted.length;
+  let slotW;      // ширина слота (один день)
+  let barW;       // ширина одного столбика
+  let minW;       // минимальная общая ширина svg
+
+  if (n <= 5) {
+    slotW = 56;
+    barW = 20;
+    minW = 340;
+  } else if (n <= 10) {
+    slotW = 46;
+    barW = 16;
+    minW = 340;
+  } else if (n <= 15) {
+    slotW = 42;
+    barW = 14;
+    minW = 0;
+  } else {
+    slotW = 38;
+    barW = 12;
+    minW = 0;
+  }
+
   const innerH = H - PAD_T - PAD_B;
 
+  // Вычисляем ширину svg
+  const calcW = PAD_L + PAD_R + slotW * n;
+  const W = Math.max(calcW, minW);
+
+  // Если W больше контейнера — скролл; если меньше — центрируем
+  const slotPadding = n <= 10 ? (W - PAD_L - PAD_R - slotW * n) / 2 : 0;
+  const startX = PAD_L + slotPadding;
+
+  // Значения и норматив
   const valuesUP = sorted.map(d => d.up);
   const valuesFD = sorted.map(d => d.upFD || 0);
-
-  // Максимум с запасом: или данные, или норматив
   const wdStats = getWorkingDaysStats();
   const normUP = planUP > 0 && wdStats.total > 0 ? planUP / wdStats.total : 0;
   const maxVal = Math.max(...valuesUP, ...valuesFD, normUP, 1) * 1.1;
 
-  const n = sorted.length;
-  const slotW = innerW / n;            // ширина слота на один день
-  const barW = Math.min(slotW / 2.6, 22); // ширина одного столбика
-  const gap = 3;                        // зазор между столбиками
-
   const toY = (v) => PAD_T + innerH - (v / maxVal) * innerH;
-  const toX = (i) => PAD_L + slotW * i + slotW / 2; // центр слота
+  const toX = (i) => startX + slotW * i + slotW / 2;
 
   // ─── Столбики ───
   let bars = '';
   sorted.forEach((d, i) => {
     const cx = toX(i);
+    const gap = 2;
 
-    // УП общий — левый столбик
+    // УП общий — левый
     const upH = (d.up / maxVal) * innerH;
     const upX = cx - barW - gap / 2;
     const upY = PAD_T + innerH - upH;
     if (upH > 0) {
       bars += `<rect x="${upX}" y="${upY}" width="${barW}" height="${upH}" rx="2" fill="#27ae60"/>`;
-      // Значение над столбиком
-      if (n <= 7) {
+      // Значение над столбиком (только если столбиков ≤ 10)
+      if (n <= 10) {
         bars += `<text x="${upX + barW/2}" y="${upY - 3}" text-anchor="middle" font-size="9" font-weight="700" fill="#27ae60">${d.up.toFixed(2)}</text>`;
       }
     }
 
-    // УП на ФД — правый столбик
+    // УП на ФД — правый
     const fdH = ((d.upFD || 0) / maxVal) * innerH;
     const fdX = cx + gap / 2;
     const fdY = PAD_T + innerH - fdH;
     if (fdH > 0) {
       bars += `<rect x="${fdX}" y="${fdY}" width="${barW}" height="${fdH}" rx="2" fill="#f39c12"/>`;
-      if (n <= 7) {
+      if (n <= 10) {
         bars += `<text x="${fdX + barW/2}" y="${fdY - 3}" text-anchor="middle" font-size="9" font-weight="700" fill="#f39c12">${(d.upFD || 0).toFixed(2)}</text>`;
       }
     }
   });
 
-  // ─── Линия норматива (пунктир) ───
+  // ─── Линия норматива ───
   let normLine = '';
   if (normUP > 0) {
     const yNorm = toY(normUP);
     normLine = `
       <line x1="${PAD_L}" y1="${yNorm}" x2="${W - PAD_R}" y2="${yNorm}"
-        stroke="#3498db" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7"/>
-      <text x="${W - PAD_R}" y="${yNorm - 3}" text-anchor="end" font-size="8" font-weight="700" fill="#3498db">
+        stroke="#3498db" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.75"/>
+      <text x="${W - PAD_R}" y="${yNorm - 4}" text-anchor="end" font-size="9" font-weight="700" fill="#3498db">
         ${normUP.toFixed(2)}
       </text>
     `;
@@ -6272,7 +6343,7 @@ function buildUpChartSvg(monthDays, planUP) {
   sorted.forEach((d, i) => {
     const cx = toX(i);
     const dayNum = d.date.split('.')[0];
-    xLabels += `<text x="${cx}" y="${PAD_T + innerH + 14}" text-anchor="middle" font-size="10" font-weight="600" fill="#666">${dayNum}</text>`;
+    xLabels += `<text x="${cx}" y="${PAD_T + innerH + 15}" text-anchor="middle" font-size="10" font-weight="600" fill="#666">${dayNum}</text>`;
   });
 
   // ─── Статистика ───
@@ -6282,9 +6353,15 @@ function buildUpChartSvg(monthDays, planUP) {
   const maxDay = sorted.reduce((a, b) => (a.up > b.up ? a : b));
   const minDay = sorted.reduce((a, b) => (a.up < b.up ? a : b));
 
+  // ─── Индикатор, нужен ли скролл ───
+  const needScroll = W > 360;
+  const scrollHint = needScroll
+    ? `<div class="up-chart-scroll-hint">← прокрути →</div>`
+    : '';
+
   return `
     <div class="up-chart-wrap">
-      <svg viewBox="0 0 ${W} ${H}" class="up-chart-svg" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="up-chart-svg" preserveAspectRatio="xMinYMid meet">
         <line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${PAD_T + innerH}" stroke="#e0e4e8" stroke-width="1"/>
         <line x1="${PAD_L}" y1="${PAD_T + innerH}" x2="${W - PAD_R}" y2="${PAD_T + innerH}" stroke="#e0e4e8" stroke-width="1"/>
         ${normLine}
@@ -6292,45 +6369,46 @@ function buildUpChartSvg(monthDays, planUP) {
         ${yLabels}
         ${xLabels}
       </svg>
+    </div>
+    ${scrollHint}
 
-      <div class="up-chart-legend">
-        <div class="ucl-item">
-          <span class="ucl-square" style="background:#27ae60;"></span>
-          <span>УП общий</span>
-        </div>
-        <div class="ucl-item">
-          <span class="ucl-square" style="background:#f39c12;"></span>
-          <span>УП на ФД (KPI)</span>
-        </div>
-        ${normUP > 0 ? `
-        <div class="ucl-item">
-          <span class="ucl-line" style="background:#3498db;"></span>
-          <span>Норматив</span>
-        </div>` : ''}
+    <div class="up-chart-legend">
+      <div class="ucl-item">
+        <span class="ucl-square" style="background:#27ae60;"></span>
+        <span>УП общий</span>
       </div>
-
-      <div class="up-chart-stats">
-        <div class="ucs-item"><span class="ucs-label">Среднее</span><span class="ucs-val">${avgUP.toFixed(2)}</span></div>
-        <div class="ucs-item"><span class="ucs-label">Макс</span><span class="ucs-val green">${maxDay.up.toFixed(2)}</span></div>
-        <div class="ucs-item"><span class="ucs-label">Мин</span><span class="ucs-val red">${minDay.up.toFixed(2)}</span></div>
-        <div class="ucs-item"><span class="ucs-label">Дней</span><span class="ucs-val">${sorted.length}</span></div>
+      <div class="ucl-item">
+        <span class="ucl-square" style="background:#f39c12;"></span>
+        <span>УП на ФД (KPI)</span>
       </div>
+      ${normUP > 0 ? `
+      <div class="ucl-item">
+        <span class="ucl-line" style="background:#3498db;"></span>
+        <span>Норматив</span>
+      </div>` : ''}
+    </div>
 
-      <div class="up-chart-kpi">
-        <div class="uck-item">
-          <span class="uck-label">УП общий</span>
-          <span class="uck-val">${sumUP.toFixed(2)}</span>
-        </div>
-        <div class="uck-item">
-          <span class="uck-label">УП на ФД</span>
-          <span class="uck-val orange">${sumFD.toFixed(2)}</span>
-        </div>
-        <div class="uck-item">
-          <span class="uck-label">Доля ФД</span>
-          <span class="uck-val ${sumUP > 0 && (sumFD/sumUP) >= 0.6 ? 'green' : (sumUP > 0 && (sumFD/sumUP) >= 0.4 ? 'orange' : 'red')}">
-            ${sumUP > 0 ? Math.round((sumFD / sumUP) * 100) + '%' : '—'}
-          </span>
-        </div>
+    <div class="up-chart-stats">
+      <div class="ucs-item"><span class="ucs-label">Среднее</span><span class="ucs-val">${avgUP.toFixed(2)}</span></div>
+      <div class="ucs-item"><span class="ucs-label">Макс</span><span class="ucs-val green">${maxDay.up.toFixed(2)}</span></div>
+      <div class="ucs-item"><span class="ucs-label">Мин</span><span class="ucs-val red">${minDay.up.toFixed(2)}</span></div>
+      <div class="ucs-item"><span class="ucs-label">Дней</span><span class="ucs-val">${sorted.length}</span></div>
+    </div>
+
+    <div class="up-chart-kpi">
+      <div class="uck-item">
+        <span class="uck-label">УП общий</span>
+        <span class="uck-val">${sumUP.toFixed(2)}</span>
+      </div>
+      <div class="uck-item">
+        <span class="uck-label">УП на ФД</span>
+        <span class="uck-val orange">${sumFD.toFixed(2)}</span>
+      </div>
+      <div class="uck-item">
+        <span class="uck-label">Доля ФД</span>
+        <span class="uck-val ${sumUP > 0 && (sumFD/sumUP) >= 0.6 ? 'green' : (sumUP > 0 && (sumFD/sumUP) >= 0.4 ? 'orange' : 'red')}">
+          ${sumUP > 0 ? Math.round((sumFD / sumUP) * 100) + '%' : '—'}
+        </span>
       </div>
     </div>
   `;
