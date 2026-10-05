@@ -5254,12 +5254,12 @@ updateDrawerRoutes();
 const ZK_COEF = 0.10;
 const SECTIONS1 = [
   // ─── ВСТРЕЧИ (не трогаем) ───
-  { title: 'Встречи', color: 'sec-meet', items: [
+   { title: 'Встречи', color: 'sec-meet', items: [
     { id: 'fd_meet_02',  name: 'Встреча ФД обычная', up: 0.20, od: 0, type: 'meeting' },
     { id: 'fd_meet_035', name: 'Встреча ФД детская с верификацией', up: 0.35, od: 0, type: 'meeting' },
     { id: 'fd_meet_dbo', name: 'Встреча ФД ДБО', up: 0.35, od: 0, type: 'meeting' },
+    { id: 'fd_meet_sim', name: 'ФД Сим', up: 0.12, od: 0, type: 'meeting' },
   ]},
-
   // ─── БИЗНЕС (фиолетовый) ───
   { title: 'Бизнес', color: 'sec-biz', items: [
     { id: 'biz_rko',  name: 'РКО',              up: 0.48, od: 0, type: 'biz' },
@@ -5717,20 +5717,31 @@ function buildSalesBreakdownToday() {
   return bd;
 }
 function buildMeetingsBreakdownToday() {
-  const b2c = { fd02: getCount1('fd_meet_02'), fd035: getCount1('fd_meet_035'), fdDbo: getCount1('fd_meet_dbo'), zk: num(getZK1()) };
+  const b2c = {
+    fd02: getCount1('fd_meet_02'),
+    fd035: getCount1('fd_meet_035'),
+    fdDbo: getCount1('fd_meet_dbo'),
+    fdSim: getCount1('fd_meet_sim'),   // ← новый
+    zk: num(getZK1())
+  };
   const b2b = { rko: getCount1('biz_rko'), ip: getCount1('biz_ip'), card: getCount1('biz_card') };
   return { b2c, b2b };
 }
 function buildReportText1() {
-  let up = 0, od = 0, upFD = 0, fd02 = 0, fd035 = 0;
+   let up = 0, od = 0, upFD = 0, fd02 = 0, fd035 = 0, fdSim = 0;
   let sumSim = 0, sumPrime = 0, sumPDS = 0, cntKK = 0, cntPK = 0, cntSZ = 0, bizMeetings = 0;
 let cntPerenos = 0;
-  const others = [];
+ const others = [];
   SECTIONS1.forEach(s => s.items.forEach(i => {
     const c = getCount1(i.id);
     if (!c) return;
     up += c * i.up; od += c * i.od;
-    if (i.type === 'meeting') { if (i.id === 'fd_meet_02') fd02 += c; else fd035 += c; return; }
+        if (i.type === 'meeting') {
+      if (i.id === 'fd_meet_02') fd02 += c;
+      else if (i.id === 'fd_meet_sim') fdSim += c;
+      else fd035 += c;
+      return;
+    }
     if (i.type === 'biz') bizMeetings += c;
     upFD += c * i.up;
     if (i.id === 'perenos_sim') cntPerenos += c;
@@ -5778,6 +5789,7 @@ B2C слот ЕКП: ${b2cLine}
 
 ФД 0.35: ${fd035}
 ФД 0.2: ${fd02}
+ФД Сим: ${fdSim}
 ЗК с ОД: 
 
 ОД: ${od}
@@ -6564,7 +6576,8 @@ const MEETINGS_B2C_GROUPS = [
   { key: 'fd02',  name: 'ФД обычная (0.20)',  icon: '👤', color: '#3498db' },
   { key: 'fd035', name: 'ФД детская (0.35)',  icon: '👶', color: '#2980b9' },
   { key: 'fdDbo', name: 'ФД ДБО (0.35)',      icon: '📱', color: '#1f6391' },
-  { key: 'zk',    name: 'ЗК',                 icon: '💰', color: '#16a085' },
+  { key: 'fdSim', name: 'ФД Сим (0.12)',      icon: '📱', color: '#16a085' },
+  { key: 'zk',    name: 'ЗК',                 icon: '💰', color: '#0e6b5a' },
 ];
 const MEETINGS_B2B_GROUPS = [
   { key: 'rko',  name: 'РКО',                icon: '🏦', color: '#8e44ad' },
