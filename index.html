@@ -3579,7 +3579,7 @@ body.dark #screen4 .route-time-col .rtc-end   { color: #81929d; }
   width: 100%;
 }
 #screen4 .route-addr-input {
-  padding-right: 40px !important;   /* только под 🎤 */
+  padding-right: 68px !important;   /* под 📍 + 🎤 */
 }
 #screen4 .route-mic-inline {
   position: absolute;
@@ -3603,6 +3603,35 @@ body.dark #screen4 .route-time-col .rtc-end   { color: #81929d; }
   width: 16px;
   height: 16px;
   display: block;
+}
+/* ─── Кнопка ручного ввода координат ─── */
+#screen4 .route-coords-btn {
+  position: absolute;
+  right: 34px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #687883;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background .15s;
+}
+#screen4 .route-coords-btn:active {
+  background: rgba(0,0,0,.06);
+}
+body.dark #screen4 .route-coords-btn {
+  color: #a8b8c4;
+}
+body.dark #screen4 .route-coords-btn:active {
+  background: rgba(255,255,255,.08);
 }
 #screen4 .route-mic-inline:active { background: rgba(0,0,0,.06); }
 #screen4 .route-mic-inline.listening {
@@ -4141,6 +4170,39 @@ body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
   </div>
 </div>
 
+<!-- Модалка ввода координат -->
+<div class="modal-overlay" id="coordsModal">
+  <div class="modal" style="max-width: 360px;">
+    <div class="emoji">📍</div>
+    <h2 style="color:#27ae60;">Координаты адреса</h2>
+    <p style="color:#666;margin-bottom:14px;font-size:13px;line-height:1.5;">
+      Открой <b>Яндекс.Карты</b> → найди дом → долгий тап (или правый клик) → скопируй координаты.
+    </p>
+
+    <div style="text-align:left;margin-bottom:10px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:4px;">Адрес</label>
+      <div id="coordsAddr" style="background:#f8f9fa;padding:8px 12px;border-radius:8px;font-size:13px;color:#2c3e50;font-weight:600;word-break:break-word;"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="flex:1;">
+        <label style="display:block;font-size:12px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:4px;">Широта</label>
+        <input type="text" id="coordLat" class="quick-input" inputmode="decimal" placeholder="55.834567">
+      </div>
+      <div style="flex:1;">
+        <label style="display:block;font-size:12px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:4px;">Долгота</label>
+        <input type="text" id="coordLon" class="quick-input" inputmode="decimal" placeholder="37.345678">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button id="coordsReset" style="flex:1;padding:13px;border:none;border-radius:10px;background:#fdecec;color:#c0392b;font-size:14px;font-weight:600;cursor:pointer;">🗑 Сбросить</button>
+      <button id="coordsSave" style="flex:2;padding:13px;border:none;border-radius:10px;background:#27ae60;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">✓ Сохранить</button>
+    </div>
+
+    <button id="coordsCancel" style="width:100%;margin-top:8px;padding:12px;border:none;border-radius:10px;background:#ecf0f1;color:#2c3e50;font-size:14px;font-weight:600;cursor:pointer;">Закрыть</button>
+  </div>
+</div>
 <div class="modal-overlay" id="monthlyReportModal">
   <div class="sales-modal monthly-report">
     <div class="sales-modal-header">
@@ -5009,6 +5071,21 @@ btnMic.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: tru
 
 addrWrap.appendChild(addrInput);
 addrWrap.appendChild(btnMic);
+
+// ─── Кнопка ручного ввода координат ───
+const btnCoords = document.createElement('button');
+btnCoords.type = 'button';
+btnCoords.className = 'route-coords-btn';
+btnCoords.innerHTML = '📍';
+btnCoords.title = 'Указать координаты вручную';
+btnCoords.addEventListener('click', (e) => {
+  e.stopPropagation();
+  vibro(15);
+  openCoordsModal(item, timeId);
+});
+btnCoords.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+
+addrWrap.appendChild(btnCoords);
 fields.appendChild(addrWrap);
 
 const noteInput = document.createElement('input');
@@ -6024,6 +6101,99 @@ setTimeout(() => {
     updateQuickPreview();
   }
 }
+/* ═══════════════════════════════════════════════
+   МОДАЛКА РУЧНОГО ВВОДА КООРДИНАТ
+   ═══════════════════════════════════════════════ */
+let _coordsEditingItem = null;
+let _coordsEditingAddr = null;
+
+function openCoordsModal(item, timeId) {
+  const addr = applyCity(item.addr || '').trim();
+  if (!addr) {
+    showToast('⚠️ Сначала введите адрес');
+    return;
+  }
+
+  _coordsEditingItem = item;
+  _coordsEditingAddr = addr;
+
+  // Показываем адрес в модалке
+  document.getElementById('coordsAddr').textContent = addr;
+
+  // Если уже есть координаты в кеше — показываем их
+  const existing = mapGeocache[addr];
+  if (existing && Array.isArray(existing)) {
+    document.getElementById('coordLat').value = existing[0];
+    document.getElementById('coordLon').value = existing[1];
+  } else {
+    document.getElementById('coordLat').value = '';
+    document.getElementById('coordLon').value = '';
+  }
+
+  document.getElementById('coordsModal').classList.add('show');
+}
+
+function closeCoordsModal() {
+  document.getElementById('coordsModal').classList.remove('show');
+  _coordsEditingItem = null;
+  _coordsEditingAddr = null;
+}
+
+// Сохранить
+document.getElementById('coordsSave').addEventListener('click', () => {
+  const lat = parseFloat(String(document.getElementById('coordLat').value).replace(',', '.'));
+  const lon = parseFloat(String(document.getElementById('coordLon').value).replace(',', '.'));
+
+  if (isNaN(lat) || isNaN(lon)) {
+    showToast('❌ Введите оба числа');
+    return;
+  }
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    showToast('❌ Координаты вне диапазона');
+    return;
+  }
+
+  if (!_coordsEditingAddr) return;
+
+  // Сохраняем в кеш
+  mapGeocache[_coordsEditingAddr] = [lat, lon];
+  saveGeocache();
+
+  showToast('✅ Координаты сохранены');
+
+  // Принудительно обновляем карту
+  _mapHash = '';
+  if (map) renderMapMarkers();
+
+  closeCoordsModal();
+});
+
+// Сбросить
+document.getElementById('coordsReset').addEventListener('click', () => {
+  if (!_coordsEditingAddr) return;
+  if (!mapGeocache[_coordsEditingAddr]) {
+    showToast('⚠️ Координаты и так не заданы');
+    return;
+  }
+  if (!confirm('Сбросить координаты?\n\nКарта снова будет искать адрес автоматически.')) return;
+
+  delete mapGeocache[_coordsEditingAddr];
+  saveGeocache();
+
+  showToast('🗑 Координаты удалены');
+
+  _mapHash = '';
+  if (map) renderMapMarkers();
+
+  closeCoordsModal();
+});
+
+// Отмена / закрыть
+document.getElementById('coordsCancel').addEventListener('click', closeCoordsModal);
+document.getElementById('coordsModal').addEventListener('click', (e) => {
+  if (e.target.id === 'coordsModal') closeCoordsModal();
+});
+
 function updateQuickSendBtn() {
   const btn = document.getElementById('qSend');
   if (!btn) return;
@@ -7389,13 +7559,20 @@ function render2() {
 
   // Кнопки Утр.отчёт / Отчёт — в конце контента, едут со скроллом
   const actionsWrap = document.createElement('div');
-  actionsWrap.className = 'r2-actions r2-actions-inline';
-  actionsWrap.id = 'r2Actions';
-  actionsWrap.innerHTML = `
-    <button class="btn-secondary" id="btnMorningReport2">Утр.отчёт</button>
-    <button class="btn-primary" id="btnReport2" disabled>Отчёт</button>
-  `;
-  app.appendChild(actionsWrap);
+actionsWrap.className = 'r2-actions r2-actions-inline';
+actionsWrap.id = 'r2Actions';
+
+// Проверяем: отправлен ли отчёт сегодня?
+const todayStr = new Date().toDateString();
+const alreadySent = state2.lastDay === todayStr && state2.savedToday === true;
+
+actionsWrap.innerHTML = `
+  <button class="btn-secondary" id="btnMorningReport2">Утр.отчёт</button>
+  <button class="btn-primary" id="btnReport2" ${alreadySent ? 'disabled' : ''}>
+    ${alreadySent ? '✓ Отправлено' : 'Отчёт'}
+  </button>
+`;
+app.appendChild(actionsWrap);
 
   // Обработчик «Утр.отчёт»
   const btnMorning = document.getElementById('btnMorningReport2');
@@ -7526,12 +7703,26 @@ function renderTotals2() {
   if (el3) el3.textContent = `${slNag} / ${slUsp}`;
   const el3p = document.getElementById('pct_slotm2');
   if (el3p) el3p.textContent = pct2(slUsp, slNag);
+
+  // ─── Кнопка «Отчёт» ───
   const btn = document.getElementById('btnReport2');
-if (btn) {
-  const upDay = getT2('up_day').trim();
-  const reasons = getManual1('reasons').trim();
-  btn.disabled = upDay === '' || reasons === '';
-}
+  if (btn) {
+    // Приоритет 1: если отчёт уже отправлен сегодня — блокируем и меняем текст
+    const todayStr = new Date().toDateString();
+    const alreadySent = state2.lastDay === todayStr && state2.savedToday === true;
+
+    if (alreadySent) {
+      btn.disabled = true;
+      btn.textContent = '✓ Отправлено';
+      return;
+    }
+
+    // Приоритет 2: если не отправлено — смотрим, заполнены ли поля
+    const upDay = getT2('up_day').trim();
+    const reasons = getManual1('reasons').trim();
+    btn.disabled = upDay === '' || reasons === '';
+    btn.textContent = 'Отчёт';
+  }
 }
 function buildMorningReport2() {
   const today = new Date().toLocaleDateString('ru-RU');
@@ -8394,7 +8585,6 @@ async function renderMapMarkers() {
         note: item.note,
         status: item.status,
         startedAt: item.startedAt,
-          startedAt: item.startedAt,
         idx
       });
       }
