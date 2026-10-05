@@ -3379,6 +3379,36 @@ body.dark .aap-item::after {
 .map-marker.t16_18{background:#27ae60}
 .map-marker.done{opacity:.55}
 .map-marker.wait{animation:markerPulse 1.8s ease-in-out infinite}
+/* ─── Маркер «В работе» — увеличенный, пульсирует ─── */
+.map-marker.live {
+  width: 44px !important;
+  height: 44px !important;
+  background: linear-gradient(145deg, #f39c12, #e67e22) !important;
+  border: 4px solid #fff !important;
+  box-shadow:
+    0 0 0 0 rgba(243, 156, 18, 0.7),
+    0 4px 14px rgba(0,0,0,0.35) !important;
+  animation: mapMarkerLive 1.4s ease-in-out infinite !important;
+  z-index: 1000 !important;
+}
+.map-marker.live span {
+  font-size: 15px !important;
+  font-weight: 900 !important;
+}
+@keyframes mapMarkerLive {
+  0%   {
+    box-shadow: 0 0 0 0 rgba(243,156,18,0.7), 0 4px 14px rgba(0,0,0,0.35);
+    transform: rotate(-45deg) scale(1);
+  }
+  50%  {
+    box-shadow: 0 0 0 14px rgba(243,156,18,0), 0 4px 14px rgba(0,0,0,0.35);
+    transform: rotate(-45deg) scale(1.15);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(243,156,18,0), 0 4px 14px rgba(0,0,0,0.35);
+    transform: rotate(-45deg) scale(1);
+  }
+}
 @keyframes markerPulse{
   0%, 100%{transform:rotate(-45deg) scale(1)}
   50%    {transform:rotate(-45deg) scale(1.15)}
@@ -3406,6 +3436,7 @@ body.dark .aap-item::after {
   display: none; /* убрать стрелочку тултипа */
 }
 .leaflet-tooltip.marker-label.wait   { border-color: #3498db; color: #2471a3; background: #eaf3fb; }
+.leaflet-tooltip.marker-label.live   { border-color: #f39c12; color: #b9770e; background: #fff8ec; font-weight: 900; }
 .leaflet-tooltip.marker-label.done   { border-color: #20a464; color: #168653; background: #e7f7ef; }
 .leaflet-tooltip.marker-label.ndz    { border-color: #d13c78; color: #c2185b; background: #fdeaf2; }
 .leaflet-tooltip.marker-label.perenos{ border-color: #8795a1; color: #5a6b7a; background: #eef2f6; }
@@ -4305,6 +4336,10 @@ if (n === 4) renderRoute();
 if (n === 5) {
   initMap();
   checkVpnAndWarn();
+  // Принудительно перерисовываем маркеры при каждом входе на карту
+  setTimeout(() => {
+    if (map) renderMapMarkers();
+  }, 200);
 }
 
   // ─── Мгновенное переключение (без анимации — не мигает в APK) ───
@@ -4665,10 +4700,12 @@ function clearStartedAtOnNewDay() {
       }
     });
   });
-  if (changed) {
+    if (changed) {
     saveRouteState(routeState);
     renderRoute();
     updateActivitiesBadge();
+    _mapHash = '';                  // ← ДОБАВИТЬ
+    if (map) renderMapMarkers();
   }
   localStorage.setItem(KEY, today);
 }
@@ -4801,10 +4838,11 @@ function showStatusMenu(anchor, item, timeId) {
   const idx = list.indexOf(item);
   if (idx >= 0) {
     list.splice(idx, 1);
-    saveRouteState(routeState);
+        saveRouteState(routeState);
     renderRoute();
     updateDrawerRoutes();
     updateActivitiesBadge();
+    _mapHash = '';                  // ← ДОБАВИТЬ
     if (map) renderMapMarkers();
     vibro(25);
   }
@@ -4815,11 +4853,12 @@ function showStatusMenu(anchor, item, timeId) {
   if (status === 'done' || status === 'ndz' || status === 'perenos') {
     item.startedAt = null;
   }
-  saveRouteState(routeState);
+    saveRouteState(routeState);
   renderRoute();
   updateDrawerRoutes();
   updateActivitiesBadge();
-  if (map) renderMapMarkers();
+  _mapHash = '';                  
+  if (map) renderMapMarkers();;
   vibro(15);
         if (!wasSame) {
           if (status === 'wait')    showSuccessNotification('Встреча в ожидании', 'wait');
@@ -4919,6 +4958,7 @@ addrInput.addEventListener('input', () => {
   item.addr = addrInput.value;
   saveRouteState(routeState);
   autoGrow(addrInput);
+  _mapHash = '';                  
 });
 
 // ─── Кнопка микрофона внутри поля адреса ───
@@ -5048,14 +5088,16 @@ if (item.startedAt) {
   startBtn.type = 'button';
   startBtn.className = 'route-start-btn';
   startBtn.innerHTML = `<span class="rsb-icon">▶</span><span>Начать</span>`;
-  startBtn.addEventListener('click', (e) => {
+    startBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     item.startedAt = Date.now();
     saveRouteState(routeState);
     vibro(20);
-    showToast('⏱ Встреча начата');
+    showToast('⏱ Время пошло');
     renderRoute();
     updateActivitiesBadge();
+    _mapHash = '';                  // ← ГЛАВНОЕ: СБРОС хеша
+    if (map) renderMapMarkers();
   });
   startBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
   statusLine.appendChild(startBtn);
@@ -5222,9 +5264,10 @@ if (mapBtn) {
       addBtn.textContent = '+ Добавить адрес';
       addBtn.addEventListener('click', () => {
         routeState.lists[t.id].push({ addr: '', note: '', status: null });
-        saveRouteState(routeState);
+                saveRouteState(routeState);
         renderRoute();
         updateDrawerRoutes();
+        _mapHash = '';                  // ← ДОБАВИТЬ
         if (map) renderMapMarkers();
         setTimeout(() => {
           const inputs = document.querySelectorAll(`#app4 .route-time-block .route-addr-input`);
@@ -5534,19 +5577,36 @@ function render1() {
   app.appendChild(reportBtnWrap);
 
   const btnReport1El = document.getElementById('btnReport1');
-  if (btnReport1El) {
+if (btnReport1El) {
 btnReport1El.addEventListener('click', async () => {
-  // Защита: не отправлять без причин
+  // ─── ЗАЩИТА ОТ ДВОЙНОГО НАЖАТИЯ ───
+  if (btnReport1El.dataset.sending === '1') return;
+  btnReport1El.dataset.sending = '1';
+  btnReport1El.disabled = true;
+  btnReport1El.textContent = 'Отправка…';
+
   const reasons = getManual1('reasons').trim();
   if (!reasons) {
     showToast('⚠️ Заполните «Причины не доставок»');
+    btnReport1El.dataset.sending = '';
+    btnReport1El.disabled = false;
+    btnReport1El.textContent = 'Отчёт';
     return;
   }
-  const text = buildReportText1();
-  saveDayToHistory();
-  localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
-  await copyText(text);
-  showSuccessNotification('Отчёт готов', 'done');
+
+  try {
+    const text = buildReportText1();
+    saveDayToHistory();
+    localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
+    await copyText(text);
+    showSuccessNotification('Отчёт готов', 'done');
+  } catch (e) {
+    showToast('❌ Ошибка: ' + e.message);
+  } finally {
+    btnReport1El.dataset.sending = '';
+    btnReport1El.disabled = false;
+    btnReport1El.textContent = 'Отчёт';
+  }
 });
   }
 }
@@ -5758,11 +5818,17 @@ else if (i.group === 'Сим') sumSim += c;
   (state1.extra || []).forEach(x => {
     if (x.name && x.name.trim()) { upFD += num(x.up); od += num(x.od); others.push(x.name.trim()); }
   });
-  const m = (id) => getManual1(id);
-  const totalMeetings = fd02 + fd035;
+    const m = (id) => getManual1(id);
   const b2cTotal = Number(m('b2c_total')) || 0;
   const b2bTotal = Number(m('b2b_total')) || 0;
-  const b2cLine = `${b2cTotal}/${totalMeetings}`;
+
+  // B2C = ВСЕ встречи из счётчиков (обычные + детские + ДБО + ФД Сим)
+  const b2cMeetings = getCount1('fd_meet_02')
+                    + getCount1('fd_meet_035')
+                    + getCount1('fd_meet_dbo')
+                    + getCount1('fd_meet_sim');
+
+  const b2cLine = `${b2cTotal}/${b2cMeetings}`;
   const b2bLine = `${b2bTotal}/${bizMeetings}`;
   return `‼️‼️‼️
 Новый формат ✅
@@ -7344,8 +7410,15 @@ function render2() {
 
   // Обработчик «Отчёт»
   const btnRep = document.getElementById('btnReport2');
-  if (btnRep) {
-    btnRep.addEventListener('click', async () => {
+if (btnRep) {
+  btnRep.addEventListener('click', async () => {
+    // ─── ЗАЩИТА ОТ ДВОЙНОГО НАЖАТИЯ ───
+    if (btnRep.dataset.sending === '1') return;   // уже отправляется
+    btnRep.dataset.sending = '1';
+    btnRep.disabled = true;
+    btnRep.textContent = 'Отправка…';
+
+    try {
       state2.last = {
         up_day: getT2('up_day'), kk_fact: getT2('kk_fact'), pk: getT2('pk'),
         tr_nag: getT2('tr_nag'), tr_usp: getT2('tr_usp'),
@@ -7359,6 +7432,8 @@ function render2() {
       state2.lastDay = new Date().toDateString();
       state2.savedToday = true;
       saveState2(state2);
+
+      // Очищаем дневные поля
       state2.today.up_day = '';
       state2.today.tr_nag = '';
       state2.today.tr_usp = '';
@@ -7367,13 +7442,20 @@ function render2() {
       state2.today.kk_fact = '';
       state2.today.pk = '';
       saveState2(state2);
+
       const text = buildReport2();
-localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
-await copyText(text);
-showSuccessNotification('Отчёт готов', 'done');
-render2();
-    });
-  }
+      localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
+      await copyText(text);
+      showSuccessNotification('Отчёт готов', 'done');
+      render2();   // перерисует — кнопка вернётся в активное состояние
+    } catch (e) {
+      btnRep.dataset.sending = '';
+      btnRep.disabled = false;
+      btnRep.textContent = 'Отчёт';
+      showToast('❌ Ошибка: ' + e.message);
+    }
+  });
+}
 
   renderTotals2();
 }
@@ -8295,10 +8377,7 @@ let _mapHash = '';
 async function renderMapMarkers() {
   if (!map) return;
 
-  const hash = JSON.stringify(routeState.lists) + '|' + currentMapFilter;
-  if (hash === _mapHash) return;
-  _mapHash = hash;
-
+  // Убрали проверку по хешу — всегда перерисовываем
   mapMarkers.forEach(m => map.removeLayer(m));
   mapMarkers = [];
 
@@ -8308,14 +8387,16 @@ async function renderMapMarkers() {
     const list = routeState.lists[t.id] || [];
     list.forEach((item, idx) => {
       if (item.addr && item.addr.trim()) {
-        activities.push({
-          timeId: t.id,
-          timeLabel: t.label,
-          addr: item.addr,
-          note: item.note,
-          status: item.status,
-          idx
-        });
+              activities.push({
+        timeId: t.id,
+        timeLabel: t.label,
+        addr: item.addr,
+        note: item.note,
+        status: item.status,
+        startedAt: item.startedAt,
+          startedAt: item.startedAt,
+        idx
+      });
       }
     });
   });
@@ -8353,10 +8434,19 @@ console.log('✅', group.addr, '→', coords[0], coords[1]);
 
     // Класс маркера — берём время первой встречи
 let markerClass = 'map-marker ' + first.timeId;
-if (group.items.every(i => i.status === 'done'))    markerClass += ' done';
-if (group.items.every(i => i.status === 'ndz'))     markerClass += ' ndz wait';
-if (group.items.every(i => i.status === 'perenos')) markerClass += ' perenos';
-if (group.items.some(i => i.status === 'wait'))     markerClass += ' wait';
+
+// Приоритет: live > done > ndz > perenos > wait
+const anyLive = group.items.some(i => i.startedAt);
+const allDone = group.items.every(i => i.status === 'done');
+const allNdz = group.items.every(i => i.status === 'ndz');
+const allPerenos = group.items.every(i => i.status === 'perenos');
+const anyWait = group.items.some(i => i.status === 'wait');
+
+if (anyLive)          markerClass += ' live';     // ← НОВОЕ: в работе
+else if (allDone)     markerClass += ' done';
+else if (allNdz)      markerClass += ' ndz wait';
+else if (allPerenos)  markerClass += ' perenos';
+else if (anyWait)     markerClass += ' wait';
     // В маркере: если встреч больше 1 — показываем цифру, иначе номер
     const label = count > 1 ? count : (first.idx + 1);
 
@@ -8381,9 +8471,13 @@ usedCoords[coordKey] = (usedCoords[coordKey] || 0) + 1;
 
 const marker = L.marker(finalCoords, { icon }).addTo(map);
 
-// Подпись статуса (если одна встреча) или "N встреч"
+// Подпись статуса
 let tooltipText, tooltipClass;
-if (group.items.length === 1) {
+if (anyLive) {
+  // Хоть одна встреча в работе — показываем "В работе"
+  tooltipText = 'В работе';
+  tooltipClass = 'live';
+} else if (group.items.length === 1) {
   tooltipText = STATUS_LABELS[first.status] || '';
   tooltipClass = first.status || '';
 } else {
@@ -8398,16 +8492,30 @@ if (tooltipText) {
     className: 'marker-label ' + tooltipClass
   });
 }
-    // Формируем попап со списком всех встреч по этому адресу
+        // Формируем попап со списком всех встреч по этому адресу
     let itemsHtml = '';
     group.items.forEach((act, i) => {
-      const statusText = STATUS_LABELS[act.status] || '—';
+      // Если встреча в работе — показываем время старта
+      let statusText;
+      let statusColor = '#71808b';
+      if (act.startedAt) {
+        const t = new Date(act.startedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        const mins = Math.floor((Date.now() - act.startedAt) / 60000);
+        const timeStr = mins >= 60
+          ? `${Math.floor(mins/60)}ч ${mins%60}м`
+          : `${mins}м`;
+        statusText = `🔴 В работе с ${t} (${timeStr})`;
+        statusColor = '#e67e22';
+      } else {
+        statusText = STATUS_LABELS[act.status] || '—';
+      }
+
       const borderTop = i > 0 ? 'border-top:1px solid #eee;padding-top:8px;margin-top:6px;' : '';
       itemsHtml += `
   <div style="${borderTop}">
     <div class="map-popup-time">${act.timeLabel}</div>
     ${act.note ? `<div class="map-popup-status">📝 ${escapeHtml(act.note)}</div>` : ''}
-    <div class="map-popup-status">Статус: ${statusText}</div>
+    <div class="map-popup-status" style="color:${statusColor};font-weight:${act.startedAt ? '800' : '500'};">Статус: ${statusText}</div>
     <button class="map-popup-btn map-popup-btn-nav" onclick="event.stopPropagation(); openNavigator('${encodeURIComponent(group.addr || '')}')">Маршрут</button>
   </div>
 `;
