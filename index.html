@@ -2717,25 +2717,34 @@ body.dark .up-chart-empty { color: #90a4ae; }
     #f5f7fa !important;
 }
 #screen4 .r3-header {
-  min-height: 68px !important;
-  padding: 10px 16px !important;
+  min-height: 50px !important;
+  padding: 6px 12px !important;
   background: linear-gradient(135deg, #172b3a 0%, #126b50 55%, #20a36a 100%) !important;
   border-bottom: 0 !important;
-  box-shadow: 0 8px 24px rgba(18,107,80,.20) !important;
+  box-shadow: 0 4px 14px rgba(18,107,80,.18) !important;
 }
-#screen4 .r3-header h1 { font-size: 20px !important; font-weight: 850 !important; letter-spacing: -.35px; }
-#screen4 .r3-header .date { font-size: 11px !important; opacity: .72 !important; margin-top: 4px !important; }
+#screen4 .r3-header h1 { font-size: 16px !important; font-weight: 800 !important; letter-spacing: -.2px; }
+#screen4 .r3-header .date { font-size: 10px !important; opacity: .7 !important; margin-top: 1px !important; }
 #screen4 .theme-btn {
-  width: 42px; height: 42px; border-radius: 14px;
-  background: rgba(255,255,255,.2);
-  border: 1px solid rgba(255,255,255,.14);
+  width: 36px; height: 36px; border-radius: 12px;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.12);
+  font-size: 15px;
+}
+#screen4 .city-input-header {
+  width: 90px;
+  padding: 6px 10px;
+  font-size: 11px;
+  border-radius: 10px;
+}
+#screen4 .city-input-header:focus {
+  width: 120px;
 }
 /* ─── Когда слот открыт — остальные слоты приглушаются ─── */
 #screen4 .slot-grid.has-open .slot-btn:not(.active) {
-  opacity: 0.35;
-  filter: saturate(0.6);
+  opacity: 0.5;
+  filter: saturate(0.7);
   transition: opacity 0.25s, filter 0.25s;
-  pointer-events: none;
 }
 
 #screen4 .slot-grid .slot-btn {
@@ -3514,9 +3523,13 @@ body.dark .bb-item.bb-today .bb-today-orb{border-color:#1a2430}
 
 /* ─── Компактные слоты в одну колонку ─── */
 #screen4 .slot-grid {
-  grid-template-columns: 1fr !important;
-  gap: 7px !important;
-  margin: 0 10px 12px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+  margin: 0 8px 10px !important;
+  width: calc(100% - 16px) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
 }
 #screen4 .slot-grid .route-time-block {
   grid-column: 1 / -1;
@@ -3524,14 +3537,43 @@ body.dark .bb-item.bb-today .bb-today-orb{border-color:#1a2430}
 }
 #screen4 .slot-btn {
   min-height: 68px !important;
-  padding: 9px 12px 8px 15px !important;
-  border-radius: 14px !important;
+  padding: 8px 6px 8px 8px !important;
+  border-radius: 12px !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
 }
-#screen4 .slot-btn .slot-head { min-height: 25px; }
-#screen4 .slot-btn .slot-time { font-size: 15px !important; font-weight: 850 !important; }
-#screen4 .slot-summary { display:flex; align-items:center; gap:7px; min-width:0; }
-#screen4 .slot-summary-main { font-size:11px; font-weight:850; color:#263944; white-space:nowrap; }
-#screen4 .slot-summary-status { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; font-weight:650; color:#82919b; }
+#screen4 .slot-btn .slot-head { min-height: 20px; width: 100%; }
+#screen4 .slot-btn .slot-time { font-size: 12px !important; font-weight: 850 !important; }
+#screen4 .slot-summary {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 1px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+#screen4 .slot-summary-main {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  color: #263944;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+#screen4 .slot-summary-status {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px !important;
+  font-weight: 650;
+  color: #82919b;
+  line-height: 1.1;
+}
 #screen4 .slot-chev { flex-shrink:0; margin-left:auto; }
 #screen4 .slot-btn.active .slot-summary-main,
 #screen4 .slot-btn.active .slot-summary-status { color:rgba(255,255,255,.88) !important; }
@@ -3942,7 +3984,6 @@ body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
     <div class="screen" id="screen1">
       <div class="r1-header">
         <div class="r1-header-left"><div><h1>📊 ВД Х-К</h1><div class="date" id="todayDate1"></div></div></div>
-        <button class="theme-btn" id="themeBtn1">🌙</button>
       </div>
       <div id="app1"></div>
     </div>
@@ -3951,7 +3992,6 @@ body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
       <div class="r2-header">
         <div class="r2-header-left"><div><h1>📊 МВС</h1><div class="date" id="todayDate2"></div></div></div>
         <div class="r2-header-right">
-          <button class="theme-btn" id="themeBtn2">🌙</button>
           <button class="menu-btn" id="menuBtn2">⋮</button>
         </div>
       </div>
@@ -3962,7 +4002,6 @@ body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
       <div class="r1-header">
         <div class="r1-header-left"><div><h1>📈 Итоги</h1><div class="date" id="todayDate3"></div></div></div>
         <div class="r2-header-right">
-          <button class="theme-btn" id="themeBtn3">🌙</button>
           <button class="menu-btn" id="menuBtn3">⋮</button>
         </div>
       </div>
@@ -3973,7 +4012,7 @@ body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
   <div class="r3-header">
     <div class="r3-header-left"><div><h1>⚡ Активности</h1><div class="date" id="todayDate4"></div></div></div>
     <div class="r3-header-right">
-      <input
+            <input
         id="myCityInput4"
         class="city-input-header"
         type="text"
@@ -3981,7 +4020,6 @@ body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
         autocomplete="off"
         spellcheck="false"
       >
-      <button class="theme-btn" id="themeBtn4">🌙</button>
     </div>
   </div>
   <div id="app4"></div>
@@ -4084,6 +4122,7 @@ body.dark .status-menu .sm-del { color: #e57373; border-top-color: #2c3a48; }
 </div>
 
 <div class="menu" id="menu3">
+  <button id="btnToggleTheme">🌙 Сменить тему</button>
   <button id="btnResetTotalsMenu">🗑 Сбросить итоги за месяц</button>
   <button id="btnFixDupHistory">🔧 Исправить дубли в истории</button>
   <button id="btnExportData" style="color:#27ae60;">💾 Сохранить данные</button>
@@ -4338,15 +4377,6 @@ function goToTab(n, animate = true) {
     setTimeout(resetTotalsPosition, 50);
   }
 
-    // Сброс аккордеона при уходе с «Сегодня»
-  if (currentTab === 1 && n !== 1) {
-    SECTIONS1.forEach(section => {
-      if (section.title !== 'Встречи') {
-        localStorage.removeItem('section_open_' + section.title);
-      }
-    });
-  }
-
   // При возврате на «Сегодня» — плашка итогов всегда в исходном положении
   if (n === 1) {
     setTimeout(resetTotalsPosition, 50);
@@ -4577,10 +4607,6 @@ function applyTheme(dark) {
 }
 function toggleTheme() { applyTheme(!document.body.classList.contains('dark')); }
 applyTheme(localStorage.getItem(THEME_KEY) === 'dark');
-document.getElementById('themeBtn1').addEventListener('click', toggleTheme);
-document.getElementById('themeBtn2').addEventListener('click', toggleTheme);
-document.getElementById('themeBtn3').addEventListener('click', toggleTheme);
-document.getElementById('themeBtn4').addEventListener('click', toggleTheme);
 
 function showToast(text) {
   const t = document.getElementById('toast');
@@ -5245,119 +5271,122 @@ frag.appendChild(stats);
     frag.appendChild(activityHint);
   }
 
-  const grid = document.createElement('div');
-grid.className = 'slot-grid' + (_openSlotId ? ' has-open' : '');
+const grid = document.createElement('div');
+grid.className = 'slot-grid';
 
-  ROUTE_TIMES.forEach(t => {
-    sortRouteList(t.id);
-    const list = routeState.lists[t.id] || [];
-    const cnt = list.length;
-    const dom = getSlotDominantStatus(t.id);
-    const isOpen = (_openSlotId === t.id);
+// ─── Сначала ВСЕ кнопки слотов ───
+ROUTE_TIMES.forEach(t => {
+  sortRouteList(t.id);
+  const list = routeState.lists[t.id] || [];
+  const cnt = list.length;
+  const dom = getSlotDominantStatus(t.id);
+  const isOpen = (_openSlotId === t.id);
 
-    const btn = document.createElement('button');
-    btn.className = 'slot-btn status-' + dom + (isOpen ? ' active' : '');
-    btn.dataset.slotId = t.id;
-    const wait = list.filter(x => x.status === 'wait').length;
-const done = list.filter(x => x.status === 'done').length;
-const ndz = list.filter(x => x.status === 'ndz').length;
-const perenos = list.filter(x => x.status === 'perenos').length;
-btn.innerHTML = `
-  <div class="slot-head">
-    <div class="slot-time">${t.label}</div>
-  </div>
-  <div class="slot-summary">
-    <span class="slot-summary-main">${cnt ? `${cnt} ${cnt === 1 ? 'встреча' : (cnt < 5 ? 'встречи' : 'встреч')}` : 'Нет встреч'}</span>
-    <span class="slot-summary-status">${cnt ? [
-      wait ? `${wait} ждут` : '',
-      done ? `${done} готово` : '',
-      ndz ? `${ndz} НДЗ` : '',
-      perenos ? `${perenos} отмена` : ''
-    ].filter(Boolean).join(' · ') : 'Добавить встречу'}</span>
-  </div>
-`;
-    btn.addEventListener('click', (e) => {
-  if (e.target.closest('[data-map-btn]')) return;
-  vibro(12);
-  const wasOpen = (_openSlotId === t.id);
-  _openSlotId = wasOpen ? null : t.id;
-  renderRoute();
+  const btn = document.createElement('button');
+  btn.className = 'slot-btn status-' + dom + (isOpen ? ' active' : '');
+  btn.dataset.slotId = t.id;
+  const wait = list.filter(x => x.status === 'wait').length;
+  const done = list.filter(x => x.status === 'done').length;
+  const ndz = list.filter(x => x.status === 'ndz').length;
+  const perenos = list.filter(x => x.status === 'perenos').length;
 
-  // Если открыли слот — прокрутить к его началу
-  if (!wasOpen) {
-    requestAnimationFrame(() => {
+  const shortLabel = t.label.replace(/:00/g, '');
+
+  btn.innerHTML = `
+    <div class="slot-head">
+      <div class="slot-time">${shortLabel}</div>
+    </div>
+    <div class="slot-summary">
+      <span class="slot-summary-main">${cnt ? `${cnt} ${cnt === 1 ? 'встреча' : (cnt < 5 ? 'встречи' : 'встреч')}` : 'Нет'}</span>
+      <span class="slot-summary-status">${cnt ? [
+        wait ? `${wait} ждут` : '',
+        done ? `${done} готово` : '',
+        ndz ? `${ndz} НДЗ` : '',
+        perenos ? `${perenos} отмена` : ''
+      ].filter(Boolean).join(' · ') : 'Добавить'}</span>
+    </div>
+  `;
+
+  btn.addEventListener('click', (e) => {
+    if (e.target.closest('[data-map-btn]')) return;
+    vibro(12);
+    const wasOpen = (_openSlotId === t.id);
+    _openSlotId = wasOpen ? null : t.id;
+    renderRoute();
+
+    if (!wasOpen) {
       requestAnimationFrame(() => {
-        setTimeout(() => {
-          const block = document.querySelector(`#app4 .route-time-block[data-time-id="${t.id}"]`);
-          const screen4 = document.getElementById('screen4');
-          if (block && screen4) {
-            // Позиция блока относительно верха скролла
-            const blockTop = block.getBoundingClientRect().top + screen4.scrollTop;
-            // Отступ сверху — чтобы шапка и статистика не перекрывали
-            const offset = 130;   // примерная высота шапки + route-stats
-            screen4.scrollTo({ top: blockTop - offset, behavior: 'smooth' });
-          }
-        }, 80);
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            const block = document.querySelector(`#app4 .route-time-block[data-time-id="${t.id}"]`);
+            const screen4 = document.getElementById('screen4');
+            if (block && screen4) {
+              const blockTop = block.getBoundingClientRect().top + screen4.scrollTop;
+              const offset = 130;
+              screen4.scrollTo({ top: blockTop - offset, behavior: 'smooth' });
+            }
+          }, 80);
+        });
       });
-    });
-  }
-});
-const mapBtn = btn.querySelector('[data-map-btn]');
-if (mapBtn) {
-  mapBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    openSlotRoute(t.id);
-  });
-  mapBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); vibro(12); }, { passive: true });
-}
-    grid.appendChild(btn);
-    
-    // ─── Если слот открыт — вставляем карточки СРАЗУ после него ───
-    if (isOpen) {
-      const block = document.createElement('div');
-      block.className = 'route-time-block';
-      block.dataset.timeId = t.id;
-
-      const header = document.createElement('div');
-      header.className = 'route-time-header';
-      header.innerHTML = `
-        <div class="rth-left"><span>${t.label}</span></div>
-        <div class="rth-right"><div class="rth-count">${list.length}</div></div>
-      `;
-      block.appendChild(header);
-
-      const body = document.createElement('div');
-      body.className = 'route-time-body';
-      if (list.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'route-empty';
-        empty.textContent = 'Нет адресов';
-        body.appendChild(empty);
-      } else {
-        list.forEach(item => body.appendChild(buildRouteCard(item, t.id, t.label)));
-      }
-      const addBtn = document.createElement('button');
-      addBtn.className = 'route-add-btn';
-      addBtn.textContent = '+ Добавить адрес';
-      addBtn.addEventListener('click', () => {
-        routeState.lists[t.id].push({ addr: '', note: '', status: null });
-                saveRouteState(routeState);
-        renderRoute();
-        updateDrawerRoutes();
-        _mapHash = '';                  // ← ДОБАВИТЬ
-        if (map) renderMapMarkers();
-        setTimeout(() => {
-          const inputs = document.querySelectorAll(`#app4 .route-time-block .route-addr-input`);
-          const last = inputs[inputs.length - 1];
-          if (last) { last.focus(); last.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-        }, 50);
-      });
-      body.appendChild(addBtn);
-      block.appendChild(body);
-
-      grid.appendChild(block);
     }
   });
+
+  grid.appendChild(btn);
+});
+
+// ─── ПОСЛЕ всех кнопок — открытый слот с карточками ───
+if (_openSlotId) {
+  const t = ROUTE_TIMES.find(x => x.id === _openSlotId);
+  if (t) {
+    const list = routeState.lists[t.id] || [];
+    sortRouteList(t.id);
+
+    const block = document.createElement('div');
+    block.className = 'route-time-block';
+    block.dataset.timeId = t.id;
+
+    const header = document.createElement('div');
+    header.className = 'route-time-header';
+    header.innerHTML = `
+      <div class="rth-left"><span>${t.label}</span></div>
+      <div class="rth-right"><div class="rth-count">${list.length}</div></div>
+    `;
+    block.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'route-time-body';
+    if (list.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'route-empty';
+      empty.textContent = 'Нет адресов';
+      body.appendChild(empty);
+    } else {
+      list.forEach(item => body.appendChild(buildRouteCard(item, t.id, t.label)));
+    }
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'route-add-btn';
+    addBtn.textContent = '+ Добавить адрес';
+    addBtn.addEventListener('click', () => {
+      routeState.lists[t.id].push({ addr: '', note: '', status: null });
+      saveRouteState(routeState);
+      renderRoute();
+      updateDrawerRoutes();
+      _mapHash = '';
+      if (map) renderMapMarkers();
+      setTimeout(() => {
+        const inputs = document.querySelectorAll(`#app4 .route-time-block .route-addr-input`);
+        const last = inputs[inputs.length - 1];
+        if (last) { last.focus(); last.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      }, 50);
+    });
+    body.appendChild(addBtn);
+    block.appendChild(body);
+    grid.appendChild(block);
+  }
+}
+
+frag.appendChild(grid);
   frag.appendChild(grid);
 
   app.innerHTML = '';
@@ -7271,6 +7300,14 @@ const BACKUP_KEYS = [
   'quick_report_reminder_shown', 'morning_report_sent_today',
   'monthly_report_last_shown', 'my_city', 'mvs_theme', 'map_geocache'
 ];
+
+document.getElementById('btnToggleTheme').addEventListener('click', () => {
+  document.getElementById('menu3')?.classList.remove('show');
+  toggleTheme();
+  // Обновляем текст кнопки
+  const isDark = document.body.classList.contains('dark');
+  document.getElementById('btnToggleTheme').textContent = isDark ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+});
 
 document.getElementById('btnExportData').addEventListener('click', () => {
   document.getElementById('menu3')?.classList.remove('show');
