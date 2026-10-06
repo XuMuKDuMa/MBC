@@ -2202,13 +2202,14 @@ body.dark .modal-overlay#quickReportModal .quick-modal {
     font-style: italic;
   }
 
-  /* ─── Слоты: аккордеон ─── */
+    /* ─── Слоты: аккордеон ─── */
   .slot-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
     margin: 0 10px 12px;
   }
+  /* #screen4 переопределяет ниже */
   .slot-btn {
     position: relative;
     display: flex;
@@ -3525,8 +3526,8 @@ body.dark .bb-item.bb-today .bb-today-orb{border-color:#1a2430}
 #screen4 .slot-grid {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 5px !important;
-  margin: 0 8px 10px !important;
+  gap: 4px 5px !important;
+  margin: 4px 8px 10px !important;
   width: calc(100% - 16px) !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
@@ -3535,12 +3536,43 @@ body.dark .bb-item.bb-today .bb-today-orb{border-color:#1a2430}
   grid-column: 1 / -1;
   margin: 0 !important;
 }
+#screen4 .slot-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
+}
+
+#screen4 .slot-time-top {
+  text-align: center;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  color: #263944;
+  letter-spacing: -0.3px;
+  padding: 0 0 2px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.dark #screen4 .slot-time-top {
+  color: #e5edf1;
+}
+
+/* Если слот открыт — время тоже выделяем цветом */
+#screen4 .slot-wrap:has(.slot-btn.active) .slot-time-top {
+  color: #27ae60;
+}
+
 #screen4 .slot-btn {
-  min-height: 68px !important;
-  padding: 8px 6px 8px 8px !important;
+  min-height: 72px !important;
+  padding: 6px 4px !important;
   border-radius: 12px !important;
   flex-direction: column !important;
-  align-items: flex-start !important;
+  align-items: center !important;
+  justify-content: center !important;
   min-width: 0 !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -3548,31 +3580,27 @@ body.dark .bb-item.bb-today .bb-today-orb{border-color:#1a2430}
 }
 #screen4 .slot-btn .slot-head { min-height: 20px; width: 100%; }
 #screen4 .slot-btn .slot-time { font-size: 12px !important; font-weight: 850 !important; }
-#screen4 .slot-summary {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  gap: 1px !important;
-  min-width: 0 !important;
-  width: 100% !important;
-  overflow: hidden !important;
-}
 #screen4 .slot-summary-main {
-  font-size: 10px !important;
-  font-weight: 800 !important;
+  font-size: 34px !important;
+  font-weight: 900 !important;
   color: #263944;
   white-space: nowrap;
-  line-height: 1.1;
+  line-height: 1;
+  text-align: center;
+  width: 100%;
+  letter-spacing: -1px;
 }
 #screen4 .slot-summary-status {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 9px !important;
-  font-weight: 650;
+  font-size: 8.5px !important;
+  font-weight: 700;
   color: #82919b;
   line-height: 1.1;
+  text-align: center;
+  width: 100%;
 }
 #screen4 .slot-chev { flex-shrink:0; margin-left:auto; }
 #screen4 .slot-btn.active .slot-summary-main,
@@ -5282,30 +5310,31 @@ ROUTE_TIMES.forEach(t => {
   const dom = getSlotDominantStatus(t.id);
   const isOpen = (_openSlotId === t.id);
 
-  const btn = document.createElement('button');
-  btn.className = 'slot-btn status-' + dom + (isOpen ? ' active' : '');
-  btn.dataset.slotId = t.id;
-  const wait = list.filter(x => x.status === 'wait').length;
-  const done = list.filter(x => x.status === 'done').length;
-  const ndz = list.filter(x => x.status === 'ndz').length;
-  const perenos = list.filter(x => x.status === 'perenos').length;
+      // ─── Обёртка: время сверху + кнопка снизу ───
+    const wrap = document.createElement('div');
+    wrap.className = 'slot-wrap';
 
-  const shortLabel = t.label.replace(/:00/g, '');
+    // Время СНАРУЖИ (над блоком, по центру)
+    const shortLabel = (t.label || '').replace(/:00/g, '');
+    const timeTop = document.createElement('div');
+    timeTop.className = 'slot-time-top';
+    timeTop.textContent = shortLabel;
 
-  btn.innerHTML = `
-    <div class="slot-head">
-      <div class="slot-time">${shortLabel}</div>
-    </div>
-    <div class="slot-summary">
-      <span class="slot-summary-main">${cnt ? `${cnt} ${cnt === 1 ? 'встреча' : (cnt < 5 ? 'встречи' : 'встреч')}` : 'Нет'}</span>
-      <span class="slot-summary-status">${cnt ? [
-        wait ? `${wait} ждут` : '',
-        done ? `${done} готово` : '',
-        ndz ? `${ndz} НДЗ` : '',
-        perenos ? `${perenos} отмена` : ''
-      ].filter(Boolean).join(' · ') : 'Добавить'}</span>
-    </div>
-  `;
+    // Сама кнопка слота — внутри только счётчик
+    const btn = document.createElement('button');
+    btn.className = 'slot-btn status-' + dom + (isOpen ? ' active' : '');
+    btn.dataset.slotId = t.id;
+
+        const wait = list.filter(x => x.status === 'wait').length;
+    const done = list.filter(x => x.status === 'done').length;
+    const ndz = list.filter(x => x.status === 'ndz').length;
+    const perenos = list.filter(x => x.status === 'perenos').length;
+
+        btn.innerHTML = `
+      <div class="slot-summary">
+        <span class="slot-summary-main">${cnt ? cnt : '—'}</span>
+      </div>
+    `;
 
   btn.addEventListener('click', (e) => {
     if (e.target.closest('[data-map-btn]')) return;
@@ -5331,7 +5360,9 @@ ROUTE_TIMES.forEach(t => {
     }
   });
 
-  grid.appendChild(btn);
+      wrap.appendChild(timeTop);
+    wrap.appendChild(btn);
+    grid.appendChild(wrap);
 });
 
 // ─── ПОСЛЕ всех кнопок — открытый слот с карточками ───
@@ -5387,7 +5418,6 @@ if (_openSlotId) {
 }
 
 frag.appendChild(grid);
-  frag.appendChild(grid);
 
   app.innerHTML = '';
   app.appendChild(frag);
@@ -5975,9 +6005,17 @@ function saveDayToHistory(dateOverride) {
   const bd = buildSalesBreakdownToday();
   const meetingsBd = buildMeetingsBreakdownToday();
   const h = loadHistory1();
+
+  // ─── ЗАЩИТА: если все данные по нулям, а запись уже есть — не трогаем ───
+  const isZero = (t.up === 0 && t.meetings === 0 && t.od === 0 && t.upFD === 0);
+  if (isZero && h[today] && (h[today].up > 0 || h[today].meetings > 0)) {
+    console.log('⚠️ saveDayToHistory: пропускаю — нули, а запись уже есть');
+    return;
+  }
+
   h[today] = {
     up: Number(t.up.toFixed(2)),
-    upFD: Number(t.upFD.toFixed(2)),   // ← ДОБАВИЛИ: УП на ФД (KPI)
+    upFD: Number(t.upFD.toFixed(2)),
     od: t.od,
     meetings: t.meetings,
     sales: bd,
