@@ -8042,7 +8042,11 @@ function autofillMvsFromToday() {
 
 (function checkNewDay2() {
   const today = new Date().toDateString();
-  if (state2.lastDay && state2.lastDay !== today) state2.savedToday = false;
+  if (state2.lastDay && state2.lastDay !== today) {
+    state2.savedToday = false;
+    state2.daySnapshot = null;   // ← сбрасываем снимок
+    saveState2(state2);          // ← не забыть сохранить
+  }
 })();
 function getT2(id) { return state2.today[id] || ''; }
 function setT2(id, v) { state2.today[id] = v; saveState2(state2); renderTotals2(); }
@@ -8139,6 +8143,7 @@ if (btnRep) {
       state2.month.slotMonth.usp += num(getT2('slot_usp'));
       state2.lastDay = new Date().toDateString();
       state2.savedToday = true;
+       state2.lastDay = new Date().toDateString();
       saveState2(state2);
 
       // Очищаем дневные поля
@@ -8219,18 +8224,18 @@ function mkRow2_2(id1, id2) {
 }
 function renderTotals2() {
   const upDone = state2.month.upDone + num(getT2('up_day'));
-  const el1 = document.getElementById('auto_up2');
-  if (el1) el1.textContent = upDone.toFixed(2);
-  const el1p = document.getElementById('pct_up2');
-  if (el1p) el1p.textContent = pct2(upDone, getPlan2('upPlan'));
-  const trNag = state2.month.trMonth.nag + num(getT2('tr_nag'));
-  const trUsp = state2.month.trMonth.usp + num(getT2('tr_usp'));
-  const el2 = document.getElementById('auto_trm2');
-  if (el2) el2.textContent = `${trNag} / ${trUsp}`;
-  const el2p = document.getElementById('pct_trm2');
-  if (el2p) el2p.textContent = pct2(trUsp, trNag);
-  const slNag = state2.month.slotMonth.nag + num(getT2('slot_nag'));
-  const slUsp = state2.month.slotMonth.usp + num(getT2('slot_usp'));
+
+  // Если отчёт уже отправлен — TR мес ЗАМЕР, используем снимок дня
+  const alreadySent = state2.savedToday === true && state2.daySnapshot;
+  const dayTrNag   = alreadySent ? state2.daySnapshot.tr_nag   : num(getT2('tr_nag'));
+  const dayTrUsp   = alreadySent ? state2.daySnapshot.tr_usp   : num(getT2('tr_usp'));
+  const daySlNag   = alreadySent ? state2.daySnapshot.slot_nag : num(getT2('slot_nag'));
+  const daySlUsp   = alreadySent ? state2.daySnapshot.slot_usp : num(getT2('slot_usp'));
+
+  const trNag = state2.month.trMonth.nag + dayTrNag;
+  const trUsp = state2.month.trMonth.usp + dayTrUsp;
+  const slNag = state2.month.slotMonth.nag + daySlNag;
+  const slUsp = state2.month.slotMonth.usp + daySlUsp;
   const el3 = document.getElementById('auto_slotm2');
   if (el3) el3.textContent = `${slNag} / ${slUsp}`;
   const el3p = document.getElementById('pct_slotm2');
