@@ -8002,6 +8002,12 @@ let state2 = loadState2();
    АВТОПОДСТАНОВКА «СЕГОДНЯ» → «МВС ЗАПАД»
    ═══════════════════════════════════════════════ */
 function autofillMvsFromToday() {
+  // Если отчёт уже отправлен сегодня — НЕ перезаписываем дневные поля
+  const todayStr = new Date().toDateString();
+  if (state2.lastDay === todayStr && state2.savedToday === true) {
+    return false;
+  }
+
   // 1. УП за день — из «Сегодня»
   const t = calcTotals1();
   const upDay = t.up.toFixed(2);
@@ -8020,7 +8026,8 @@ function autofillMvsFromToday() {
       if (item.status === 'done') doneMeetings++;
     });
   });
-  // 4. ВСЕГДА подставляем актуальные значения
+
+  // 4. Подставляем актуальные значения
   state2.today.up_day   = upDay;
   state2.today.kk_fact  = String(kkCount);
   state2.today.pk       = String(pkCount);
@@ -8148,7 +8155,8 @@ if (btnRep) {
       localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
       await copyText(text);
       showSuccessNotification('Отчёт готов', 'done');
-      render2();   // перерисует — кнопка вернётся в активное состояние
+     render2();          // перерисует МВС
+     renderTotals3();    // пересчитает "Итоги" с новыми данными
     } catch (e) {
       btnRep.dataset.sending = '';
       btnRep.disabled = false;
