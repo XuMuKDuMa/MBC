@@ -4070,8 +4070,8 @@ body.dark .status-badge.status-none    .sb-dot { background: #3a4a5a; }
   box-shadow: 0 10px 40px rgba(0,0,0,.25);
   overflow: hidden;
   z-index: 2500;
-  min-width: 160px;
-  padding: 4px 0;
+  min-width: 150px;
+  padding: 3px 0;
   animation: smPop .15s ease-out;
 }
 @keyframes smPop {
@@ -4081,28 +4081,28 @@ body.dark .status-badge.status-none    .sb-dot { background: #3a4a5a; }
 .status-menu button {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 11px 16px;
+  padding: 8px 14px;
   border: none;
   background: transparent;
   text-align: left;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #263944;
   cursor: pointer;
 }
 .status-menu button:active { background: #f0f4f8; }
 .status-menu .sm-icon {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 900;
   flex-shrink: 0;
   color: #fff;
@@ -4118,8 +4118,8 @@ body.dark .status-badge.status-none    .sb-dot { background: #3a4a5a; }
 .status-menu .sm-del {
   color: #c0392b;
   border-top: 1px solid #eee;
-  margin-top: 4px;
-  padding-top: 12px;
+  margin-top: 3px;
+  padding-top: 9px;
 }
 .status-menu .sm-del:active { background: #fdecec; }
 
@@ -5158,12 +5158,12 @@ function showStatusMenu(anchor, item, timeId) {
   }
 
   // Показать меню с новыми кнопками
-  menu.innerHTML = `
+    menu.innerHTML = `
     <button data-status="wait"><span class="sm-icon">+</span>Ждёт</button>
     <button data-status="done"><span class="sm-icon">✓</span>Готово</button>
     <button data-status="perenos"><span class="sm-icon">−</span>Отмена</button>
     <button data-status="ndz"><span class="sm-icon">О</span>НДЗ</button>
-    <button class="sm-del" data-action="delete"><span class="sm-icon">🗑</span>Удалить</button>
+    <button class="sm-del" data-action="delete">Удалить</button>
   `;
 
   // Позиционирование
