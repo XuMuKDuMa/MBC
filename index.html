@@ -8209,50 +8209,77 @@ function mkAuto2(label, autoId, pctId) {
 function mkAuto2_2(autoId, pctId) {
   const row = document.createElement('div');
   row.className = 'field';
-  // Определяем, к какому месячному полю относится (tr или slot)
   const isTr = autoId.includes('trm');
-  const overrideKey = isTr ? 'trMonthOverride' : 'slotMonthOverride';
+  const monthKey = isTr ? 'trMonth' : 'slotMonth';
+  const editFlagKey = isTr ? 'trMonthManual' : 'slotMonthManual';
 
-  // Если есть ручное значение — показываем его и кнопку «↺ Авто»
-  const ov = state2.month[overrideKey];
-  const hasOverride = ov && (ov.nag !== undefined || ov.usp !== undefined);
+  const isManual = state2[editFlagKey] === true;
 
-  if (hasOverride) {
+  if (isManual) {
+    // ─── Ручной режим: input-поля ───
+    const m = state2.month[monthKey] || { nag: 0, usp: 0 };
     row.innerHTML = `
       <div class="label">Назначено / Успешных <span style="font-size:10px;color:#f39c12;font-weight:700;">(ручной)</span></div>
-      <input type="text" inputmode="numeric" data-override="${overrideKey}" data-override-field="nag" value="${ov.nag ?? ''}" style="width:56px;text-align:center;font-weight:800;color:#f39c12;background:#3a2f14;border:1px solid #7a5c00;border-radius:8px;padding:6px;">
+      <input type="text" inputmode="numeric" id="${autoId}_nag" value="${m.nag ?? 0}"
+        style="width:56px;text-align:center;font-weight:800;color:#f39c12;background:#3a2f14;border:1px solid #7a5c00;border-radius:8px;padding:6px;">
       <span class="slash">/</span>
-      <input type="text" inputmode="numeric" data-override="${overrideKey}" data-override-field="usp" value="${ov.usp ?? ''}" style="width:56px;text-align:center;font-weight:800;color:#f39c12;background:#3a2f14;border:1px solid #7a5c00;border-radius:8px;padding:6px;">
-      <button class="btn-auto-reset" data-override-reset="${overrideKey}" title="Вернуть авто" style="margin-left:6px;padding:6px 10px;background:#2c3a48;color:#b0bec5;border:none;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">↺</button>
+      <input type="text" inputmode="numeric" id="${autoId}_usp" value="${m.usp ?? 0}"
+        style="width:56px;text-align:center;font-weight:800;color:#f39c12;background:#3a2f14;border:1px solid #7a5c00;border-radius:8px;padding:6px;">
+      <button class="btn-auto-reset" id="${autoId}_save" title="Сохранить и вернуть авто"
+        style="margin-left:6px;padding:6px 10px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">✓</button>
+      <button class="btn-auto-cancel" id="${autoId}_cancel" title="Отмена"
+        style="margin-left:4px;padding:6px 10px;background:#2c3a48;color:#b0bec5;border:none;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">✕</button>
     `;
-    // Обработчики
-    row.querySelectorAll('input[data-override]').forEach(inp => {
-      inp.addEventListener('input', () => {
-        const key = inp.dataset.override;
-        const field = inp.dataset.overrideField;
-        if (!state2.month[key]) state2.month[key] = {};
-        state2.month[key][field] = num(inp.value);
-        saveState2(state2);
-        renderTotals2();
-      });
-    });
-    row.querySelector('.btn-auto-reset').addEventListener('click', () => {
-      delete state2.month[overrideKey];
+
+    // Сохранить → записать в month, вернуть авто
+    row.querySelector(`#${autoId}_save`).addEventListener('click', () => {
+      const nag = num(document.getElementById(`${autoId}_nag`).value);
+      const usp = num(document.getElementById(`${autoId}_usp`).value);
+
+      // ВАЖНО: записываем прямо в month.
+      // Но в auto-режиме отображение = month + daySnapshot.
+      // Значит в month надо записать: желаемое - день (если отчёт уже отправлен)
+      // Вычитаем ТО ЖЕ, что renderTotals2 будет прибавлять
+const dayNag = state2.daySnapshot
+  ? (state2.daySnapshot[isTr ? 'tr_nag' : 'slot_nag'] || 0)
+  : num(getT2(isTr ? 'tr_nag' : 'slot_nag'));
+const dayUsp = state2.daySnapshot
+  ? (state2.daySnapshot[isTr ? 'tr_usp' : 'slot_usp'] || 0)
+  : num(getT2(isTr ? 'tr_usp' : 'slot_usp'));
+
+      state2.month[monthKey] = {
+        nag: nag - dayNag,
+        usp: usp - dayUsp
+      };
+
+      state2[editFlagKey] = false;
       saveState2(state2);
       render2();
       renderTotals2();
       vibro(15);
-      showToast('↺ Авто-режим включён');
+      showToast('✅ Сохранено — авто включено');
+    });
+
+    // Отмена → просто вернуть авто без сохранения
+    row.querySelector(`#${autoId}_cancel`).addEventListener('click', () => {
+      state2[editFlagKey] = false;
+      saveState2(state2);
+      render2();
+      renderTotals2();
+      vibro(10);
+      showToast('↺ Отменено');
     });
   } else {
+    // ─── Авто режим: цифры + кнопка ✎ ───
     row.innerHTML = `
       <div class="label">Назначено / Успешных</div>
       <div class="auto" id="${autoId}">0 / 0</div>
       <div class="pct" id="${pctId}">—</div>
-      <button class="btn-auto-edit" data-override-edit="${overrideKey}" title="Редактировать вручную" style="margin-left:6px;padding:6px 10px;background:#2c3a48;color:#b0bec5;border:none;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">✎</button>
+      <button class="btn-auto-edit" id="${autoId}_edit" title="Редактировать вручную"
+        style="margin-left:6px;padding:6px 10px;background:#2c3a48;color:#b0bec5;border:none;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">✎</button>
     `;
-    row.querySelector('.btn-auto-edit').addEventListener('click', () => {
-      // Берём текущее авто-значение и переводим в ручное
+    row.querySelector(`#${autoId}_edit`).addEventListener('click', () => {
+      // Открываем в ручном режиме, подставляя ТЕКУЩЕЕ авто-значение
       const autoEl = document.getElementById(autoId);
       let nag = 0, usp = 0;
       if (autoEl) {
@@ -8260,12 +8287,13 @@ function mkAuto2_2(autoId, pctId) {
         nag = parts[0] || 0;
         usp = parts[1] || 0;
       }
-      state2.month[overrideKey] = { nag, usp };
+      // Кладём текущие значения в month временно — чтобы показать в инпутах
+      state2.month[monthKey] = { nag, usp };
+      state2[editFlagKey] = true;
       saveState2(state2);
       render2();
-      renderTotals2();
       vibro(15);
-      showToast('✎ Ручной режим включён');
+      showToast('✎ Ручной режим — введите и нажмите ✓');
     });
   }
   return row;
@@ -8290,13 +8318,10 @@ function renderTotals2() {
   const daySlUsp   = alreadySent ? state2.daySnapshot.slot_usp : num(getT2('slot_usp'));
 
     // Если override — используем ручные значения, авто-подсчёт игнорируем
-  const trOv = state2.month.trMonthOverride;
-  const slOv = state2.month.slotMonthOverride;
-
-  const trNag = trOv ? (trOv.nag || 0) : (state2.month.trMonth.nag + dayTrNag);
-  const trUsp = trOv ? (trOv.usp || 0) : (state2.month.trMonth.usp + dayTrUsp);
-  const slNag = slOv ? (slOv.nag || 0) : (state2.month.slotMonth.nag + daySlNag);
-  const slUsp = slOv ? (slOv.usp || 0) : (state2.month.slotMonth.usp + daySlUsp);
+    const trNag = state2.month.trMonth.nag + dayTrNag;
+  const trUsp = state2.month.trMonth.usp + dayTrUsp;
+  const slNag = state2.month.slotMonth.nag + daySlNag;
+  const slUsp = state2.month.slotMonth.usp + daySlUsp;
 
   const el2 = document.getElementById('auto_trm2');
   if (el2) el2.textContent = `${trNag} / ${trUsp}`;
