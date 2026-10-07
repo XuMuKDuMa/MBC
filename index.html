@@ -6836,7 +6836,35 @@ const monthsSorted = Object.keys(monthTotals).sort().reverse();const meetRows = 
   function pctClass(p) { if (p === null) return 'gray'; if (p >= 80) return 'green'; if (p >= 50) return 'yellow'; return 'red'; }
   function pctText(p) { if (p === null) return '—'; return p.toFixed(1) + '%'; }
 
-  const trBlock = `<div class="section"><div class="section-title sec-tr">📊 Встречи TR (из Отчёта 2)</div><div class="tr-block"><div class="tr-item ${pctClass(trPct)}"><div class="tr-title">TR мес</div><div class="tr-row"><span>Назначено / Успешных:</span><span class="val">${trNag} / ${trUsp}<span class="tr-pct-inline">(${pctText(trPct)})</span></span></div></div><div class="tr-item ${pctClass(slPct)}"><div class="tr-title">TR слот мес</div><div class="tr-row"><span>Назначено / Успешных:</span><span class="val">${slNag} / ${slUsp}<span class="tr-pct-inline">(${pctText(slPct)})</span></span></div></div></div></div>`;
+  const trNagFinal = state2.month.trMonth.nag + num(getT2('tr_nag'));
+const trUspFinal = state2.month.trMonth.usp + num(getT2('tr_usp'));
+const slNagFinal = state2.month.slotMonth.nag + num(getT2('slot_nag'));
+const slUspFinal = state2.month.slotMonth.usp + num(getT2('slot_usp'));
+
+const trPctFinal = trNagFinal > 0 ? (trUspFinal / trNagFinal) * 100 : null;
+const slPctFinal = slNagFinal > 0 ? (slUspFinal / slNagFinal) * 100 : null;
+const trBlock = `
+  <div class="section">
+        <div class="section-title sec-tr">
+      <span>📊 Встречи TR (из Отчёта 2)</span>
+    </div>
+    <div class="tr-block">
+      <div class="tr-item ${pctClass(trPctFinal)}">
+        <div class="tr-title">TR мес</div>
+        <div class="tr-row">
+          <span>Назначено / Успешных:</span>
+          <span class="val">${trNagFinal} / ${trUspFinal}<span class="tr-pct-inline">(${pctText(trPctFinal)})</span></span>
+        </div>
+      </div>
+      <div class="tr-item ${pctClass(slPctFinal)}">
+        <div class="tr-title">TR слот мес</div>
+        <div class="tr-row">
+          <span>Назначено / Успешных:</span>
+          <span class="val">${slNagFinal} / ${slUspFinal}<span class="tr-pct-inline">(${pctText(slPctFinal)})</span></span>
+        </div>
+      </div>
+    </div>
+  </div>`;
 
   const daysBlock = `<div class="section"><div class="section-title sec-days">📅 Рабочие дни (${getMonthNameLocal()})</div><div class="days-block"><div class="days-row"><span class="label">Всего в месяце:</span><span class="val">${wdStats.total}</span></div><div class="days-row"><span class="label">Прошло:</span><span class="val">${wdStats.past}</span></div><div class="days-row highlight"><span class="label">Осталось:</span><span class="val">${wdStats.remaining}</span></div>${plan > 0 && remains > 0 && wdStats.remaining > 0 ? `<div class="forecast-block"><div class="forecast-label">📊 Нужно УП в день</div><div class="forecast-value">${forecastUP.toFixed(2)} УП</div></div>` : ''}<button class="days-toggle" id="daysToggle">▼ Показать календарь</button>${buildCalendarHtml(wdStats)}</div></div>`;
   const chartBlock = `
@@ -6987,6 +7015,7 @@ if (salesPlanToggle && salesPlanBody && salesPlanArrow) {
     });
   });
 }
+
 function buildUpChartSvg(monthDays, planUP) {
   if (!monthDays || monthDays.length === 0) {
     return `<div class="up-chart-empty">Пока нет данных за этот месяц</div>`;
@@ -8140,9 +8169,14 @@ if (btnRep) {
       state2.month.trMonth.usp += num(getT2('tr_usp'));
       state2.month.slotMonth.nag += num(getT2('slot_nag'));
       state2.month.slotMonth.usp += num(getT2('slot_usp'));
-      state2.lastDay = new Date().toDateString();
+            state2.lastDay = new Date().toDateString();
       state2.savedToday = true;
-       state2.lastDay = new Date().toDateString();
+      state2.daySnapshot = {
+        tr_nag:   num(getT2('tr_nag')),
+        tr_usp:   num(getT2('tr_usp')),
+        slot_nag: num(getT2('slot_nag')),
+        slot_usp: num(getT2('slot_usp'))
+      };
       saveState2(state2);
 
       // Очищаем дневные поля
