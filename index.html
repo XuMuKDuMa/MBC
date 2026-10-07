@@ -2256,11 +2256,63 @@ body.dark .modal-overlay#quickReportModal .quick-modal {
   #screen4 .slot-btn::after {
   content: '';
   position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 7px;
+  left: 12px;
+  right: 12px;
+  bottom: 3px;
+  top: auto;
+  width: auto;
+  height: 4px;
   background: transparent;
-  border-radius: 12px 0 0 12px;
+  border-radius: 3px;
+  transition: background 0.2s, box-shadow 0.2s;
+  /* 3D-эффект: свечение + тень */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
 }
+/* Цвет полоски снизу — по слоту, с лёгким свечением */
+#screen4 .slot-btn[data-slot-id="t10_12"]::after {
+  background: #e67e22;
+  box-shadow: 0 0 6px rgba(230, 126, 34, 0.5);
+}
+#screen4 .slot-btn[data-slot-id="t12_14"]::after {
+  background: #8e44ad;
+  box-shadow: 0 0 6px rgba(142, 68, 173, 0.5);
+}
+#screen4 .slot-btn[data-slot-id="t14_16"]::after {
+  background: #2471a3;
+  box-shadow: 0 0 6px rgba(36, 113, 163, 0.5);
+}
+#screen4 .slot-btn[data-slot-id="t16_18"]::after {
+  background: #27ae60;
+  box-shadow: 0 0 6px rgba(39, 174, 96, 0.5);
+}
+/* Активный слот — белая полоска с свечением */
+#screen4 .slot-btn.active[data-slot-id="t10_12"]::after,
+#screen4 .slot-btn.active[data-slot-id="t12_14"]::after,
+#screen4 .slot-btn.active[data-slot-id="t14_16"]::after,
+#screen4 .slot-btn.active[data-slot-id="t16_18"]::after {
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  opacity: 0.85;
+}
+
+/* Цвет цифры внутри — под цвет полоски */
+#screen4 .slot-btn[data-slot-id="t10_12"] .slot-summary-main { color: #e67e22 !important; }
+#screen4 .slot-btn[data-slot-id="t12_14"] .slot-summary-main { color: #8e44ad !important; }
+#screen4 .slot-btn[data-slot-id="t14_16"] .slot-summary-main { color: #2471a3 !important; }
+#screen4 .slot-btn[data-slot-id="t16_18"] .slot-summary-main { color: #27ae60 !important; }
+
+/* На активном — цифра белая (видна на заливке) */
+#screen4 .slot-btn.active[data-slot-id="t10_12"] .slot-summary-main,
+#screen4 .slot-btn.active[data-slot-id="t12_14"] .slot-summary-main,
+#screen4 .slot-btn.active[data-slot-id="t14_16"] .slot-summary-main,
+#screen4 .slot-btn.active[data-slot-id="t16_18"] .slot-summary-main {
+  color: #ffffff !important;
+}
+/* На активном слоте — полоска ярче */
+#screen4 .slot-btn.active[data-slot-id="t10_12"]::after { background: #ffffff; opacity: 0.6; }
+#screen4 .slot-btn.active[data-slot-id="t12_14"]::after { background: #ffffff; opacity: 0.6; }
+#screen4 .slot-btn.active[data-slot-id="t14_16"]::after { background: #ffffff; opacity: 0.6; }
+#screen4 .slot-btn.active[data-slot-id="t16_18"]::after { background: #ffffff; opacity: 0.6; }
   .slot-btn.status-wait::after  { background: #3498db; }
   .slot-btn.status-done::after  { background: #2ecc71; }
   .slot-btn.status-perenos::after { background: #95a5a6; }
@@ -2407,6 +2459,18 @@ body.dark #screen4 .slot-btn:active {
     0 1px 2px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(0, 0, 0, 0.5) !important;
+}
+body.dark #screen4 .slot-btn[data-slot-id="t10_12"] .slot-summary-main { color: #f5b041 !important; }
+body.dark #screen4 .slot-btn[data-slot-id="t12_14"] .slot-summary-main { color: #a569bd !important; }
+body.dark #screen4 .slot-btn[data-slot-id="t14_16"] .slot-summary-main { color: #5dade2 !important; }
+body.dark #screen4 .slot-btn[data-slot-id="t16_18"] .slot-summary-main { color: #58d68d !important; }
+
+/* Активный — тоже белый */
+body.dark #screen4 .slot-btn.active[data-slot-id="t10_12"] .slot-summary-main,
+body.dark #screen4 .slot-btn.active[data-slot-id="t12_14"] .slot-summary-main,
+body.dark #screen4 .slot-btn.active[data-slot-id="t14_16"] .slot-summary-main,
+body.dark #screen4 .slot-btn.active[data-slot-id="t16_18"] .slot-summary-main {
+  color: #ffffff !important;
 }
   .undo-toast {
     position: fixed;
@@ -4105,6 +4169,49 @@ body.dark #screen4 .slot-btn.active[data-slot-id="t16_18"] {
 
 #screen4 .slot-btn.active .slot-summary-main {
   color: #ffffff !important;
+}
+/* ─── ФИКС: 3D-полоски снизу ─── */
+#screen4 .slot-btn::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 12px !important;
+  right: 12px !important;
+  bottom: 3px !important;
+  top: auto !important;
+  width: auto !important;
+  height: 4px !important;
+  background: transparent !important;
+  border-radius: 3px !important;
+  transition: background 0.2s, box-shadow 0.2s !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25)) !important;
+}
+
+/* Цветные полоски по слоту со свечением */
+#screen4 .slot-btn[data-slot-id="t10_12"]::after {
+  background: #e67e22 !important;
+  box-shadow: 0 0 6px rgba(230, 126, 34, 0.6) !important;
+}
+#screen4 .slot-btn[data-slot-id="t12_14"]::after {
+  background: #8e44ad !important;
+  box-shadow: 0 0 6px rgba(142, 68, 173, 0.6) !important;
+}
+#screen4 .slot-btn[data-slot-id="t14_16"]::after {
+  background: #2471a3 !important;
+  box-shadow: 0 0 6px rgba(36, 113, 163, 0.6) !important;
+}
+#screen4 .slot-btn[data-slot-id="t16_18"]::after {
+  background: #27ae60 !important;
+  box-shadow: 0 0 6px rgba(39, 174, 96, 0.6) !important;
+}
+
+/* Активный — белая полоска с белым свечением */
+#screen4 .slot-btn.active[data-slot-id="t10_12"]::after,
+#screen4 .slot-btn.active[data-slot-id="t12_14"]::after,
+#screen4 .slot-btn.active[data-slot-id="t14_16"]::after,
+#screen4 .slot-btn.active[data-slot-id="t16_18"]::after {
+  background: #ffffff !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7) !important;
+  opacity: 0.9 !important;
 }
 </style>
 
