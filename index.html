@@ -21,6 +21,45 @@
     height: 100%;
     overflow-y: hidden;
   }
+  
+/* ─── Подсказка «выбери статус» перед бейджем ─── */
+.status-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #f39c12;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  animation: statusHintPulse 1.6s ease-in-out infinite;
+  margin-right: -2px;
+  position: relative;
+  z-index: 2;
+}
+
+.status-hint .sh-arrow {
+  font-size: 13px;
+  font-weight: 900;
+  animation: arrowSlide 1.2s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes statusHintPulse {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+
+@keyframes arrowSlide {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(3px); }
+}
+
+body.dark .status-hint {
+  color: #f5b041;
+}
+
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -4081,6 +4120,44 @@ body.dark .route-start-btn:active {
   background: linear-gradient(135deg, #143224, #0f2d1c);
 }
 
+/* ─── Подсказка «выбери статус» перед бейджем ─── */
+.status-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #f39c12;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  animation: statusHintPulse 1.6s ease-in-out infinite;
+  margin-right: -2px;
+  position: relative;
+  z-index: 2;
+}
+
+.status-hint .sh-arrow {
+  font-size: 13px;
+  font-weight: 900;
+  animation: arrowSlide 1.2s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes statusHintPulse {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+
+@keyframes arrowSlide {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(3px); }
+}
+
+body.dark .status-hint {
+  color: #f5b041;
+}
+
 /* ─── Индикатор «в процессе» ─── */
 .route-live {
   margin-left: auto;
@@ -4909,7 +4986,13 @@ function goToTab(n, animate = true) {
   updateBottomBarActive(n);
 
   // ─── Рендерим контент СРАЗУ, до анимации ───
-   if (n === 1) render1();
+  if (n === 1) {
+  // Перерисовываем «Сегодня» с актуальными данными из слотов
+  render1();
+  renderTotals1();
+  // Отложенно обновляем поле B2C — когда routeState точно готов
+  setTimeout(updateB2cField, 50);
+}
   if (n === 2) {
   autofillMvsFromToday();
   render2();
@@ -5791,29 +5874,32 @@ card.appendChild(topRow);
 // ─── Строка со статусом и кнопкой «Начать» / индикатором ───
 const statusLine = document.createElement('div');
 statusLine.className = 'route-status-line';
+
+// ─── Если встреча в работе — подсказка ПЕРЕД статусом ───
+if (item.startedAt) {
+  const hint = document.createElement('div');
+  hint.className = 'status-hint';
+  hint.innerHTML = `<span>выбери статус</span><span class="sh-arrow">➜</span>`;
+  statusLine.appendChild(hint);
+}
+
+// Бейдж статуса — идёт после подсказки
 statusLine.appendChild(statusBadge);
 
+// ─── Индикатор «В работе» — справа ───
 if (item.startedAt) {
-  // Уже в процессе — показываем индикатор
   const elapsed = Date.now() - item.startedAt;
   const over3h = elapsed > 3 * 60 * 60 * 1000;
-  const startTime = new Date(item.startedAt).toLocaleTimeString('ru-RU', {
-    hour: '2-digit', minute: '2-digit'
-  });
-  const hours = Math.floor(elapsed / (60 * 60 * 1000));
-  const mins  = Math.floor((elapsed % (60 * 60 * 1000)) / (60 * 1000));
-  let timeText;
-  if (hours > 0) timeText = `${hours}ч ${mins}м`;
-  else           timeText = `${mins}м`;
 
   const live = document.createElement('div');
   live.className = 'route-live' + (over3h ? ' over-3h' : '');
   live.innerHTML = `
     <span class="rl-dot"></span>
-    <span>идёт с ${startTime} (${timeText})</span>
+    <span>В работе</span>
   `;
   statusLine.appendChild(live);
-} else {
+}
+else {
   // Ещё не начата — показываем кнопку «Начать»
   const startBtn = document.createElement('button');
   startBtn.type = 'button';
@@ -6031,12 +6117,15 @@ if (window._showTapHint) {
     <div class="tap-hint-icon">👆</div>
     <div class="tap-hint-text">Тапни на слот, чтобы увидеть встречи</div>
   `;
-  frag.appendChild(tapHint);
+    frag.appendChild(tapHint);
+}   
+
+app.innerHTML = '';
+app.appendChild(frag);
+// Обновляем B2C поле в «Сегодня» через универсальную функцию
+if (typeof updateB2cField === 'function') {
+  updateB2cField();
 }
-
-    app.innerHTML = '';
-  app.appendChild(frag);
-
   // ─── Фокус-режим: ищем активную карточку по startedAt ───
   app.classList.remove('has-live');
   
@@ -6353,8 +6442,44 @@ function render1() {
   B2C1.forEach(m => {
   const row = document.createElement('div');
   row.className = 'manual';
-  const ph = m.placeholder ? ` placeholder="${m.placeholder}"` : '';
-  row.innerHTML = `<div class="name">${m.name}</div><input type="text" inputmode="${m.mode || 'numeric'}" data-manual="${m.id}"${ph} value="${getManual1(m.id)}">`;
+
+  if (m.id === 'b2c_total') {
+    // ─── B2C: авто + override с кнопкой 🔄 ───
+    const t = calcTotals1();
+    const manualVal = String(getManual1('b2c_total') || '').trim();
+    const isManual = manualVal !== '' && manualVal !== '0';
+    const displayVal = isManual ? manualVal : t.b2cAuto;
+
+    row.innerHTML = `
+      <div class="name">
+        ${m.name}
+        <span class="b2c-mode-badge" style="font-size:10px;font-weight:800;color:${isManual ? '#f39c12' : '#27ae60'};margin-left:4px;">
+          ${isManual ? '(ручной)' : '(авто)'}
+        </span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+        <input type="text" inputmode="numeric" data-manual="${m.id}"
+               class="b2c-input"
+               value="${displayVal}"
+               style="width:64px;text-align:center;font-weight:800;
+                      background:${isManual ? '#3a2f14' : '#e7f7ef'};
+                      color:${isManual ? '#f39c12' : '#168653'};
+                      border:1px solid ${isManual ? '#7a5c00' : '#c9ebd8'};
+                      padding:8px 6px;border-radius:8px;">
+        <button class="b2c-reset-btn" data-b2c-reset
+                title="Вернуть авто-значение"
+                style="padding:7px 9px;border:none;border-radius:8px;
+                       background:#ecf0f1;color:#2c3e50;font-size:13px;
+                       font-weight:800;cursor:pointer;">
+          🔄
+        </button>
+      </div>
+    `;
+  } else {
+    const ph = m.placeholder ? ` placeholder="${m.placeholder}"` : '';
+    row.innerHTML = `<div class="name">${m.name}</div><input type="text" inputmode="${m.mode || 'numeric'}" data-manual="${m.id}"${ph} value="${getManual1(m.id)}">`;
+  }
+
   b2cSec.appendChild(row);
 });
   app.appendChild(b2cSec);
@@ -6430,6 +6555,18 @@ document.addEventListener('click', (e) => {
     render1();
     renderTotals1();
   }
+  // ─── Кнопка 🔄 B2C: вернуть авто ───
+const b2cReset = e.target.closest('#app1 button[data-b2c-reset]');
+if (b2cReset) {
+  e.preventDefault();
+  e.stopPropagation();
+  setManual1('b2c_total', '');
+  vibro(15);
+  render1();
+  renderTotals1();
+  showToast('🔄 B2C: авто-режим');
+  return;
+}
 });
 document.addEventListener('input', (e) => {
   const inp = e.target.closest('#app1 input[data-manual]');
@@ -6473,19 +6610,43 @@ function calcTotals1() {
   const zkCount = num(getZK1());
   up += zkCount * ZK_COEF;
   (state1.extra || []).forEach(x => { upFD += num(x.up); od += num(x.od); });
-  const b2cTotal = Number(getManual1('b2c_total')) || 0;
-  const b2bTotal = Number(getManual1('b2b_total')) || 0;
-  return { up, od, upFD, meetings, bizMeetings, b2cTotal, b2bTotal, zkCount };
+
+// ─── B2C: авто из активностей + override ───
+let b2cAuto = 0;
+let b2cDone = 0;
+
+ROUTE_TIMES.forEach(t => {
+  (routeState.lists[t.id] || []).forEach(item => {
+    if (!item) return;
+    if (!item.addr || !item.addr.trim()) return;
+    b2cAuto++;
+    if (item.status === 'done') b2cDone++;
+  });
+});
+
+// Ручное значение, если введено > 0 — имеет приоритет
+const b2cManualRaw = String(getManual1('b2c_total') || '').trim();
+const b2cManual = (b2cManualRaw !== '' && b2cManualRaw !== '0')
+  ? (Number(b2cManualRaw) || 0)
+  : null;
+
+const b2cTotal = b2cManual !== null ? b2cManual : b2cAuto;
+
+// B2B — оставляем ручное
+const b2bTotal = Number(getManual1('b2b_total')) || 0;
+
+return { up, od, upFD, meetings, bizMeetings,
+         b2cTotal, b2cAuto, b2cDone, b2bTotal, zkCount };
 }
 function renderTotals1() {
   const t = calcTotals1();
   document.getElementById('totalUP1').textContent = t.up.toFixed(2);
   document.getElementById('totalOD1').textContent = t.od;
   document.getElementById('totalUPFD1').textContent = t.upFD.toFixed(2);
-  document.getElementById('totalB2C1').textContent = `${t.b2cTotal}/${t.meetings}`;
+  document.getElementById('totalB2C1').textContent = `${t.b2cTotal}/${t.b2cDone}`;
   document.getElementById('totalB2B1').textContent = `${t.b2bTotal}/${t.bizMeetings}`;
   const btn = document.getElementById('btnReport1');
-btn.disabled = getManual1('b2c_total').trim() === '' || getManual1('reasons').trim() === '';
+btn.disabled = getManual1('reasons').trim() === '';
   const dUP = document.getElementById('drawerTotalUP');
   const dOD = document.getElementById('drawerTotalOD');
   const dUPFD = document.getElementById('drawerTotalUPFD');
@@ -6494,7 +6655,7 @@ btn.disabled = getManual1('b2c_total').trim() === '' || getManual1('reasons').tr
   if (dUP) dUP.textContent = t.up.toFixed(2);
   if (dOD) dOD.textContent = t.od;
   if (dUPFD) dUPFD.textContent = t.upFD.toFixed(2);
-  if (dB2C) dB2C.textContent = `${t.b2cTotal}/${t.meetings}`;
+  if (dB2C) dB2C.textContent = `${t.b2cTotal}/${t.b2cDone}`;
   if (dB2B) dB2B.textContent = `${t.b2bTotal}/${t.bizMeetings}`;
 }
 
@@ -6612,17 +6773,29 @@ else if (i.group === 'Сим') sumSim += c;
     if (x.name && x.name.trim()) { upFD += num(x.up); od += num(x.od); others.push(x.name.trim()); }
   });
     const m = (id) => getManual1(id);
-  const b2cTotal = Number(m('b2c_total')) || 0;
-  const b2bTotal = Number(m('b2b_total')) || 0;
+const b2bTotal = Number(m('b2b_total')) || 0;
 
-  // B2C = ВСЕ встречи из счётчиков (обычные + детские + ДБО + ФД Сим)
-  const b2cMeetings = getCount1('fd_meet_02')
-                    + getCount1('fd_meet_035')
-                    + getCount1('fd_meet_dbo')
-                    + getCount1('fd_meet_sim');
+// ─── B2C: назначено и успешных — АВТО из активностей ───
+let b2cTotal = 0;
+let b2cDone = 0;
 
-  const b2cLine = `${b2cTotal}/${b2cMeetings}`;
-  const b2bLine = `${b2bTotal}/${bizMeetings}`;
+// Защита от неинициализированных переменных
+if (typeof ROUTE_TIMES !== 'undefined' &&
+    typeof routeState !== 'undefined' &&
+    routeState && routeState.lists) {
+  ROUTE_TIMES.forEach(t => {
+    const list = routeState.lists[t.id] || [];
+    list.forEach(item => {
+      if (!item) return;
+      if (!item.addr || !item.addr.trim()) return;
+      b2cTotal++;
+      if (item.status === 'done') b2cDone++;
+    });
+  });
+}
+
+const b2cLine = `${b2cTotal}/${b2cDone}`;
+const b2bLine = `${b2bTotal}/${bizMeetings}`;
   return `‼️‼️‼️
 Новый формат ✅
 
@@ -6684,6 +6857,43 @@ function saveDayToHistory(dateOverride) {
 
 render1();
 renderTotals1();
+setTimeout(updateB2cField, 100);
+/* ═══════════════════════════════════════════════
+   ОБНОВЛЕНИЕ ПОЛЯ B2C В «СЕГОДНЯ»
+   ═══════════════════════════════════════════════ */
+function updateB2cField() {
+  const field = document.querySelector('#app1 .b2c-input');
+  if (!field) return;
+
+  // Считаем авто-значение ВСЕГДА
+  let b2cAuto = 0;
+  if (typeof ROUTE_TIMES !== 'undefined' &&
+      typeof routeState !== 'undefined' &&
+      routeState && routeState.lists) {
+    ROUTE_TIMES.forEach(t => {
+      (routeState.lists[t.id] || []).forEach(item => {
+        if (!item) return;
+        if (!item.addr || !item.addr.trim()) return;
+        b2cAuto++;
+      });
+    });
+  }
+
+  // Если поле в ручном режиме (пользователь ввёл своё) — показываем
+  // ручное значение, НО не трогаем его
+  const manualVal = String(getManual1('b2c_total') || '').trim();
+  const isManual = manualVal !== '' && manualVal !== '0';
+
+  if (isManual) {
+    // Ручное значение — оставляем как есть
+    return;
+  }
+
+  // Авто-режим — обновляем, если изменилось
+  if (field.value !== String(b2cAuto)) {
+    field.value = b2cAuto;
+  }
+}
 
 function loadQuickReport() {
   try {
@@ -8378,18 +8588,23 @@ if (btnRep) {
       };
       state2.month.upDone = Number((state2.month.upDone + num(getT2('up_day'))).toFixed(2));
       state2.month.trMonth.nag += num(getT2('tr_nag'));
-      state2.month.trMonth.usp += num(getT2('tr_usp'));
-      state2.month.slotMonth.nag += num(getT2('slot_nag'));
-      state2.month.slotMonth.usp += num(getT2('slot_usp'));
-            state2.lastDay = new Date().toDateString();
-      state2.savedToday = true;
-      state2.daySnapshot = {
-        tr_nag:   num(getT2('tr_nag')),
-        tr_usp:   num(getT2('tr_usp')),
-        slot_nag: num(getT2('slot_nag')),
-        slot_usp: num(getT2('slot_usp'))
-      };
-      saveState2(state2);
+state2.month.trMonth.usp += num(getT2('tr_usp'));
+state2.month.slotMonth.nag += num(getT2('slot_nag'));
+state2.month.slotMonth.usp += num(getT2('slot_usp'));
+
+state2.lastDay = new Date().toDateString();
+state2.savedToday = true;
+
+// ─── ВАЖНО: daySnapshot = 0, потому что день УЖЕ добавлен в month ───
+// Иначе при показе month + snapshot будет двойной счёт
+state2.daySnapshot = {
+  tr_nag:   0,
+  tr_usp:   0,
+  slot_nag: 0,
+  slot_usp: 0
+};
+
+saveState2(state2);
 
       // Очищаем дневные поля
       state2.today.up_day = '';
