@@ -4553,11 +4553,11 @@ body.dark #screen4 .slot-btn.active[data-slot-id="t16_18"] {
   <div class="screens-track" id="screensTrack">
 
     <div class="screen" id="screen1">
-      <div class="r1-header">
-        <div class="r1-header-left"><div><h1>📊 ВД Х-К</h1><div class="date" id="todayDate1"></div></div></div>
-      </div>
-      <div id="app1"></div>
-    </div>
+  <div class="r1-header">
+    <div class="r1-header-left"><div><h1>📊 Сегодня</h1><div class="date" id="todayDate1"></div></div></div>
+  </div>
+  <div id="app1"></div>
+</div>
 
     <div class="screen" id="screen2">
       <div class="r2-header">
@@ -9075,7 +9075,12 @@ setInterval(checkReminder, 60 * 1000);
   }
 })();
 function updateAllDates() {
-  const d = new Date().toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
+  const d = new Date().toLocaleDateString('ru-RU', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
   ['todayDate1', 'todayDate2', 'todayDate3', 'todayDate4'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = d;
