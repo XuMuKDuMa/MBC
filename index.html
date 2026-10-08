@@ -1825,6 +1825,71 @@ body.dark .modal-overlay#quickReportModal .quick-modal {
   body.dark .route-time-block[data-time-id="t14_16"] .route-time-body { background: linear-gradient(180deg, #152230, #1c2733 40%); }
   body.dark .route-time-block[data-time-id="t16_18"] .route-time-body { background: linear-gradient(180deg, #0f2d1c, #1c2733 40%); }
 
+/* ═══════════════════════════════════════════════
+   ФОКУС-РЕЖИМ (через оверлей)
+   ═══════════════════════════════════════════════ */
+
+/* Затемняющий blur-оверлей поверх всего на вкладке Активности */
+#screen4:has(#app4.has-live)::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 22, 30, 0.55);
+  backdrop-filter: blur(6px) saturate(0.7);
+  -webkit-backdrop-filter: blur(6px) saturate(0.7);
+  z-index: 90;
+  pointer-events: none;
+  animation: liveFadeIn 0.35s ease;
+}
+
+@keyframes liveFadeIn {
+  from { opacity: 0; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
+  to   { opacity: 1; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+}
+
+/* Активная карточка — поверх оверлея */
+#app4 .route-card.route-card-live {
+  position: relative !important;
+  z-index: 100 !important;
+  filter: none !important;
+  opacity: 1 !important;
+  box-shadow:
+    0 0 0 3px #20a36a,
+    0 14px 40px rgba(32, 163, 106, 0.5),
+    0 6px 18px rgba(0, 0, 0, 0.35) !important;
+  animation: liveCardPulse 2.2s ease-in-out infinite;
+  transition: box-shadow 0.3s ease;
+}
+
+@keyframes liveCardPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px #20a36a,
+      0 14px 40px rgba(32, 163, 106, 0.5),
+      0 6px 18px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px rgba(32, 163, 106, 0.65),
+      0 18px 50px rgba(32, 163, 106, 0.65),
+      0 8px 22px rgba(0, 0, 0, 0.4);
+  }
+}
+
+body.dark #app4.has-live::before {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+body.dark #app4 .route-card.route-card-live {
+  box-shadow:
+    0 0 0 3px #4ade80,
+    0 14px 40px rgba(74, 222, 128, 0.4),
+    0 6px 18px rgba(0, 0, 0, 0.5) !important;
+}
+/* Плавный вход/выход */
+.route-card {
+  transition: filter 0.35s ease, opacity 0.35s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
   .route-card {
     display: flex;
     flex-direction: column;
@@ -3475,13 +3540,79 @@ body.dark .aap-item::after {
   box-shadow:0 2px 7px rgba(0,0,0,.08);
 }
 .map-filter{
-  flex:0 0 auto;border:1px solid #dbe3e8;background:#f7f9fa;
-  color:#52616d;border-radius:16px;padding:7px 13px;
-  font-size:12px;font-weight:800;
+  flex:0 0 auto;
+  border-radius:16px;
+  padding:7px 13px;
+  font-size:12px;
+  font-weight:800;
+  transition:transform .12s, box-shadow .15s, opacity .15s;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
 }
-.map-filter.active{
-  background:#20a36a;color:#fff;border-color:#20a36a;
-  box-shadow:0 3px 9px rgba(32,163,106,.25);
+
+/* ─── Все — зелёная ─── */
+.map-filter[data-map-filter="all"]{
+  background:#f7f9fa;
+  color:#3a7a56;
+  border:1px solid #c8e6d5;
+}
+.map-filter[data-map-filter="all"].active{
+  background:linear-gradient(135deg,#2ecc71,#20a36a);
+  color:#fff;
+  border-color:#20a36a;
+  box-shadow:0 3px 9px rgba(32,163,106,.35);
+}
+
+/* ─── 10–12 — оранжевая ─── */
+.map-filter[data-map-filter="t10_12"]{
+  background:#fff8ec;
+  color:#b9770e;
+  border:1px solid #f5d59a;
+}
+.map-filter[data-map-filter="t10_12"].active{
+  background:linear-gradient(135deg,#f5b041,#e67e22);
+  color:#fff;
+  border-color:#c87f0a;
+  box-shadow:0 3px 9px rgba(230,126,34,.4);
+}
+
+/* ─── 12–14 — фиолетовая ─── */
+.map-filter[data-map-filter="t12_14"]{
+  background:#f4ecf7;
+  color:#7d3c98;
+  border:1px solid #d7bde2;
+}
+.map-filter[data-map-filter="t12_14"].active{
+  background:linear-gradient(135deg,#a569bd,#8e44ad);
+  color:#fff;
+  border-color:#6c3483;
+  box-shadow:0 3px 9px rgba(142,68,173,.4);
+}
+
+/* ─── 14–16 — синяя ─── */
+.map-filter[data-map-filter="t14_16"]{
+  background:#ecf6fc;
+  color:#1f6391;
+  border:1px solid #c3dff0;
+}
+.map-filter[data-map-filter="t14_16"].active{
+  background:linear-gradient(135deg,#5dade2,#2471a3);
+  color:#fff;
+  border-color:#1f6391;
+  box-shadow:0 3px 9px rgba(36,113,163,.4);
+}
+
+/* ─── 16–18 — зелёная ─── */
+.map-filter[data-map-filter="t16_18"]{
+  background:#ecfaf1;
+  color:#1e8449;
+  border:1px solid #c3e8d1;
+}
+.map-filter[data-map-filter="t16_18"].active{
+  background:linear-gradient(135deg,#58d68d,#27ae60);
+  color:#fff;
+  border-color:#1e8449;
+  box-shadow:0 3px 9px rgba(39,174,96,.4);
 }
 #mapView{position:absolute;left:0;right:0;top:106px;bottom:0;min-height:300px;z-index:1}
 .map-bottom-card{
@@ -3612,8 +3743,46 @@ body.dark .map-popup-btn-nav {
 
 body.dark #screen5{background:#121a22}
 body.dark .map-toolbar{background:rgba(28,39,51,.96)}
-body.dark .map-filter{background:#263340;color:#b8c5cf;border-color:#3a4a5a}
-body.dark .map-filter.active{background:#20a36a;color:#fff;border-color:#20a36a}
+/* Тёмная тема — приглушённые фоны, яркие активные */
+body.dark .map-filter[data-map-filter="all"]{
+  background:#1f2e24;color:#62d999;border-color:#2e5a3d;
+}
+body.dark .map-filter[data-map-filter="all"].active{
+  background:linear-gradient(135deg,#2ecc71,#20a36a);
+  color:#fff;border-color:#20a36a;
+}
+
+body.dark .map-filter[data-map-filter="t10_12"]{
+  background:#2c2615;color:#f5b041;border-color:#5a4415;
+}
+body.dark .map-filter[data-map-filter="t10_12"].active{
+  background:linear-gradient(135deg,#e67e22,#c87f0a);
+  color:#fff;border-color:#c87f0a;
+}
+
+body.dark .map-filter[data-map-filter="t12_14"]{
+  background:#25152e;color:#c39bd3;border-color:#4a2857;
+}
+body.dark .map-filter[data-map-filter="t12_14"].active{
+  background:linear-gradient(135deg,#a569bd,#8e44ad);
+  color:#fff;border-color:#6c3483;
+}
+
+body.dark .map-filter[data-map-filter="t14_16"]{
+  background:#152230;color:#5dade2;border-color:#2c5472;
+}
+body.dark .map-filter[data-map-filter="t14_16"].active{
+  background:linear-gradient(135deg,#3498db,#2471a3);
+  color:#fff;border-color:#1f6391;
+}
+
+body.dark .map-filter[data-map-filter="t16_18"]{
+  background:#0f2d1c;color:#58d68d;border-color:#2e6b48;
+}
+body.dark .map-filter[data-map-filter="t16_18"].active{
+  background:linear-gradient(135deg,#2ecc71,#27ae60);
+  color:#fff;border-color:#1e8449;
+}
 body.dark .map-bottom-card{background:rgba(28,39,51,.98);border-color:#3a4a5a}
 body.dark .map-info-main{color:#e8eef5}
 body.dark .map-info-count{background:#1a3a25;color:#4ade80}
@@ -5445,6 +5614,8 @@ function buildRouteCard(item, timeId, timeLabel) {
   if (item.status === 'ndz') card.classList.add('status-ndz');
   const isCollapsed = (item.status === 'done' || item.status === 'perenos');
   if (isCollapsed) card.classList.add('collapsed');
+    // Если встреча в процессе — добавляем класс "живой"
+  if (item.startedAt) card.classList.add('route-card-live');
 
   if (isCollapsed) {
     const addrDiv = document.createElement('div');
@@ -5698,13 +5869,12 @@ function renderRouteIfChanged() {
 }
 function renderRoute() {
   const app = document.getElementById('app4');
-  const hash = JSON.stringify(routeState.lists) + '|' + _openSlotId;
+  if (!app) return;
   const c = getRouteCounts();
 
-  const frag = document.createDocumentFragment();   // ← собираем всё сюда
+  const frag = document.createDocumentFragment();
 
   const stats = document.createElement('div');
-
 stats.className = 'route-stats';
 stats.innerHTML = `
   <div class="route-stat"><div class="rs-label">Всего</div><div class="rs-value">${c.total}</div></div>
@@ -5864,8 +6034,50 @@ if (window._showTapHint) {
   frag.appendChild(tapHint);
 }
 
-  app.innerHTML = '';
+    app.innerHTML = '';
   app.appendChild(frag);
+
+  // ─── Фокус-режим: ищем активную карточку по startedAt ───
+  app.classList.remove('has-live');
+  
+  // Проходим по слотам — если в слоте есть активная встреча,
+  // ищем соответствующую DOM-карточку по позиции (idx)
+  let hasLive = false;
+  ROUTE_TIMES.forEach(t => {
+    const list = routeState.lists[t.id] || [];
+    const block = app.querySelector(`.route-time-block[data-time-id="${t.id}"]`);
+    if (!block) return;
+
+    // Берём карточки в этом блоке — их порядок совпадает с list (после sortRouteList)
+    const cards = block.querySelectorAll('.route-card');
+    
+    // Сопоставляем по индексу
+    let cardIdx = 0;
+    list.forEach((item) => {
+      if (item.status === 'done' || item.status === 'perenos') return; // collapsed — пропускаем в DOM-сопоставлении? нет, они тоже в DOM
+      // На самом деле collapsed-карточки тоже в DOM. Идём по всем.
+    });
+    
+    // Проще: находим карточку по textContent адреса
+    list.forEach((item) => {
+      if (!item || !item.startedAt) return;
+      hasLive = true;
+      const itemAddr = (item.addr || '').trim();
+      cards.forEach(card => {
+        const addrInput = card.querySelector('.route-addr-input');
+        const addrCollapsed = card.querySelector('.route-addr-collapsed');
+        const cardAddr = (addrInput ? addrInput.value : (addrCollapsed ? addrCollapsed.textContent : '')).trim();
+        if (cardAddr === itemAddr && !card.classList.contains('route-card-live')) {
+          card.classList.add('route-card-live');
+        }
+      });
+    });
+  });
+
+  // Если есть хоть одна активная — включаем фокус-режим
+  if (hasLive) {
+    app.classList.add('has-live');
+  }
 }
 
 updateDrawerRoutes();
@@ -8274,17 +8486,19 @@ function mkAuto2_2(autoId, pctId) {
       // Но в auto-режиме отображение = month + daySnapshot.
       // Значит в month надо записать: желаемое - день (если отчёт уже отправлен)
       // Вычитаем ТО ЖЕ, что renderTotals2 будет прибавлять
-const dayNag = state2.daySnapshot
-  ? (state2.daySnapshot[isTr ? 'tr_nag' : 'slot_nag'] || 0)
-  : num(getT2(isTr ? 'tr_nag' : 'slot_nag'));
-const dayUsp = state2.daySnapshot
-  ? (state2.daySnapshot[isTr ? 'tr_usp' : 'slot_usp'] || 0)
-  : num(getT2(isTr ? 'tr_usp' : 'slot_usp'));
+// Записываем РОВНО введённое — БЕЗ вычитания дня.
+// Плюс: обнуляем today и snapshot, чтобы не прибавлялись.
+state2.month[monthKey] = { nag, usp };
 
-      state2.month[monthKey] = {
-        nag: nag - dayNag,
-        usp: usp - dayUsp
-      };
+// Обнуляем дневные поля, чтобы месяц больше не увеличивался на "сегодня"
+state2.today[isTr ? 'tr_nag' : 'slot_nag'] = '';
+state2.today[isTr ? 'tr_usp' : 'slot_usp'] = '';
+if (state2.daySnapshot) {
+  state2.daySnapshot[isTr ? 'tr_nag' : 'slot_nag'] = 0;
+  state2.daySnapshot[isTr ? 'tr_usp' : 'slot_usp'] = 0;
+}
+state2.savedToday = true;
+state2.lastDay = new Date().toDateString();
 
       state2[editFlagKey] = false;
       saveState2(state2);
@@ -9621,6 +9835,38 @@ loadGeocache();
     isHorizontal = false;
   }, { passive: true });
 })();
+/* ═══════════════════════════════════════════════
+   ФОКУС-РЕЖИМ: тап по замыленному фону — сброс
+   ═══════════════════════════════════════════════ */
+document.getElementById('app4')?.addEventListener('click', (e) => {
+  const app4 = document.getElementById('app4');
+  if (!app4 || !app4.classList.contains('has-live')) return;
+
+  // Если тап по активной карточке или по элементам внутри неё — игнорируем
+  if (e.target.closest('.route-card-live')) return;
+
+  // Иначе — сбрасываем startedAt у всех активных встреч
+  const activeItems = [];
+  ROUTE_TIMES.forEach(t => {
+    (routeState.lists[t.id] || []).forEach(item => {
+      if (item && item.startedAt) activeItems.push(item);
+    });
+  });
+
+  if (activeItems.length === 0) return;
+
+  const confirmed = confirm('Остановить текущую встречу?\n\nВремя перестанет идти.');
+  if (!confirmed) return;
+
+  activeItems.forEach(item => { item.startedAt = null; });
+  saveRouteState(routeState);
+  vibro(20);
+  renderRoute();
+  updateActivitiesBadge();
+  _mapHash = '';
+  if (map) renderMapMarkers();
+  showToast('⏹ Встреча остановлена');
+}, true);  // ← capture: true, чтобы сработало до других обработчиков
 </script>
 </body>
 </html>
