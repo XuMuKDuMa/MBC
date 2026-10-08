@@ -4009,6 +4009,60 @@ body.dark #screen4 .route-time-col .rtc-end   { color: #81929d; }
 #screen4 .route-addr-input {
   padding-right: 68px !important;   /* под 📍 + 🎤 */
 }
+/* ─── Контейнер для поля заметки + микрофона ─── */
+#screen4 .route-note-wrap {
+  position: relative;
+  width: 100%;
+}
+
+#screen4 .route-note-wrap .route-note-input {
+  padding-right: 38px !important;   /* место под кнопку */
+}
+
+/* ─── Кнопка микрофона в поле заметки ─── */
+#screen4 .route-note-mic {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #687883;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+#screen4 .route-note-mic svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+#screen4 .route-note-mic:active {
+  background: rgba(0,0,0,.06);
+}
+#screen4 .route-note-mic.listening {
+  color: #c0392b;
+  background: rgba(192,57,43,.1);
+  animation: micPulse 1s ease-in-out infinite;
+}
+
+body.dark #screen4 .route-note-mic {
+  color: #a8b8c4;
+}
+body.dark #screen4 .route-note-mic:active {
+  background: rgba(255,255,255,.08);
+}
+body.dark #screen4 .route-note-mic.listening {
+  color: #e57373;
+  background: rgba(192,57,43,.2);
+}
+
 #screen4 .route-mic-inline {
   position: absolute;
   right: 4px;
@@ -5825,6 +5879,10 @@ btnCoords.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: 
 addrWrap.appendChild(btnCoords);
 fields.appendChild(addrWrap);
 
+// ─── Поле заметки + кнопка микрофона ───
+const noteWrap = document.createElement('div');
+noteWrap.className = 'route-note-wrap';
+
 const noteInput = document.createElement('input');
 noteInput.type = 'text';
 noteInput.className = 'route-note-input';
@@ -5832,7 +5890,52 @@ noteInput.placeholder = 'кв, этаж, код домофона…';
 noteInput.value = item.note || '';
 noteInput.addEventListener('input', () => { item.note = noteInput.value; saveRouteState(routeState); });
 
-fields.appendChild(noteInput);
+// ─── Кнопка микрофона в поле заметки ───
+const btnNoteMic = document.createElement('button');
+btnNoteMic.type = 'button';
+btnNoteMic.className = 'route-note-mic';
+btnNoteMic.innerHTML = MIC_SVG;
+btnNoteMic.title = 'Голосовой ввод заметки';
+btnNoteMic.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('🎤 Голосовой ввод не поддерживается'); return; }
+  const rec = new SR();
+  rec.lang = 'ru-RU';
+  rec.continuous = false;
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  vibro(15);
+  btnNoteMic.classList.add('listening');
+  showToast('🎤 Говорите...');
+
+  rec.onresult = (e) => {
+    const text = e.results[0][0].transcript.trim();
+    const clean = text.replace(/\.$/, '');
+    if (clean) {
+      const existing = (item.note || '').trim();
+      item.note = existing ? existing + ', ' + clean : clean;
+      saveRouteState(routeState);
+      noteInput.value = item.note;
+      showToast('✅ ' + clean);
+    }
+  };
+  rec.onerror = (e) => {
+    if (e.error === 'not-allowed') showToast('❌ Нет доступа к микрофону');
+    else if (e.error === 'no-speech') showToast('⚠️ Ничего не услышано');
+    else if (e.error !== 'aborted') showToast('❌ Ошибка: ' + e.error);
+  };
+  rec.onend = () => { btnNoteMic.classList.remove('listening'); };
+  try { rec.start(); } catch (err) {
+    showToast('❌ Не удалось запустить');
+    btnNoteMic.classList.remove('listening');
+  }
+});
+btnNoteMic.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+
+noteWrap.appendChild(noteInput);
+noteWrap.appendChild(btnNoteMic);
+fields.appendChild(noteWrap);
 topRow.appendChild(fields);
 
 
