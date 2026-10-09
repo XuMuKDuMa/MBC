@@ -7931,9 +7931,114 @@ const trBlock = `
       </div>
       <div id="monthsHistoryBody" style="display:none;">
         ${monthsSorted.length === 0 ? '<div style="padding:16px;text-align:center;color:#888">Пока нет данных</div>' : monthsSorted.map(key => { const [y, m] = key.split('-'); const d = new Date(parseInt(y), parseInt(m) - 1, 1); const name = d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }); return `<div class="row month-history-row" data-year="${y}" data-month="${m}" style="justify-content:space-between;cursor:pointer;"><div class="name" style="flex:1">${name}</div><div style="font-weight:700;color:#2980b9">${monthTotals[key].up.toFixed(2)} УП</div><div style="margin-left:8px;color:#95a5a6;font-size:16px;">›</div></div>`; }).join('')}
+              </div>
+    </div>
+        <div class="section" id="aiAnalysisSection3">
+      <div class="section-title" style="background:#3949ab;">🤖 ИИ-помощник по итогам</div>
+      <div style="padding:12px;">
+        <div style="font-size:13px;color:#777;margin-bottom:10px;line-height:1.45;">Анализирует УП, выполнение плана, рабочие дни, встречи, продажи и сравнение с прошлым месяцем.</div>
+        <button type="button" id="runAiAnalysis3" style="width:100%;border:0;border-radius:10px;padding:13px 12px;background:#3949ab;color:#fff;font-weight:700;font-size:14px;cursor:pointer;">✨ Проанализировать результаты</button>
+        <div id="aiAnalysisResult3" style="display:none;margin-top:12px;padding:12px;border-radius:10px;background:rgba(127,127,127,.08);font-size:13px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;"></div>
       </div>
     </div>`;
+      // ─── Привязка ИИ-помощника ───
+  const aiRun3 = document.getElementById('runAiAnalysis3');
+  const aiResult3 = document.getElementById('aiAnalysisResult3');
 
+  if (aiRun3 && aiResult3) {
+    aiRun3.addEventListener('click', () => {
+      vibro(15);
+      const originalLabel = aiRun3.textContent;
+      aiRun3.disabled = true;
+      aiRun3.textContent = '⏳ Анализирую...';
+      aiResult3.style.display = 'block';
+      aiResult3.textContent = 'Собираю показатели месяца...';
+
+      setTimeout(() => {
+        try {
+          const now = new Date();
+          const report = collectMonthlyReportByMonth(now.getFullYear(), now.getMonth());
+          const planValue = Number(getPlanUP()) || 0;
+          const up = Number(report.totals.up) || 0;
+          const days = Number(report.totals.days) || 0;
+          const meetings = Number(report.totals.meetings) || 0;
+          const salesCount = (report.sales.entries || []).reduce((s, i) => s + (Number(i.count) || 0), 0);
+          const b2c = Object.values(report.meetings.b2c || {}).reduce((s, n) => s + (Number(n) || 0), 0);
+          const b2b = Object.values(report.meetings.b2b || {}).reduce((s, n) => s + (Number(n) || 0), 0);
+
+          // TR мес / TR слот мес
+          const trNag = (state2.month && state2.month.trMonth && state2.month.trMonth.nag) || 0;
+          const trUsp = (state2.month && state2.month.trMonth && state2.month.trMonth.usp) || 0;
+          const slNag = (state2.month && state2.month.slotMonth && state2.month.slotMonth.nag) || 0;
+          const slUsp = (state2.month && state2.month.slotMonth && state2.month.slotMonth.usp) || 0;
+
+          // УП на ФД из истории
+          const h = loadHistory1();
+          let sumUPFD = 0;
+          Object.keys(h).forEach(ds => {
+            const p = ds.split('.');
+            if (p.length !== 3) return;
+            const m = parseInt(p[1]) - 1, y = parseInt(p[2]);
+            if (m === now.getMonth() && y === now.getFullYear()) {
+              sumUPFD += h[ds].upFD || 0;
+            }
+          });
+
+          const avg = days > 0 ? (up / days) : 0;
+          const fdShare = up > 0 ? Math.round((sumUPFD / up) * 100) : 0;
+          const trPct = trNag > 0 ? ((trUsp / trNag) * 100).toFixed(1) : '—';
+          const slPct = slNag > 0 ? ((slUsp / slNag) * 100).toFixed(1) : '—';
+
+          const lines = [];
+          lines.push('📊 АНАЛИЗ ЗА ' + report.monthName.toUpperCase());
+          lines.push('');
+          lines.push('💰 УП общий: ' + up.toFixed(2) + (planValue > 0 ? ' (план ' + planValue + ' → ' + ((up / planValue) * 100).toFixed(1) + '%)' : ' (план не задан)'));
+          lines.push('🎯 УП на ФД: ' + sumUPFD.toFixed(2) + ' (' + fdShare + '% от УП)');
+          lines.push('');
+          lines.push('📞 TR мес (не слот): ' + trNag + ' / ' + trUsp + ' (' + trPct + '%)');
+          lines.push('📞 TR слот мес: ' + slNag + ' / ' + slUsp + ' (' + slPct + '%)');
+          lines.push('');
+          lines.push('👥 Встречи: ' + meetings + ' (B2C: ' + b2c + ', B2B: ' + b2b + ')');
+          lines.push('🛒 Продажи: ' + salesCount);
+          lines.push('');
+          lines.push('📅 Рабочих дней: ' + days + '; средний УП/день: ' + avg.toFixed(2));
+
+          const verdict = [];
+          if (planValue > 0) {
+            const pct = (up / planValue) * 100;
+            if (pct >= 100) verdict.push('🎉 План выполнен!');
+            else if (pct >= 80) verdict.push('✅ Хороший темп.');
+            else if (pct >= 50) verdict.push('⚠️ Средний темп.');
+            else verdict.push('🔴 Отставание от плана.');
+          }
+          if (up > 0) {
+            if (fdShare >= 60) verdict.push('Отличная доля ФД.');
+            else if (fdShare >= 40) verdict.push('Нормальная доля ФД.');
+            else verdict.push('Мало УП на ФД.');
+          }
+          if (trNag > 0) {
+            const pct = (trUsp / trNag) * 100;
+            if (pct >= 80) verdict.push('TR высокая конверсия.');
+            else if (pct >= 50) verdict.push('TR средняя конверсия.');
+            else verdict.push('TR низкая конверсия.');
+          }
+          lines.push('');
+          lines.push('💡 ' + (verdict.join(' ') || 'Недостаточно данных.'));
+
+          aiResult3.textContent = lines.join('\n');
+        } catch (e) {
+          console.error('AI error:', e);
+          aiResult3.textContent = '❌ Ошибка: ' + e.message;
+        } finally {
+          aiRun3.disabled = false;
+          aiRun3.textContent = originalLabel;
+        }
+      }, 100);
+    });
+  }
+  // ═══════════════════════════════════════════════
+  //   ИИ-ПОМОЩНИК ПО ИТОГАМ
+  // ═══════════════════════════════════════════════
   // Аккордеон «Встречи для плана»
 const meetPlanToggle = document.getElementById('meetPlanToggle');
 const meetPlanBody = document.getElementById('meetPlanBody');
