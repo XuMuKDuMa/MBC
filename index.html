@@ -52,7 +52,37 @@
   color: #71808c;
   letter-spacing: 0.2px;
 }
+/* ═══════════════════════════════════════════════
+   ЦИТАТА КАК ЧАСТЬ БЛОКА АКТИВНОСТЕЙ
+   ═══════════════════════════════════════════════ */
 
+/* Когда цитата идёт сразу после activity-hint — сливаем их */
+#screen4 .activity-hint + .daily-quote {
+  margin-top: -4px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: 1px dashed rgba(31, 55, 70, 0.12);
+  box-shadow: 0 4px 14px rgba(20, 35, 50, 0.06);
+}
+
+/* Верхняя граница — от блока активности */
+#screen4 .activity-hint:has(+ .daily-quote) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-bottom: 0;
+  padding-bottom: 8px;
+  border-bottom: none;
+  box-shadow: none;
+}
+
+/* Тёмная тема */
+body.dark #screen4 .activity-hint + .daily-quote {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark #screen4 .activity-hint:has(+ .daily-quote) {
+  box-shadow: none;
+}
 @keyframes quoteFadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -6515,7 +6545,11 @@ frag.appendChild(stats);
 
 
  if (c.total === 0) {
-  // Совсем нет встреч — большая подсказка
+  // ─── Одна общая карточка: подсказка + цитата ───
+  const combinedBlock = document.createElement('div');
+  combinedBlock.className = 'activity-combined';
+
+  // Верхняя часть — подсказка
   const activityHint = document.createElement('div');
   activityHint.className = 'activity-hint';
   activityHint.innerHTML = `
@@ -6524,9 +6558,17 @@ frag.appendChild(stats);
       <div class="activity-hint-title">Активности на сегодня</div>
       <div class="activity-hint-sub">Добавляй адреса по времени и отмечай статус выполнения</div>
     </div>`;
-  frag.appendChild(activityHint);
+  combinedBlock.appendChild(activityHint);
+
+  // Нижняя часть — цитата (если слот не открыт)
+  if (!_openSlotId) {
+    const quoteEl = buildQuoteBlock();
+    quoteEl.classList.add('inside-combined');
+    combinedBlock.appendChild(quoteEl);
+  }
+
+  frag.appendChild(combinedBlock);
 } else if (!_openSlotId) {
-  // Встречи есть, но ни один слот не открыт — запомним, что надо показать подсказку
   window._showTapHint = true;
 }
 
@@ -6651,10 +6693,6 @@ if (_openSlotId) {
 frag.appendChild(grid);
 
 
-// ─── Цитата дня: если ни один слот не открыт ───
-if (!_openSlotId && c.total > 0) {
-  frag.appendChild(buildQuoteBlock());
-}
 
 // ─── Подсказка ПОСЛЕ слотов ───
 if (window._showTapHint) {
