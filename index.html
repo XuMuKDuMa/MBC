@@ -5249,10 +5249,7 @@ function goToTab(n, animate = true) {
     });
   }
 
-  // При возврате на «Сегодня» — плашка итогов в исходном положении
-  if (n === 1) {
-    setTimeout(resetTotalsPosition, 50);
-  }
+
 
   // При возврате на «Сегодня» — плашка итогов всегда в исходном положении
   if (n === 1) {
@@ -5302,6 +5299,7 @@ function goToTab(n, animate = true) {
   setTimeout(updateB2cField, 50);
 }
   if (n === 2) {
+  syncMonthUpFromHistory();   // ← синхронизация upDone из истории
   autofillMvsFromToday();
   render2();
 }
@@ -6615,10 +6613,6 @@ if (!_openSlotId && c.total > 0) {
   frag.appendChild(buildQuoteBlock());
 }
 
-// ─── Подсказка ПОСЛЕ слотов ───
-if (window._showTapHint) {
-  // ...
-}
 // ─── Подсказка ПОСЛЕ слотов ───
 if (window._showTapHint) {
   window._showTapHint = false;
@@ -8997,7 +8991,46 @@ function autofillMvsFromToday() {
   saveState2(state2);
   return true;
 }
+/* ═══════════════════════════════════════════════
+   СИНХРОНИЗАЦИЯ month.upDone ИЗ ИСТОРИИ ДНЕЙ
+   ═══════════════════════════════════════════════ */
+function syncMonthUpFromHistory() {
+  // Считаем сумму УП за текущий месяц из истории
+  const h = loadHistory1();
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
 
+  let sumUP = 0;
+  Object.keys(h).forEach(dateStr => {
+    const parts = dateStr.split('.');
+    if (parts.length !== 3) return;
+    const m = parseInt(parts[1]) - 1;
+    const y = parseInt(parts[2]);
+    if (m === month && y === year) {
+      sumUP += h[dateStr].up || 0;
+    }
+  });
+
+  const historyUP = Number(sumUP.toFixed(2));
+
+  // ─── Если было ручное значение — оно БАЗА, а новые дни прибавляются ───
+  const manualBase = Number(state2.month.upDoneManual) || 0;
+  const alreadyCounted = Number(state2.month.upDoneManualCounted) || 0;
+  const newFromHistory = Math.max(0, historyUP - alreadyCounted);
+
+  const finalUP = manualBase > 0
+    ? Number((manualBase + newFromHistory).toFixed(2))
+    : historyUP;
+
+  if (state2.month.upDone !== finalUP) {
+    console.log('🔄 syncMonthUp:', state2.month.upDone, '→', finalUP,
+                '| база:', manualBase, '| история:', historyUP,
+                '| уже учтено:', alreadyCounted, '| новых:', newFromHistory);
+    state2.month.upDone = finalUP;
+    saveState2(state2);
+  }
+}
 function checkNewDay2() {
   const today = new Date().toDateString();
   if (state2.lastDay && state2.lastDay !== today) {
@@ -9030,7 +9063,7 @@ function render2() {
   app.appendChild(empSec);
   const upSec = mkSection2('УП', 'sec-up');
   upSec.appendChild(mkPlanField2('upPlan', 'УП план на месяц'));
-  upSec.appendChild(mkAuto2('УП фактический за месяц', 'auto_up2', 'pct_up2'));
+  upSec.appendChild(mkAutoUp2());
   upSec.appendChild(mkField2('up_day', 'УП за день'));
   app.appendChild(upSec);
   const kkSec = mkSection2('КК', 'sec-kk');
@@ -9272,6 +9305,108 @@ state2.lastDay = new Date().toDateString();
   }
   return row;
 }
+function mkAutoUp2() {
+  const row = document.createElement('div');
+  row.className = 'field';
+
+  const isManual = state2.upMonthManual === true;
+
+  if (isManual) {
+    // ─── Ручной режим ───
+    const val = state2.month.upDoneManual != null ? state2.month.upDoneManual : 0;
+
+    row.innerHTML = `
+      <div class="label">УП фактический за месяц <span style="font-size:10px;color:#f39c12;font-weight:700;">(ручной)</span></div>
+      <input type="text" inputmode="decimal" id="upManualInput" value="${val}"
+        style="width:70px;text-align:center;font-weight:800;color:#f39c12;background:#3a2f14;border:1px solid #7a5c00;border-radius:8px;padding:7px;">
+      <button id="upManualSave" title="Сохранить"
+        style="margin-left:6px;padding:7px 10px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;">✓</button>
+      <button id="upManualAuto" title="Вернуться в авто (значение сохранится)"
+        style="margin-left:4px;padding:7px 10px;background:#2c3a48;color:#b0bec5;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;">🔄</button>
+    `;
+
+    // ✓ Сохранить — запоминаем базу истории на момент ввода
+    row.querySelector('#upManualSave').addEventListener('click', () => {
+      const v = num(document.getElementById('upManualInput').value);
+
+      // Считаем ТЕКУЩУЮ сумму из истории — она пойдёт в "уже учтено"
+      const h = loadHistory1();
+      const now = new Date();
+      const month = now.getMonth();
+      const year = now.getFullYear();
+      let sumUP = 0;
+      Object.keys(h).forEach(dateStr => {
+        const parts = dateStr.split('.');
+        if (parts.length !== 3) return;
+        const m = parseInt(parts[1]) - 1;
+        const y = parseInt(parts[2]);
+        if (m === month && y === year) {
+          sumUP += h[dateStr].up || 0;
+        }
+      });
+
+      state2.month.upDoneManual = v;
+      state2.month.upDoneManualCounted = Number(sumUP.toFixed(2));  // ← база
+      state2.upMonthManual = true;
+      state2.month.upDone = v;
+      saveState2(state2);
+      render2();
+      renderTotals2();
+      vibro(15);
+      showToast('✅ Сохранено: ' + v.toFixed(2));
+    });
+
+    // 🔄 Авто — НЕ трогаем upDone, значение остаётся
+    row.querySelector('#upManualAuto').addEventListener('click', () => {
+      state2.upMonthManual = false;
+      // НЕ вызываем syncMonthUpFromHistory() — оставляем текущее upDone
+      // Синхронизация сработает при следующем заходе на вкладку МВС
+      saveState2(state2);
+      render2();
+      renderTotals2();
+      vibro(10);
+      showToast('🔄 Авто-режим (значение ' + state2.month.upDone + ' сохранено)');
+    });
+
+    // Подсчёт % в реальном времени
+    const inp = row.querySelector('#upManualInput');
+    inp.addEventListener('input', () => {
+      const plan = Number(getPlan2('upPlan')) || 0;
+      const fact = num(inp.value);
+      const pctEl = document.getElementById('pct_up2');
+      if (pctEl) pctEl.textContent = plan > 0 ? ((fact / plan) * 100).toFixed(1) + '%' : '—';
+    });
+
+  } else {
+    // ─── Авто режим ───
+    row.innerHTML = `
+      <div class="label">УП фактический за месяц <span style="font-size:10px;color:#27ae60;font-weight:700;">(авто)</span></div>
+      <div class="auto" id="auto_up2">0</div>
+      <div class="pct" id="pct_up2">—</div>
+      <button id="upManualEdit" title="Ручной ввод"
+        style="margin-left:6px;padding:7px 10px;background:#2c3a48;color:#b0bec5;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;">✎</button>
+    `;
+
+    row.querySelector('#upManualEdit').addEventListener('click', () => {
+      // Если было ручное — берём ЕГО (не сбрасываем)
+      let val;
+      if (state2.month.upDoneManual != null) {
+        val = state2.month.upDoneManual;
+      } else {
+        const autoEl = document.getElementById('auto_up2');
+        val = autoEl ? num(autoEl.textContent) : 0;
+      }
+      state2.month.upDoneManual = val;
+      state2.upMonthManual = true;
+      saveState2(state2);
+      render2();
+      vibro(15);
+      showToast('✎ Ручной режим');
+    });
+  }
+
+  return row;
+}
 function mkRow2_2(id1, id2) {
   const row = document.createElement('div');
   row.className = 'row2';
@@ -9282,17 +9417,29 @@ function mkRow2_2(id1, id2) {
   return row;
 }
 function renderTotals2() {
-  const upDone = state2.month.upDone + num(getT2('up_day'));
+  // ─── Обновляем поле "УП фактический за месяц" ───
+  const isManualUP = state2.upMonthManual === true;
+  const upDoneDisplay = isManualUP
+    ? Number(state2.month.upDone || 0)
+    : Number((state2.month.upDone + num(getT2('up_day'))).toFixed(2));
 
-  // Если отчёт уже отправлен — TR мес ЗАМЕР, используем снимок дня
+  const autoUpEl = document.getElementById('auto_up2');
+  if (autoUpEl) autoUpEl.textContent = upDoneDisplay.toFixed(2);
+
+  const pctUpEl = document.getElementById('pct_up2');
+  if (pctUpEl) {
+    const plan = Number(getPlan2('upPlan')) || 0;
+    pctUpEl.textContent = plan > 0 ? ((upDoneDisplay / plan) * 100).toFixed(1) + '%' : '—';
+  }
+
+  // ─── Дальше — TR (как было) ───
   const alreadySent = state2.savedToday === true && state2.daySnapshot;
-  const dayTrNag   = alreadySent ? state2.daySnapshot.tr_nag   : num(getT2('tr_nag'));
-  const dayTrUsp   = alreadySent ? state2.daySnapshot.tr_usp   : num(getT2('tr_usp'));
-  const daySlNag   = alreadySent ? state2.daySnapshot.slot_nag : num(getT2('slot_nag'));
-  const daySlUsp   = alreadySent ? state2.daySnapshot.slot_usp : num(getT2('slot_usp'));
+  const dayTrNag = alreadySent ? state2.daySnapshot.tr_nag : num(getT2('tr_nag'));
+  const dayTrUsp = alreadySent ? state2.daySnapshot.tr_usp : num(getT2('tr_usp'));
+  const daySlNag = alreadySent ? state2.daySnapshot.slot_nag : num(getT2('slot_nag'));
+  const daySlUsp = alreadySent ? state2.daySnapshot.slot_usp : num(getT2('slot_usp'));
 
-    // Если override — используем ручные значения, авто-подсчёт игнорируем
-    const trNag = state2.month.trMonth.nag + dayTrNag;
+  const trNag = state2.month.trMonth.nag + dayTrNag;
   const trUsp = state2.month.trMonth.usp + dayTrUsp;
   const slNag = state2.month.slotMonth.nag + daySlNag;
   const slUsp = state2.month.slotMonth.usp + daySlUsp;
@@ -9306,18 +9453,16 @@ function renderTotals2() {
   const el3p = document.getElementById('pct_slotm2');
   if (el3p) el3p.textContent = pct2(slUsp, slNag);
 
-    // ─── Кнопка «Отчёт» ───
+  // Кнопка «Отчёт»
   const btn = document.getElementById('btnReport2');
   if (btn) {
     const todayStr = new Date().toDateString();
     const sentToday = state2.lastDay === todayStr && state2.savedToday === true;
-
     if (sentToday) {
       btn.disabled = true;
       btn.textContent = '✓ Отправлено';
       return;
     }
-
     const upDay = getT2('up_day').trim();
     const reasons = getManual1('reasons').trim();
     btn.disabled = upDay === '' || reasons === '';
