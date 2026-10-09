@@ -4602,6 +4602,101 @@ body.dark #screen4 .route-time-body .route-card:not(.status-wait):not(.status-do
 body.dark #screen4 .route-time-body {
   background: #121a22 !important;
 }
+/* ─── Панель записи голоса ─── */
+.voice-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.vp-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e3e9ed;
+  background: #fff;
+  color: #263944;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.12s, background 0.15s;
+}
+
+.vp-btn:active {
+  transform: scale(0.95);
+}
+
+.vp-record {
+  background: #eaf3fb;
+  color: #2980b9;
+  border-color: #c3dff0;
+}
+.vp-record:active { background: #d5e8f7; }
+
+.vp-stop {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: #fff;
+  border-color: #c0392b;
+}
+
+.vp-play {
+  background: #e7f7ef;
+  color: #168653;
+  border-color: #c9ebd8;
+}
+.vp-play:active { background: #d0efe0; }
+
+.vp-delete {
+  background: #ecf0f1;
+  color: #7f8c8d;
+  border-color: #dfe4e6;
+}
+.vp-delete:active { background: #dde3e5; }
+
+.vp-timer {
+  font-size: 12px;
+  font-weight: 800;
+  color: #e74c3c;
+  animation: recPulse 1s ease-in-out infinite;
+  padding: 0 4px;
+}
+
+@keyframes recPulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+/* Тёмная тема */
+body.dark .vp-btn {
+  background: #2c3a48;
+  color: #b0bec5;
+  border-color: #3a4a5a;
+}
+body.dark .vp-record {
+  background: #1a2a3a;
+  color: #5dade2;
+  border-color: #3498db;
+}
+body.dark .vp-stop {
+  background: linear-gradient(135deg, #c0392b, #922b21);
+  color: #fff;
+  border-color: #922b21;
+}
+body.dark .vp-play {
+  background: #183a29;
+  color: #62d999;
+  border-color: #27ae60;
+}
+body.dark .vp-delete {
+  background: #263340;
+  color: #90a4ae;
+  border-color: #3a4a5a;
+}
 </style>
 
 </head>
@@ -5982,6 +6077,132 @@ btnNoteMic.addEventListener('touchstart', (e) => e.stopPropagation(), { passive:
 noteWrap.appendChild(noteInput);
 noteWrap.appendChild(btnNoteMic);
 fields.appendChild(noteWrap);
+// ─── Панель записи голоса ───
+const voicePanel = document.createElement('div');
+voicePanel.className = 'voice-panel';
+voicePanel.innerHTML = `
+  <button type="button" class="vp-btn vp-record" title="Записать голос">
+    🎙 Записать
+  </button>
+  <span class="vp-timer" style="display:none;">⏺ 00:00</span>
+  <button type="button" class="vp-btn vp-stop" style="display:none;" title="Остановить">
+    ⏹ Стоп
+  </button>
+  <button type="button" class="vp-btn vp-play" style="display:none;" title="Прослушать">
+    ▶ Прослушать
+  </button>
+  <button type="button" class="vp-btn vp-delete" style="display:none;" title="Удалить">
+    🗑 Удалить
+  </button>
+  <audio class="vp-audio" style="display:none;"></audio>
+`;
+fields.appendChild(voicePanel);
+
+// ─── Логика записи ───
+let _mediaRecorder = null;
+let _audioChunks = [];
+let _audioUrl = null;
+let _timerInterval = null;
+let _seconds = 0;
+
+const btnRecord  = voicePanel.querySelector('.vp-record');
+const btnStop    = voicePanel.querySelector('.vp-stop');
+const btnPlay    = voicePanel.querySelector('.vp-play');
+const btnDelete  = voicePanel.querySelector('.vp-delete');
+const timerEl    = voicePanel.querySelector('.vp-timer');
+const audioEl    = voicePanel.querySelector('.vp-audio');
+
+function fmtTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+
+btnRecord.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    _audioChunks = [];
+    _mediaRecorder = new MediaRecorder(stream);
+
+    _mediaRecorder.addEventListener('dataavailable', (ev) => {
+      if (ev.data.size > 0) _audioChunks.push(ev.data);
+    });
+
+    _mediaRecorder.addEventListener('stop', () => {
+      const blob = new Blob(_audioChunks, { type: 'audio/webm' });
+      _audioUrl = URL.createObjectURL(blob);
+      audioEl.src = _audioUrl;
+
+      stream.getTracks().forEach(t => t.stop());
+
+      // UI
+      btnRecord.style.display = 'none';
+      btnStop.style.display = 'none';
+      timerEl.style.display = 'none';
+      btnPlay.style.display = 'inline-flex';
+      btnDelete.style.display = 'inline-flex';
+      clearInterval(_timerInterval);
+      vibro(15);
+    });
+
+    _mediaRecorder.start();
+    _seconds = 0;
+    timerEl.textContent = '⏺ 00:00';
+    timerEl.style.display = 'inline';
+    btnRecord.style.display = 'none';
+    btnStop.style.display = 'inline-flex';
+    btnPlay.style.display = 'none';
+    btnDelete.style.display = 'none';
+
+    _timerInterval = setInterval(() => {
+      _seconds++;
+      timerEl.textContent = '⏺ ' + fmtTime(_seconds);
+      if (_seconds >= 120) btnStop.click();  // макс 2 мин
+    }, 1000);
+
+    vibro(20);
+    showToast('🎙 Идёт запись...');
+  } catch (err) {
+    showToast('❌ Нет доступа к микрофону');
+  }
+});
+
+btnStop.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (_mediaRecorder && _mediaRecorder.state === 'recording') {
+    _mediaRecorder.stop();
+  }
+});
+
+btnPlay.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (audioEl.paused) {
+    audioEl.play();
+    btnPlay.textContent = '⏸ Пауза';
+  } else {
+    audioEl.pause();
+    btnPlay.textContent = '▶ Прослушать';
+  }
+});
+
+audioEl.addEventListener('ended', () => {
+  btnPlay.textContent = '▶ Прослушать';
+});
+
+btnDelete.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (_audioUrl) URL.revokeObjectURL(_audioUrl);
+  _audioUrl = null;
+  _audioChunks = [];
+  audioEl.src = '';
+  btnPlay.style.display = 'none';
+  btnDelete.style.display = 'none';
+  btnRecord.style.display = 'inline-flex';
+  btnRecord.textContent = '🎙 Записать';
+  vibro(15);
+  showToast('🗑 Запись удалена');
+});
 topRow.appendChild(fields);
 
 
