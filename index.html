@@ -1855,14 +1855,7 @@ body.dark .modal-overlay#quickReportModal .quick-modal {
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
-  .route-time-block[data-time-id="t10_12"] .route-time-body { background: linear-gradient(180deg, #fff8ec, #ffffff 40%); }
-  .route-time-block[data-time-id="t12_14"] .route-time-body { background: linear-gradient(180deg, #f4ecf7, #ffffff 40%); }
-  .route-time-block[data-time-id="t14_16"] .route-time-body { background: linear-gradient(180deg, #ecf6fc, #ffffff 40%); }
-  .route-time-block[data-time-id="t16_18"] .route-time-body { background: linear-gradient(180deg, #ecfaf1, #ffffff 40%); }
-  body.dark .route-time-block[data-time-id="t10_12"] .route-time-body { background: linear-gradient(180deg, #2c2615, #1c2733 40%); }
-  body.dark .route-time-block[data-time-id="t12_14"] .route-time-body { background: linear-gradient(180deg, #221530, #1c2733 40%); }
-  body.dark .route-time-block[data-time-id="t14_16"] .route-time-body { background: linear-gradient(180deg, #152230, #1c2733 40%); }
-  body.dark .route-time-block[data-time-id="t16_18"] .route-time-body { background: linear-gradient(180deg, #0f2d1c, #1c2733 40%); }
+
 
 /* ═══════════════════════════════════════════════
    ФОКУС-РЕЖИМ (через оверлей)
@@ -2187,18 +2180,23 @@ body.dark #app4 .route-card.route-card-live {
   }
   .route-addr-input:focus { outline: none; background: #fff; border-color: #3498db; }
   .route-note-input {
-    width: 100%;
-    padding: 5px 10px;
-    font-size: 12px;
-    font-weight: 500;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    background: #fafafa;
-    color: #666;
-    -webkit-appearance: none;
-    font-family: inherit;
-    transition: background 0.2s, border-color 0.2s;
-  }
+  width: 100%;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #666;
+  -webkit-appearance: none;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s;
+  resize: none;
+  overflow-y: hidden;
+  min-height: 26px;
+  line-height: 1.35;
+  transition: height 0.1s ease, background 0.2s, border-color 0.2s;
+}
   .route-note-input:focus { outline: none; background: #fff; border-color: #3498db; }
 
   .route-side-btn {
@@ -3081,6 +3079,10 @@ body.dark #screen4 .activity-hint-sub{color:#81929d}
   background: #fff !important;
   font-size: 11px !important;
   color: #687883 !important;
+  resize: none !important;
+  overflow-y: hidden !important;
+  line-height: 1.35 !important;
+  transition: height 0.1s ease, background 0.2s, border-color 0.2s !important;
 }
 #screen4 .route-addr-input:focus,
 #screen4 .route-note-input:focus {
@@ -4574,6 +4576,32 @@ body.dark #screen4 .slot-btn.active[data-slot-id="t16_18"] {
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.7) !important;
   opacity: 0.9 !important;
 }
+
+/* ═══════════════════════════════════════════════
+   ФИКС: Карточки всегда белые/тёмные
+   Цветные — только по статусу
+   ═══════════════════════════════════════════════ */
+
+/* Карточка по умолчанию — БЕЛАЯ (без статуса) */
+#screen4 .route-time-body .route-card:not(.status-wait):not(.status-done):not(.status-perenos):not(.status-ndz) {
+  background: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(20,35,50,.06) !important;
+}
+
+/* Body слота — нейтральный фон */
+#screen4 .route-time-body {
+  background: #f5f7fa !important;
+}
+
+/* Тёмная тема */
+body.dark #screen4 .route-time-body .route-card:not(.status-wait):not(.status-done):not(.status-perenos):not(.status-ndz) {
+  background: #1c2832 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15) !important;
+}
+
+body.dark #screen4 .route-time-body {
+  background: #121a22 !important;
+}
 </style>
 
 </head>
@@ -5883,12 +5911,29 @@ fields.appendChild(addrWrap);
 const noteWrap = document.createElement('div');
 noteWrap.className = 'route-note-wrap';
 
-const noteInput = document.createElement('input');
-noteInput.type = 'text';
+const noteInput = document.createElement('textarea');
 noteInput.className = 'route-note-input';
 noteInput.placeholder = 'кв, этаж, код домофона…';
 noteInput.value = item.note || '';
-noteInput.addEventListener('input', () => { item.note = noteInput.value; saveRouteState(routeState); });
+noteInput.rows = 1;
+
+// Авто-высота (до 3 строк)
+function autoGrowNote(el) {
+  el.style.height = 'auto';
+  const maxHeight = 60;  // ~3 строки
+  el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px';
+  el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden';
+}
+
+noteInput.addEventListener('input', () => {
+  item.note = noteInput.value;
+  saveRouteState(routeState);
+  autoGrowNote(noteInput);
+});
+
+// Применить высоту при рендере
+requestAnimationFrame(() => autoGrowNote(noteInput));
+setTimeout(() => autoGrowNote(noteInput), 100);
 
 // ─── Кнопка микрофона в поле заметки ───
 const btnNoteMic = document.createElement('button');
@@ -10228,7 +10273,6 @@ function normalizeNumbers(text) {
   
   return result;
 }
-</script>
 
 </script>
 </body>
