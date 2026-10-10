@@ -4999,6 +4999,7 @@ body.dark .vp-delete {
   <button id="btnFixDupHistory">🔧 Исправить дубли в истории</button>
   <button id="btnExportData" style="color:#27ae60;">💾 Сохранить данные</button>
   <button id="btnImportData" style="color:#2980b9;">📂 Загрузить данные</button>
+  <button id="btnClearMapCache" onclick="window.__clearMapCache && window.__clearMapCache()" style="color:#e67e22;">🗺 Очистить кэш карты</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -5433,10 +5434,15 @@ if (n === 4) {
 if (n === 5) {
   initMap();
   checkVpnAndWarn();
-  // Принудительно перерисовываем маркеры при каждом входе на карту
   setTimeout(() => {
     if (map) renderMapMarkers();
-  }, 200);
+    // ─── Принудительно обновляем надпись города ───
+    updateMapCityLabel();
+  }, 300);
+  // ─── Ещё раз через 1 сек — на случай медленной инициализации ───
+  setTimeout(() => {
+    updateMapCityLabel();
+  }, 1200);
 }
 
   // ─── Мгновенное переключение (без анимации — не мигает в APK) ───
@@ -6133,7 +6139,8 @@ function buildRouteCard(item, timeId, timeLabel) {
   if (item.status === 'done') card.classList.add('status-done');
   if (item.status === 'perenos') card.classList.add('status-perenos');
   if (item.status === 'ndz') card.classList.add('status-ndz');
-  const isCollapsed = (item.status === 'done' || item.status === 'perenos');
+  
+   const isCollapsed = (item.status === 'done' || item.status === 'perenos');
   if (isCollapsed) card.classList.add('collapsed');
     // Если встреча в процессе — добавляем класс "живой"
   if (item.startedAt) card.classList.add('route-card-live');
@@ -6156,6 +6163,24 @@ function buildRouteCard(item, timeId, timeLabel) {
     return card;
   }
 
+    // ─── Тап по обычной карточке → открыть на карте ───
+  card.addEventListener('click', (e) => {
+    const ignoreSelectors = [
+      'input', 'textarea', 'button', 'select',
+      '.status-badge', '.route-start-btn', '.route-live',
+      '.route-mic-inline', '.route-note-mic', '.route-coords-btn',
+      '.route-side-btn', '.route-status-btn', '.route-add-btn',
+      '.voice-panel', '.vp-btn', '.vp-audio',
+      '.status-menu', '.status-overlay', '.route-note-wrap',
+    ];
+    if (ignoreSelectors.some(sel => e.target.closest(sel))) return;
+
+    const addr = (item.addr || '').trim();
+    if (!addr) return;
+
+    vibro(10);
+    openMapForAddress(addr);
+  });
   const topRow = document.createElement('div');
 topRow.className = 'route-top-row';
 
@@ -7701,7 +7726,8 @@ function openCoordsModal(item, timeId) {
   _coordsEditingAddr = addr;
 
   // Показываем адрес в модалке
-  document.getElementById('coordsAddr').textContent = addr;
+  const addrEl = document.getElementById('coordsAddr');
+if (addrEl) addrEl.textContent = addr;
 
   // Если уже есть координаты в кеше — показываем их
   const existing = mapGeocache[addr];
@@ -9059,6 +9085,25 @@ document.getElementById('btnToggleTheme').addEventListener('click', () => {
 });
 
 document.getElementById('btnExportData').addEventListener('click', () => {
+  // ─── Очистить кэш карты (координаты) ───
+document.getElementById('btnClearMapCache').addEventListener('click', () => {
+  document.getElementById('menu3')?.classList.remove('show');
+
+  if (!confirm('Очистить кэш карты?\n\nАдреса будут искаться заново. Все сохранённые координаты удалятся.')) return;
+
+  const count = Object.keys(mapGeocache).length;
+  mapGeocache = {};
+  saveGeocache();
+
+  vibro(20);
+  showToast(`✅ Кэш карты очищен (${count} адресов удалено)`);
+
+  // Если карта открыта — перерисуем маркеры
+  if (map) {
+    _mapHash = '';
+    renderMapMarkers();
+  }
+});
   document.getElementById('menu3')?.classList.remove('show');
 
   const dump = {
@@ -10335,26 +10380,43 @@ function initMap() {
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19
 }).addTo(map);
-
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// Автоскрытие строки при драге карты
-const card = document.getElementById('mapInfoCard');
-if (card) {
-  map.on('movestart', () => card.classList.add('hidden'));
-  map.on('moveend', () => {
-    setTimeout(() => card.classList.remove('hidden'), 800);
-  });
-}
+// ...
 
-getUserLocation();
-renderMapMarkers();
-updateMapCityLabel();
-  }); 
+// ─── Сначала пробуем центрироваться по сохранённому городу ───
+const savedCity = getMyCity();
+if (savedCity) {
+  // Геокодируем город
+  geocodeAddress(savedCity).then(coords => {
+    if (coords && map) {
+      map.setView(coords, 13, { animate: false });
+      updateMapCityLabel(savedCity);
+    } else {
+      // Не нашли — используем GPS
+      getUserLocation();
+    }
+    renderMapMarkers();
+  });
+} else {
+  // Нет сохранённого города — используем GPS
+  getUserLocation();
+  renderMapMarkers();
+  updateMapCityLabel();
+}
+  });
 }
 
 // Получение геолокации пользователя
 function getUserLocation() {
+  // ─── Если сохранён город — НЕ центрируем по GPS ───
+  const savedCity = getMyCity();
+  if (savedCity) {
+    console.log('📍 Есть город:', savedCity, '— GPS игнорируется');
+    updateMapCityLabel(savedCity);
+    return;
+  }
+
   if (!navigator.geolocation) {
     fetch('https://ipapi.co/json/')
       .then(r => r.json())
@@ -10372,7 +10434,7 @@ function getUserLocation() {
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       userLocation = [pos.coords.latitude, pos.coords.longitude];
-      if (map) map.setView(userLocation, 13);
+      // ─── Сохраняем для кнопки "Моё местоположение", но НЕ центрируем ───
       updateMapCityLabel();
     },
     (err) => {
@@ -10382,7 +10444,6 @@ function getUserLocation() {
         .then(data => {
           if (data.latitude && data.longitude) {
             userLocation = [data.latitude, data.longitude];
-            if (map) map.setView(userLocation, 13);
             updateMapCityLabel(data.city);
           }
         })
@@ -10393,40 +10454,10 @@ function getUserLocation() {
 }
 
 // Обновление подписи города
-function updateMapCityLabel(cityName) {
-  const label = document.getElementById('mapCityLabel');
-  if (!label) return;
-  
-  if (cityName) {
-    label.textContent = cityName;
-    return;
-  }
-  
-  const savedCity = getMyCity();
-  if (savedCity) {
-    label.textContent = savedCity;
-    return;
-  }
-  
-  if (userLocation) {
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLocation[0]}&lon=${userLocation[1]}&format=json&accept-language=ru`)
-      .then(r => r.json())
-      .then(data => {
-        const city = data.address?.city || data.address?.town || data.address?.village || 'Ваш город';
-        label.textContent = city;
-      })
-      .catch(() => { label.textContent = 'Ваш город'; });
-  } else {
-    label.textContent = 'Определяем город…';
-  }
-}
-
-// Геокодирование адреса через Nominatim (с кешем)
 async function geocodeAddress(address) {
   let cleanAddr = applyCity(address).trim();
   if (!cleanAddr) return null;
   
-  // Если в адресе нет города — добавляем
   const city = getMyCity();
   if (city && !cleanAddr.toLowerCase().includes(city.toLowerCase())) {
     cleanAddr = city + ', ' + cleanAddr;
@@ -10435,22 +10466,61 @@ async function geocodeAddress(address) {
   if (mapGeocache[cleanAddr]) {
     return mapGeocache[cleanAddr];
   }
-  try {
-  const response = await fetch(
-    `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanAddr)}&limit=1`
-  );
-  const data = await response.json();
 
-  if (data && data.features && data.features.length > 0) {
-    const geom = data.features[0].geometry;
-    const coords = [geom.coordinates[1], geom.coordinates[0]];
-    mapGeocache[cleanAddr] = coords;
-    saveGeocache();
-    return coords;
+  // ─── Nominatim (OpenStreetMap) — точнее для России ───
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?` +
+                `q=${encodeURIComponent(cleanAddr)}` +
+                `&format=json&limit=1&accept-language=ru` +
+                `&countrycodes=ru` +                    // ← только Россия
+                `&addressdetails=1`;
+    
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'MVS-Reports-App/1.0' }
+    });
+    const data = await response.json();
+
+    if (data && data.length > 0) {
+      const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      mapGeocache[cleanAddr] = coords;
+      saveGeocache();
+      console.log('✅ Nominatim:', cleanAddr, '→', coords);
+      return coords;
+    }
+  } catch (e) {
+    console.warn('Nominatim error:', e);
   }
-} catch (e) {
-  console.warn('Geocode error:', e);
-}
+
+  // ─── Fallback: photon.komoot.io (если Nominatim не ответил) ───
+  try {
+    const response = await fetch(
+      `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanAddr)}&limit=1`
+    );
+    const data = await response.json();
+
+    if (data && data.features && data.features.length > 0) {
+      const geom = data.features[0].geometry;
+      const coords = [geom.coordinates[1], geom.coordinates[0]];
+      
+      // ─── Проверка: координаты в России? ───
+      // Россия: широта 41–82, долгота 19–180 (и -180 до -169 для Калининграда)
+      const [lat, lon] = coords;
+      const inRussia = lat >= 41 && lat <= 82 && (
+        (lon >= 19 && lon <= 180) || (lon >= -180 && lon <= -169)
+      );
+      
+      if (!inRussia) {
+        console.warn('⚠️ Photon вернул координаты вне России:', coords);
+        return null;   // ← не сохраняем
+      }
+      
+      mapGeocache[cleanAddr] = coords;
+      saveGeocache();
+      return coords;
+    }
+  } catch (e) {
+    console.warn('Photon error:', e);
+  }
 
   return null;
 }
@@ -10466,7 +10536,37 @@ function loadGeocache() {
     if (saved) mapGeocache = JSON.parse(saved);
   } catch (e) {}
 }
+// ─── Обновление надписи города на карте ───
+function updateMapCityLabel(cityName) {
+  const label = document.getElementById('mapCityLabel');
+  if (!label) return;
 
+  // Приоритет 1: сохранённый город из поля «Мой город»
+  const savedCity = getMyCity();
+  if (savedCity) {
+    label.textContent = savedCity;
+    return;
+  }
+
+  // Приоритет 2: переданный город
+  if (cityName) {
+    label.textContent = cityName;
+    return;
+  }
+
+  // Приоритет 3: reverse geocode по GPS
+  if (userLocation) {
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLocation[0]}&lon=${userLocation[1]}&format=json&accept-language=ru`)
+      .then(r => r.json())
+      .then(data => {
+        const city = data.address?.city || data.address?.town || data.address?.village || 'Ваш город';
+        label.textContent = city;
+      })
+      .catch(() => { label.textContent = 'Ваш город'; });
+  } else {
+    label.textContent = 'Определяем город…';
+  }
+}
 // Рендеринг маркеров на карте
 let _mapHash = '';
 
@@ -10710,7 +10810,81 @@ window.openActivityFromMap = function(timeId, addrEncoded) {
     });
   });
 };
+// ─── Открыть карту на конкретном адресе ───
+window.openMapForAddress = function(addr) {
+  const cleanAddr = (addr || '').trim();
+  if (!cleanAddr) {
+    showToast('⚠️ Адрес пустой');
+    return;
+  }
 
+  vibro(15);
+  goToTab(5);
+
+  let attempts = 0;
+  const MAX_ATTEMPTS = 30;
+
+  const tryCenter = () => {
+    attempts++;
+
+    if (!map) {
+      if (attempts < MAX_ATTEMPTS) {
+        setTimeout(tryCenter, 200);
+      } else {
+        showToast('⚠️ Карта не загрузилась');
+      }
+      return;
+    }
+
+    const targetAddr = cleanAddr.toLowerCase();
+
+    let foundCoords = null;
+    Object.keys(mapGeocache).forEach(key => {
+      if (foundCoords) return;
+      const k = key.toLowerCase();
+      if (k.includes(targetAddr) || targetAddr.includes(k)) {
+        foundCoords = mapGeocache[key];
+      }
+    });
+
+    if (foundCoords) {
+      map.setView(foundCoords, 17, { animate: true });
+
+      setTimeout(() => {
+        mapMarkers.forEach(marker => {
+          const ll = marker.getLatLng();
+          if (Math.abs(ll.lat - foundCoords[0]) < 0.0001 &&
+              Math.abs(ll.lng - foundCoords[1]) < 0.0001) {
+            marker.openPopup();
+          }
+        });
+      }, 500);
+
+      showToast('📍 ' + cleanAddr);
+      return;
+    }
+
+    if (attempts < MAX_ATTEMPTS) {
+      if (typeof renderMapMarkers === 'function') {
+        renderMapMarkers();
+      }
+      setTimeout(tryCenter, 400);
+      return;
+    }
+
+    showToast('🔍 Ищу адрес...');
+    geocodeAddress(cleanAddr).then(coords => {
+      if (coords && map) {
+        map.setView(coords, 17, { animate: true });
+        showToast('📍 ' + cleanAddr);
+      } else {
+        showToast('⚠️ Адрес не найден');
+      }
+    });
+  };
+
+  setTimeout(tryCenter, 200);
+};
 window.openNavigator = function(addrEncoded) {
   vibro(15);
   const addr = decodeURIComponent(addrEncoded || '').trim();
@@ -10936,6 +11110,72 @@ function normalizeNumbers(text) {
   
   return result;
 }
+
+// ═══════════════════════════════════════════════
+// ОЧИСТКА КЭША КАРТЫ
+// ═══════════════════════════════════════════════
+window.__clearMapCache = function() {
+  document.getElementById('menu3')?.classList.remove('show');
+  
+  try {
+    const raw = localStorage.getItem('map_geocache');
+    const cache = raw ? JSON.parse(raw) : {};
+    const count = Object.keys(cache).length;
+    
+    if (!confirm('Удалить ' + count + ' сохранённых координат?\n\nАдреса будут искаться заново через Nominatim.')) {
+      return;
+    }
+    
+    // Очистить localStorage
+    localStorage.removeItem('map_geocache');
+    
+    // Очистить переменную в памяти
+    if (typeof mapGeocache !== 'undefined') {
+      mapGeocache = {};
+    }
+    
+    // Показать результат
+    showToast('✅ Кэш очищен (' + count + ' адресов)');
+    
+    // Перерисовать карту, если открыта
+    if (typeof map !== 'undefined' && map) {
+      _mapHash = '';
+      renderMapMarkers();
+    }
+  } catch (e) {
+    showToast('❌ Ошибка: ' + e.message);
+  }
+};
+
+// ─── Показать кэш (для отладки) ───
+window.__showMapCache = function() {
+  document.getElementById('menu3')?.classList.remove('show');
+  
+  try {
+    const raw = localStorage.getItem('map_geocache');
+    if (!raw) {
+      alert('Кэш пуст');
+      return;
+    }
+    const cache = JSON.parse(raw);
+    const keys = Object.keys(cache);
+    
+    if (keys.length === 0) {
+      alert('Кэш пуст (0 адресов)');
+      return;
+    }
+    
+    let text = 'В кэше ' + keys.length + ' адрес(ов):\n\n';
+    keys.forEach(k => {
+      const c = cache[k];
+      text += k + '\n  [' + c[0].toFixed(4) + ', ' + c[1].toFixed(4) + ']\n\n';
+    });
+    alert(text);
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  }
+};
+
 
 </script>
 </body>
