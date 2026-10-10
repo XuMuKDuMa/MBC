@@ -52,6 +52,51 @@
   color: #71808c;
   letter-spacing: 0.2px;
 }
+/* ─── Выезд цитаты из-под баннера ─── */
+@keyframes quoteSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
+
+@keyframes quoteSlideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-30px);
+    max-height: 0;
+  }
+}
+
+.daily-quote.slide-in {
+animation: quoteSlideDown 1.2s cubic-bezier(0.34, 1.8, 0.64, 1) forwards;
+  overflow: hidden;
+}
+
+/* Класс «уезжает» */
+.daily-quote.slide-out {
+  animation: quoteSlideUp 0.4s cubic-bezier(0.55, 0, 0.68, 0.19) forwards;
+  overflow: hidden;
+}
+
+/* Скругления — чтобы цитата выглядела как продолжение баннера */
+#screen4 .activity-hint + .daily-quote.slide-in {
+  margin-top: -4px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: 1px dashed rgba(31, 55, 70, 0.12);
+}
 /* ═══════════════════════════════════════════════
    ЦИТАТА КАК ЧАСТЬ БЛОКА АКТИВНОСТЕЙ
    ═══════════════════════════════════════════════ */
@@ -3121,10 +3166,19 @@ body.dark .up-chart-empty { color: #90a4ae; }
 
 #screen4 .activity-hint{
   display:flex; align-items:center; gap:10px;
-  margin:4px 11px 10px; padding:10px 12px;
+  margin:4px 11px 0; padding:10px 12px;
   border:1px solid rgba(31,55,70,.07);
   border-radius:14px;
   background:rgba(255,255,255,.68);
+}
+
+/* Когда цитата идёт сразу после — соединяем */
+#screen4 .activity-hint:has(+ .daily-quote) {
+  margin-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+  box-shadow: none;
 }
 #screen4 .activity-hint-icon{
   width:34px;height:34px;min-width:34px;
@@ -5377,7 +5431,17 @@ function goToTab(n, animate = true) {
   render2();
 }
 if (n === 3) renderTotals3();
-if (n === 4) renderRoute();
+if (n === 4) {
+  renderRoute();
+
+  // ─── Выезд цитаты при входе на вкладку ───
+  setTimeout(() => {
+    const quote = document.querySelector('#app4 .daily-quote');
+    if (quote && !quote.classList.contains('slide-in')) {
+      quote.classList.add('slide-in');
+    }
+  }, 80);
+}
 if (n === 5) {
   initMap();
   checkVpnAndWarn();
@@ -6561,11 +6625,15 @@ frag.appendChild(stats);
   combinedBlock.appendChild(activityHint);
 
   // Нижняя часть — цитата (если слот не открыт)
-  if (!_openSlotId) {
-    const quoteEl = buildQuoteBlock();
-    quoteEl.classList.add('inside-combined');
-    combinedBlock.appendChild(quoteEl);
-  }
+if (!_openSlotId) {
+  const quoteEl = buildQuoteBlock();
+  quoteEl.classList.add('inside-combined');
+
+  // ─── Плавный выезд из-под баннера ───
+  quoteEl.classList.add('slide-in');
+
+  combinedBlock.appendChild(quoteEl);
+}
 
   frag.appendChild(combinedBlock);
 } else if (!_openSlotId) {
@@ -9181,6 +9249,12 @@ function autofillMvsFromToday() {
    СИНХРОНИЗАЦИЯ month.upDone ИЗ ИСТОРИИ ДНЕЙ
    ═══════════════════════════════════════════════ */
 function syncMonthUpFromHistory() {
+  // ❗ Если ручной режим — НЕ трогаем upDone
+  if (state2.upMonthManual === true) {
+    console.log('⏸ syncMonthUpFromHistory: ручной режим — пропускаю');
+    return;
+  }
+
   // Считаем сумму УП за текущий месяц из истории
   const h = loadHistory1();
   const now = new Date();
@@ -9199,21 +9273,9 @@ function syncMonthUpFromHistory() {
   });
 
   const historyUP = Number(sumUP.toFixed(2));
-
-  // ─── Если было ручное значение — оно БАЗА, а новые дни прибавляются ───
-  const manualBase = Number(state2.month.upDoneManual) || 0;
-  const alreadyCounted = Number(state2.month.upDoneManualCounted) || 0;
-  const newFromHistory = Math.max(0, historyUP - alreadyCounted);
-
-  const finalUP = manualBase > 0
-    ? Number((manualBase + newFromHistory).toFixed(2))
-    : historyUP;
-
-  if (state2.month.upDone !== finalUP) {
-    console.log('🔄 syncMonthUp:', state2.month.upDone, '→', finalUP,
-                '| база:', manualBase, '| история:', historyUP,
-                '| уже учтено:', alreadyCounted, '| новых:', newFromHistory);
-    state2.month.upDone = finalUP;
+  if (state2.month.upDone !== historyUP) {
+    console.log('🔄 syncMonthUp:', state2.month.upDone, '→', historyUP);
+    state2.month.upDone = historyUP;
     saveState2(state2);
   }
 }
