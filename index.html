@@ -4859,30 +4859,7 @@ body.dark .vp-delete {
 
 </head>
 <body class="tab-4">
-<div class="drawer-totals-overlay" id="drawerOverlay"></div>
-<div class="drawer-totals-panel" id="drawerTotalsPanel">
 
-  <div class="dtp-city-block">
-    <div class="dtp-city-label">🏙 Мой город</div>
-    <input class="dtp-city-input" id="myCityInput" type="text" placeholder="например, Химки">
-  </div>
-
-  <div class="dtp-title">📊 Итоги дня
-    <button class="dtp-close" id="dtpClose">✕</button>
-  </div>
-  <div class="dtp-row"><span class="dtp-label">УП</span><span class="dtp-value green" id="drawerTotalUP">0.00</span></div>
-  <div class="dtp-row"><span class="dtp-label">ОД</span><span class="dtp-value blue" id="drawerTotalOD">0</span></div>
-  <div class="dtp-row"><span class="dtp-label">УП/ФД</span><span class="dtp-value" id="drawerTotalUPFD">0.00</span></div>
-  <div class="dtp-row"><span class="dtp-label">B2C</span><span class="dtp-value" id="drawerTotalB2C">0/0</span></div>
-  <div class="dtp-row"><span class="dtp-label">B2B</span><span class="dtp-value" id="drawerTotalB2B">0/0</span></div>
-
-  <div class="dtp-title" style="border-top: 1px solid #eee;">⚡ Активности</div>
-  <div class="dtp-row"><span class="dtp-label">Всего</span><span class="dtp-value" id="drawerRouteTotal">0</span></div>
-  <div class="dtp-row"><span class="dtp-label">Ждут</span><span class="dtp-value blue" id="drawerRouteWait">0</span></div>
-  <div class="dtp-row"><span class="dtp-label">Пров.</span><span class="dtp-value green" id="drawerRouteDone">0</span></div>
-  <div class="dtp-row"><span class="dtp-label">НДЗ</span><span class="dtp-value magenta" id="drawerRouteNdz">0</span></div>
-  <div class="dtp-row"><span class="dtp-label">ПР/ОТ</span><span class="dtp-value white" id="drawerRoutePerenos">0</span></div>
-</div>
 
 <div class="screens-viewport" id="screensViewport">
   <div class="screens-track" id="screensTrack">
@@ -4918,14 +4895,6 @@ body.dark .vp-delete {
   <div class="r3-header">
     <div class="r3-header-left"><div><h1>⚡ Активности</h1><div class="date" id="todayDate4"></div></div></div>
     <div class="r3-header-right">
-            <input
-        id="myCityInput4"
-        class="city-input-header"
-        type="text"
-        placeholder="🏙 Город"
-        autocomplete="off"
-        spellcheck="false"
-      >
     </div>
   </div>
   <div id="app4"></div>
@@ -5024,6 +4993,7 @@ body.dark .vp-delete {
 </div>
 
 <div class="menu" id="menu3">
+  <button id="btnOpenCityModal" style="color:#2980b9;">🏙 Мой город</button>
   <button id="btnToggleTheme">🌙 Сменить тему</button>
   <button id="btnResetTotalsMenu">🗑 Сбросить итоги за месяц</button>
   <button id="btnFixDupHistory">🔧 Исправить дубли в истории</button>
@@ -5121,10 +5091,6 @@ body.dark .vp-delete {
       Открой <b>Яндекс.Карты</b> → найди дом → долгий тап (или правый клик) → скопируй координаты.
     </p>
 
-    <div style="text-align:left;margin-bottom:10px;">
-      <label style="display:block;font-size:12px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:4px;">Адрес</label>
-      <div id="coordsAddr" style="background:#f8f9fa;padding:8px 12px;border-radius:8px;font-size:13px;color:#2c3e50;font-weight:600;word-break:break-word;"></div>
-    </div>
 
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <div style="flex:1;">
@@ -5143,6 +5109,28 @@ body.dark .vp-delete {
     </div>
 
     <button id="coordsCancel" style="width:100%;margin-top:8px;padding:12px;border:none;border-radius:10px;background:#ecf0f1;color:#2c3e50;font-size:14px;font-weight:600;cursor:pointer;">Закрыть</button>
+  </div>
+</div>
+<!-- Модалка ввода города -->
+<div class="modal-overlay" id="cityModal">
+  <div class="modal" style="max-width: 360px;">
+    <div class="emoji">🏙</div>
+    <h2 style="color:#2980b9;">Мой город</h2>
+    <p style="color:#666;margin-bottom:14px;font-size:13px;line-height:1.5;">
+      Укажи город — он будет автоматически подставляться к адресам при построении маршрута и на карте.
+    </p>
+
+    <div style="text-align:left;margin-bottom:14px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:4px;">Город</label>
+      <input type="text" id="cityModalInput" class="quick-input" placeholder="например, Красногорск" autocomplete="off">
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button id="cityModalReset" style="flex:1;padding:13px;border:none;border-radius:10px;background:#fdecec;color:#c0392b;font-size:14px;font-weight:600;cursor:pointer;">🗑 Сбросить</button>
+      <button id="cityModalSave" style="flex:2;padding:13px;border:none;border-radius:10px;background:#27ae60;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">✓ Сохранить</button>
+    </div>
+
+    <button id="cityModalCancel" style="width:100%;margin-top:8px;padding:12px;border:none;border-radius:10px;background:#ecf0f1;color:#2c3e50;font-size:14px;font-weight:600;cursor:pointer;">Закрыть</button>
   </div>
 </div>
 <div class="modal-overlay" id="monthlyReportModal">
@@ -5588,20 +5576,17 @@ function resetTotalsPosition() {
   el.style.opacity = '1';
   el.style.pointerEvents = '';
 }
+// Панель «Итоги дня» отключена
+const drawerTotalsPanel = null;
+const drawerOverlay = null;
 
-const drawerTotalsPanel = document.getElementById('drawerTotalsPanel');
-const drawerOverlay = document.getElementById('drawerOverlay');
 function openDrawerTotals() {
-  drawerTotalsPanel.classList.add('open');
-  drawerOverlay.classList.add('show');
-  updateDrawerRoutes();
+  // отключено
 }
 function closeDrawerTotals() {
-  drawerTotalsPanel.classList.remove('open');
-  drawerOverlay.classList.remove('show');
+  // отключено
 }
-drawerOverlay.addEventListener('click', () => closeDrawerTotals());
-document.getElementById('dtpClose').addEventListener('click', closeDrawerTotals);
+
 function updateDrawerRoutes() {
   const c = getRouteCounts();
   const tEl = document.getElementById('drawerRouteTotal');
@@ -5912,15 +5897,25 @@ function openStatusMenu(anchor, item, timeId) {
 
   clearTimeout(_statusMenuHideTimer);
 
-  // 1. Заполняем кнопки
-  menu.innerHTML = `
-    <button data-status="wait"><span class="sm-icon">+</span>Ждёт</button>
-    <button data-status="done"><span class="sm-icon">✓</span>Готово</button>
-    <button data-status="perenos"><span class="sm-icon">−</span>Отмена</button>
-    <button data-status="ndz"><span class="sm-icon">О</span>НДЗ</button>
-    <button class="sm-del" data-action="delete">Удалить</button>
-  `;
+    // 1. Заполняем кнопки — зависит от того, в процессе ли встреча
+  const isLive = !!item.startedAt;
 
+  if (isLive) {
+    // ─── Встреча в процессе: только «Завершить» и «Удалить» ───
+    menu.innerHTML = `
+      <button data-status="done"><span class="sm-icon">✓</span>Завершить</button>
+      <button class="sm-del" data-action="delete">Удалить</button>
+    `;
+  } else {
+    // ─── Обычный режим: полное меню ───
+    menu.innerHTML = `
+      <button data-status="wait"><span class="sm-icon">+</span>Ждёт</button>
+      <button data-status="done"><span class="sm-icon">✓</span>Готово</button>
+      <button data-status="perenos"><span class="sm-icon">−</span>Отмена</button>
+      <button data-status="ndz"><span class="sm-icon">О</span>НДЗ</button>
+      <button class="sm-del" data-action="delete">Удалить</button>
+    `;
+  }
   // 2. Позиционируем
   menu.style.left = '0px';
   menu.style.top = '0px';
@@ -7726,7 +7721,67 @@ function closeCoordsModal() {
   _coordsEditingItem = null;
   _coordsEditingAddr = null;
 }
+/* ═══════════════════════════════════════════════
+   МОДАЛКА «МОЙ ГОРОД»
+   ═══════════════════════════════════════════════ */
+function openCityModal() {
+  const input = document.getElementById('cityModalInput');
+  if (input) input.value = getMyCity();
+  document.getElementById('cityModal').classList.add('show');
+}
+function closeCityModal() {
+  document.getElementById('cityModal').classList.remove('show');
+}
 
+// Кнопка в меню ⋮
+document.getElementById('btnOpenCityModal')?.addEventListener('click', () => {
+  document.getElementById('menu3')?.classList.remove('show');
+  vibro(10);
+  openCityModal();
+});
+
+// Сохранить
+document.getElementById('cityModalSave')?.addEventListener('click', () => {
+  const v = document.getElementById('cityModalInput').value.trim();
+  setMyCity(v);
+
+  const oldInput = document.getElementById('myCityInput');
+  if (oldInput) oldInput.value = v;
+
+  if (typeof updateMapCityLabel === 'function') updateMapCityLabel(v);
+  if (typeof renderRoute === 'function') renderRoute();
+  if (typeof renderMapMarkers === 'function' && map) renderMapMarkers();
+
+  vibro(15);
+  showToast(v ? '✅ Город сохранён: ' + v : '🗑 Город удалён');
+  closeCityModal();
+});
+
+// Сбросить
+document.getElementById('cityModalReset')?.addEventListener('click', () => {
+  if (!getMyCity()) {
+    showToast('⚠️ Город и так не задан');
+    return;
+  }
+  if (!confirm('Сбросить город?\n\nАдреса будут без автоматической подстановки.')) return;
+  setMyCity('');
+  const input = document.getElementById('cityModalInput');
+  if (input) input.value = '';
+  const oldInput = document.getElementById('myCityInput');
+  if (oldInput) oldInput.value = '';
+  if (typeof updateMapCityLabel === 'function') updateMapCityLabel('');
+  if (typeof renderRoute === 'function') renderRoute();
+  if (typeof renderMapMarkers === 'function' && map) renderMapMarkers();
+  vibro(15);
+  showToast('🗑 Город удалён');
+  closeCityModal();
+});
+
+// Отмена / закрыть
+document.getElementById('cityModalCancel')?.addEventListener('click', closeCityModal);
+document.getElementById('cityModal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'cityModal') closeCityModal();
+});
 // Сохранить
 document.getElementById('coordsSave').addEventListener('click', () => {
   const lat = parseFloat(String(document.getElementById('coordLat').value).replace(',', '.'));
@@ -8951,7 +9006,8 @@ document.getElementById('monthlyCopy').addEventListener('click', async () => {
 
 const menu3 = document.getElementById('menu3');
 document.getElementById('menuBtn3').addEventListener('click', (e) => {
-  e.stopPropagation(); menu3.classList.toggle('show');
+  e.stopPropagation();
+  menu3.classList.toggle('show');
 });
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#menu3') && !e.target.closest('#menuBtn3')) menu3.classList.remove('show');
@@ -9970,13 +10026,35 @@ setInterval(checkReminder, 60 * 1000);
     if (typeof updateMapCityLabel === 'function') updateMapCityLabel();
   }
 
+  // ─── Обработчики для поля в drawer ───
   if (oldInput) {
     oldInput.addEventListener('input', handleInput);
     oldInput.addEventListener('blur', handleInput);
+    
+    // ⭐ Принудительно даём фокус при тапе
+    oldInput.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+    }, { passive: true });
+    
+    oldInput.addEventListener('click', (e) => {
+      e.stopPropagation();
+      oldInput.focus();
+    });
   }
+  
+  // ─── Обработчики для поля в шапке «Активности» ───
   if (newInput) {
     newInput.addEventListener('input', handleInput);
     newInput.addEventListener('blur', handleInput);
+    
+    newInput.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+    }, { passive: true });
+    
+    newInput.addEventListener('click', (e) => {
+      e.stopPropagation();
+      newInput.focus();
+    });
   }
 })();
 function updateAllDates() {
@@ -9994,178 +10072,7 @@ function updateAllDates() {
 updateAllDates();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) updateAllDates(); });
 setInterval(updateAllDates, 60 * 1000);
-document.querySelectorAll('.r1-header, .r2-header, .r3-header').forEach(h => {
-  h.addEventListener('click', (e) => {
-    if (e.target.closest('.theme-btn') || e.target.closest('.menu-btn')) return;
-    openDrawerTotals();
-  });
-});
 
-(function initDrawerSwipe() {
-  const panel = drawerTotalsPanel;
-  const overlay = drawerOverlay;
-  const allActPanel = document.querySelector('.all-activities-panel');
-  const EDGE_ZONE = 40;
-  const THRESHOLD = 80;
-  const MIN_DECIDE = 10;
-
-  let startX = 0, startY = 0;
-  let active = false, decided = false, isDragging = false;
-  let isClosing = false;
-  let rafId = null;
-  let pendingX = 0;
-
-  function isExcluded(el) {
-    if (!el || !el.closest) return false;
-    if (el.closest('input, textarea, select, [contenteditable="true"]')) return true;
-    if (el.closest('.modal-overlay.show')) return true;
-    if (el.closest('.all-activities-panel.open')) return true;
-    return false;
-  }
-
-  function applyMove() {
-    rafId = null;
-    const w = Math.min(240, window.innerWidth * 0.75);
-    let target = Math.max(0, Math.min(w, pendingX));
-    if (isClosing) {
-      // закрываем: сдвигаем влево от 0 до -w
-      panel.style.transform = `translateX(${-target}px)`;
-      overlay.style.opacity = String((1 - target / w) * 0.5);
-    } else {
-      // открываем: сдвигаем справа от -w до 0
-      panel.style.transform = `translateX(${target - w}px)`;
-      overlay.style.opacity = String(target / w * 0.5);
-    }
-  }
-
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1) return;
-    if (isExcluded(e.target)) { active = false; return; }
-    const t = e.touches[0];
-
-    const isOpen = panel.classList.contains('open');
-
-        if (isOpen) {
-      // режим закрытия — ловим в области панели (левые 260px)
-      if (t.clientX > 260) { active = false; return; }
-      isClosing = true;
-    } else {
-      // режим открытия — только от левого края
-      if (t.clientX > EDGE_ZONE) { active = false; return; }
-      if (allActPanel && allActPanel.classList.contains('open')) { active = false; return; }
-      isClosing = false;
-    }
-
-    startX = t.clientX;
-    startY = t.clientY;
-    pendingX = 0;
-    active = true;
-    decided = false;
-    isDragging = false;
-  }, { passive: true });
-  document.addEventListener('touchmove', (e) => {
-    if (!active) return;
-    const t = e.touches[0];
-    if (!t) return;
-    const dx = t.clientX - startX;
-    const dy = t.clientY - startY;
-
-    if (!decided) {
-      if (Math.abs(dx) < MIN_DECIDE && Math.abs(dy) < MIN_DECIDE) return;
-      decided = true;
-      if (Math.abs(dy) > Math.abs(dx) * 1.2) { active = false; return; }
-
-      // Для открытия — только свайп вправо (dx > 0)
-      // Для закрытия — только свайп влево (dx < 0)
-      if (isClosing && dx > 0) { active = false; return; }
-      if (!isClosing && dx < 0) { active = false; return; }
-
-    isDragging = true;
-panel.classList.add('no-anim');
-if (isClosing) {
-  panel.style.transform = 'translateX(0)';
-} else {
-  panel.style.transform = 'translateX(100%)';
-  overlay.classList.add('show');
-}
-overlay.style.transition = 'none';
-    }
-
-    if (!isDragging) return;
-    if (e.cancelable) e.preventDefault();
-
-    const w = Math.min(240, window.innerWidth * 0.75);
-    let progress;
-    if (isClosing) {
-      progress = Math.max(0, Math.min(1, Math.abs(dx) / w));
-    } else {
-      progress = Math.max(0, Math.min(1, dx / w));
-    }
-    pendingX = progress * w;
-
-    if (rafId === null) rafId = requestAnimationFrame(applyMove);
-  }, { passive: false });
-
-  document.addEventListener('touchend', () => {
-    if (!isDragging) {
-      active = false; decided = false;
-      return;
-    }
-    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
-
-    const passed = pendingX > THRESHOLD;
-
-    panel.classList.remove('no-anim');
-    panel.style.transform = '';
-    overlay.style.transition = '';
-    overlay.style.opacity = '';
-
-    isDragging = false;
-    active = false;
-    decided = false;
-    pendingX = 0;
-
-    if (isClosing) {
-      if (passed) {
-        panel.classList.remove('open');
-        overlay.classList.remove('show');
-        vibro(15);
-      } else {
-        panel.classList.add('open');
-        overlay.classList.add('show');
-      }
-    } else {
-      if (passed) {
-        openDrawerTotals();
-        vibro(15);
-      } else {
-        panel.classList.remove('open');
-        overlay.classList.remove('show');
-      }
-    }
-    isClosing = false;
-  }, { passive: true });
-
-  document.addEventListener('touchcancel', () => {
-    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
-    panel.classList.remove('no-anim');
-    panel.style.transform = '';
-    overlay.style.transition = '';
-    overlay.style.opacity = '';
-    if (isClosing) {
-      panel.classList.add('open');
-      overlay.classList.add('show');
-    } else {
-      panel.classList.remove('open');
-      overlay.classList.remove('show');
-    }
-    isDragging = false;
-    active = false;
-    decided = false;
-    pendingX = 0;
-    isClosing = false;
-  }, { passive: true });
-})();
 
 /* ═══ Автосброс МВС 1-го числа ═══ */
 function checkAutoReset2() {
