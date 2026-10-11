@@ -5129,18 +5129,20 @@ body.dark .row-icon-img {
 }
 
 .products-wrap {
-  animation: productsSlideDown 0.35s ease-out;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    max-height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@keyframes productsSlideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.products-wrap.open {
+  max-height: 5000px;   /* ← большое значение, чтобы влезли все продукты */
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* ─── Тёмная тема ─── */
@@ -5169,18 +5171,20 @@ body.dark .products-toggle-btn:active {
 }
 
 .products-wrap {
-  animation: productsSlideDown 0.35s ease-out;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    max-height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@keyframes productsSlideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.products-wrap.open {
+  max-height: 5000px;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* ─── Тёмная тема ─── */
@@ -5942,7 +5946,7 @@ function goToTab(n, animate = true) {
     // ─── Скрыть продукты при уходе с «Сегодня» ───
     const productsWrap = document.getElementById('productsWrap');
     const toggleBtn = document.getElementById('productsToggleBtn');
-    if (productsWrap) productsWrap.style.display = 'none';
+    if (productsWrap) productsWrap.classList.remove('open');
     if (toggleBtn) {
       const iconEl = toggleBtn.querySelector('.ptb-icon');
       const textEl = toggleBtn.querySelector('.ptb-text');
@@ -7861,7 +7865,6 @@ if (section.title === 'Встречи') {
   const productsWrap = document.createElement('div');
   productsWrap.className = 'products-wrap';
   productsWrap.id = 'productsWrap';
-  productsWrap.style.display = 'none';
   app.appendChild(productsWrap);
 
 } else if (section.title === 'Бизнес') {
@@ -8047,24 +8050,68 @@ btnReport1El.addEventListener('click', async () => {
     // Восстановить состояние из localStorage
     const savedState = localStorage.getItem('products_open');
     if (savedState === '1') {
-      productsWrapEl.style.display = 'block';
-      toggleBtnEl.querySelector('.ptb-icon').textContent = '▲';
-      toggleBtnEl.querySelector('.ptb-text').textContent = 'Скрыть продукты';
-    }
+  productsWrapEl.classList.add('open');
+  toggleBtnEl.querySelector('.ptb-icon').textContent = '▲';
+  toggleBtnEl.querySelector('.ptb-text').textContent = 'Скрыть продукты';
+}
 
     toggleBtnEl.addEventListener('click', () => {
-      const isOpen = productsWrapEl.style.display !== 'none';
-      const newState = !isOpen;
+  const isOpen = productsWrapEl.classList.contains('open');
+  const newState = !isOpen;
 
-      productsWrapEl.style.display = newState ? 'block' : 'none';
-      toggleBtnEl.querySelector('.ptb-icon').textContent = newState ? '▲' : '▼';
-      toggleBtnEl.querySelector('.ptb-text').textContent = newState ? 'Скрыть продукты' : 'Показать продукты';
+  // ─── Меняем текст кнопки ───
+  toggleBtnEl.querySelector('.ptb-icon').textContent = newState ? '▲' : '▼';
+  toggleBtnEl.querySelector('.ptb-text').textContent = newState ? 'Скрыть продукты' : 'Показать продукты';
 
-      // Запомнить состояние
-      localStorage.setItem('products_open', newState ? '1' : '0');
+  // ─── Сохраняем состояние ───
+  localStorage.setItem('products_open', newState ? '1' : '0');
 
-      vibro(10);
-    });
+  vibro(10);
+
+  if (newState) {
+    // ═══ ОТКРЫТИЕ ═══
+
+    // 1. Сначала раскрываем (меняем класс)
+    productsWrapEl.classList.add('open');
+
+    // 2. Ждём 100мс — чтобы transition начал работать
+    //    и вычисляем высоту после раскрытия
+    setTimeout(() => {
+      // 3. Плавный скролл к началу блока продуктов
+      const screen1 = document.getElementById('screen1');
+      if (screen1) {
+        // Вычисляем позицию блока относительно скролла
+        const blockTop = productsWrapEl.getBoundingClientRect().top
+                        + screen1.scrollTop
+                        - 60;   // ← отступ сверху (чтобы кнопка «Скрыть продукты» осталась видна)
+
+        screen1.scrollTo({
+          top: Math.max(0, blockTop),
+          behavior: 'smooth'
+        });
+      }
+    }, 120);
+
+  } else {
+    // ═══ ЗАКРЫТИЕ ═══
+    // Плавно сворачиваем
+    productsWrapEl.classList.remove('open');
+
+    // Скроллим чуть вверх — к кнопке, чтобы не «улететь» на пустое место
+    setTimeout(() => {
+      const screen1 = document.getElementById('screen1');
+      if (screen1) {
+        const btnTop = toggleBtnEl.getBoundingClientRect().top
+                     + screen1.scrollTop
+                     - 80;
+        screen1.scrollTo({
+          top: Math.max(0, btnTop),
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+  }
+});
   }
     }
 
