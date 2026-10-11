@@ -463,7 +463,7 @@ body.dark .drawer-totals-panel .dtp-value.magenta {
     position: relative;
   }
 
-      #app1 { padding-bottom: 300px; }
+  #app1 { padding-bottom: 300px; padding-top: 0; }
   #app2 { padding-bottom: 220px; }
   #app3 { padding-bottom: 220px; }
   #app4 { padding-bottom: 200px; }
@@ -533,6 +533,10 @@ body.dark .drawer-totals-panel .dtp-value.magenta {
     border-radius: 8px; overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   }
+  /* ─── Первая секция — без верхнего отступа ─── */
+#app1 .section:first-child {
+  margin-top: 0;
+}
   .section-title {
     font-size: 12px; text-transform: uppercase;
     letter-spacing: 0.4px; color: #fff;
@@ -4887,14 +4891,14 @@ body.dark .r3-header-compact {
    ОТСТУП ПОД ВЫРЕЗ / СТАТУС-БАР
    ═══════════════════════════════════════════════ */
 
-#screen1,
-#screen4 {
+#screen1, #screen4 {
   padding-top: 0 !important;
 }
 
 #screen1 .screen-date-bar,
 #screen4 .r3-header-compact {
-  padding-top: calc(env(safe-area-inset-top, 0) + 6px) !important;
+  padding-top: calc(env(safe-area-inset-top, 0) + 2px) !important;  /* ← 6px → 2px */
+  padding-bottom: 0 !important;
 }
 
 /* ═══════════════════════════════════════════════
@@ -4958,8 +4962,8 @@ body.dark .section[data-section-title="Встречи"] .row[data-id="fd_meet_si
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 6px 14px;
-  min-height: 32px;
+  padding: 4px 14px 0;      /* ← убираем нижний padding */
+  min-height: 24px;          /* ← уменьшаем высоту */
   background: transparent;
 }
 
@@ -5270,7 +5274,7 @@ body.dark .rcs-btn.active[data-cat="b2b"] {
   display: flex;
   justify-content: center;
   gap: 8px;
-  padding: 10px 0 8px;
+  padding: 2px 0 4px;       /* ← компактнее сверху/снизу */
 }
 
 .meetings-dots .dot {
