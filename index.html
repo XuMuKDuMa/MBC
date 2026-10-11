@@ -8446,7 +8446,7 @@ function updateB2cField() {
   const field = document.querySelector('#app1 .b2c-input');
   if (!field) return;
 
-  // Считаем авто-значение ВСЕГДА
+  // Считаем авто-значение ТОЛЬКО по B2C-карточкам
   let b2cAuto = 0;
   if (typeof ROUTE_TIMES !== 'undefined' &&
       typeof routeState !== 'undefined' &&
@@ -8455,24 +8455,40 @@ function updateB2cField() {
       (routeState.lists[t.id] || []).forEach(item => {
         if (!item) return;
         if (!item.addr || !item.addr.trim()) return;
-        b2cAuto++;
+        const cat = item.category || 'b2c';   // ← по умолчанию B2C
+        if (cat === 'b2c') b2cAuto++;         // ← считаем только B2C!
       });
     });
   }
 
-  // Если поле в ручном режиме (пользователь ввёл своё) — показываем
-  // ручное значение, НО не трогаем его
+  // Ручной режим — не трогаем
   const manualVal = String(getManual1('b2c_total') || '').trim();
   const isManual = manualVal !== '' && manualVal !== '0';
-
-  if (isManual) {
-    // Ручное значение — оставляем как есть
-    return;
-  }
+  if (isManual) return;
 
   // Авто-режим — обновляем, если изменилось
   if (field.value !== String(b2cAuto)) {
     field.value = b2cAuto;
+  }
+
+  // ─── Заодно обновим B2B ───
+  const b2bField = document.querySelector('#app1 .b2b-input');
+  if (b2bField) {
+    let b2bAuto = 0;
+    ROUTE_TIMES.forEach(t => {
+      (routeState.lists[t.id] || []).forEach(item => {
+        if (!item) return;
+        if (!item.addr || !item.addr.trim()) return;
+        const cat = item.category || 'b2c';
+        if (cat === 'b2b') b2bAuto++;         // ← считаем только B2B!
+      });
+    });
+
+    const manualB2B = String(getManual1('b2b_total') || '').trim();
+    const isManualB2B = manualB2B !== '' && manualB2B !== '0';
+    if (!isManualB2B && b2bField.value !== String(b2bAuto)) {
+      b2bField.value = b2bAuto;
+    }
   }
 }
 
