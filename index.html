@@ -5066,18 +5066,81 @@ body.dark .row-icon-img {
   width: calc(100% - 16px);
   margin: 10px 8px;
   padding: 14px 16px;
-  background: linear-gradient(135deg, #34495e, #2c3e50);
+  /* ─── Радужный градиент ─── */
+  background: linear-gradient(
+    90deg,
+    #e74c3c 0%,
+    #e67e22 16%,
+    #f1c40f 33%,
+    #2ecc71 50%,
+    #3498db 66%,
+    #9b59b6 83%,
+    #e91e63 100%
+  );
+  background-size: 200% 100%;
   color: #fff;
   border: none;
   border-radius: 10px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   font-family: inherit;
   cursor: pointer;
   letter-spacing: 0.3px;
-  box-shadow: 0 3px 10px rgba(44, 62, 80, 0.25);
-  transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.25),
+    0 1px 3px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s, box-shadow 0.15s, background-position 0.4s;
   -webkit-tap-highlight-color: transparent;
+  animation: rainbowShift 4s ease-in-out infinite;
+  background-position: 0% 50%;
+}
+
+@keyframes rainbowShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.products-toggle-btn:active {
+  transform: scale(0.98);
+  box-shadow:
+    0 1px 5px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.products-toggle-btn .ptb-icon {
+  font-size: 12px;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.products-wrap {
+  animation: productsSlideDown 0.35s ease-out;
+}
+
+@keyframes productsSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Тёмная тема ─── */
+body.dark .products-toggle-btn {
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.5),
+    0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+body.dark .products-toggle-btn:active {
+  box-shadow:
+    0 1px 5px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .products-toggle-btn:active {
@@ -5108,12 +5171,141 @@ body.dark .row-icon-img {
 }
 
 /* ─── Тёмная тема ─── */
+/* ─── Тёмная тема — оставляем радугу, только тень глубже ─── */
 body.dark .products-toggle-btn {
-  background: linear-gradient(135deg, #1e2a34, #16202a);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.5),
+    0 1px 3px rgba(0, 0, 0, 0.35),
+    0 0 24px rgba(155, 89, 182, 0.18);
 }
+
 body.dark .products-toggle-btn:active {
-  background: linear-gradient(135deg, #16202a, #0d1520);
+  transform: scale(0.98);
+  box-shadow:
+    0 1px 5px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ═══════════════════════════════════════════════
+   ПЕРЕКЛЮЧАТЕЛЬ B2C / B2B НА КАРТОЧКЕ
+   ═══════════════════════════════════════════════ */
+
+.route-category-switch {
+  display: inline-flex;
+  gap: 3px;
+  background: rgba(232, 238, 245, 0.9);
+  border-radius: 10px;
+  padding: 3px;
+  margin-top: 8px;
+  width: fit-content;
+}
+
+.rcs-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  color: #8a99a5;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.3px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rcs-btn:active {
+  transform: scale(0.94);
+}
+
+.rcs-btn.active[data-cat="b2c"] {
+  background: linear-gradient(135deg, #3498db, #2471a3);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(52, 152, 219, 0.4);
+}
+
+.rcs-btn.active[data-cat="b2b"] {
+  background: linear-gradient(135deg, #8e44ad, #6c3483);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(142, 68, 173, 0.4);
+}
+
+/* Тёмная тема */
+body.dark .route-category-switch {
+  background: rgba(44, 58, 72, 0.7);
+}
+
+body.dark .rcs-btn {
+  color: #8fa0b1;
+}
+
+body.dark .rcs-btn.active[data-cat="b2c"] {
+  background: linear-gradient(135deg, #3498db, #2471a3);
+}
+
+body.dark .rcs-btn.active[data-cat="b2b"] {
+  background: linear-gradient(135deg, #8e44ad, #6c3483);
+}
+/* ═══════════════════════════════════════════════
+   СЛАЙДЕР B2C ↔ B2B В «ВСТРЕЧИ»
+   ═══════════════════════════════════════════════ */
+
+.meetings-swiper {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.meetings-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 8px;
+}
+
+.meetings-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(127, 127, 127, 0.35);
+  transition: all 0.25s;
+  cursor: pointer;
+}
+
+.meetings-dots .dot.active {
+  background: #27ae60;
+  width: 22px;
+  border-radius: 4px;
+  box-shadow: 0 0 6px rgba(39, 174, 96, 0.4);
+}
+
+body.dark .meetings-dots .dot {
+  background: rgba(127, 127, 127, 0.5);
+}
+
+body.dark .meetings-dots .dot.active {
+  background: #2ecc71;
+  box-shadow: 0 0 8px rgba(46, 204, 113, 0.5);
+}
+.meetings-track {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 200%;              /* ← 200% от swiper */
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.meetings-slide {
+  flex: 0 0 50%;            /* 50% от трека = 100% от swiper */
+  width: 50%;
+  min-width: 50%;
+  max-width: 50%;
+  padding: 0 6px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 </style>
 
@@ -5403,6 +5595,8 @@ body.dark .products-toggle-btn:active {
 </div>
 
 <script>
+  // ─── Глобальное состояние слайдера встреч ───
+let meetingsSlide = 0;
 /* ═══════════════════════════════════════════════
    ЦИТАТА ДНЯ
    ═══════════════════════════════════════════════ */
@@ -5502,6 +5696,119 @@ function buildQuoteBlock() {
     <div class="dq-author">— ${q.author}</div>
   `;
   return wrap;
+}
+/* ═══════════════════════════════════════════════
+   СВАЙП B2C ↔ B2B В «ВСТРЕЧИ»
+   ═══════════════════════════════════════════════ */
+let _meetingsSlide = 0;
+
+function goToMeetingsSlide(idx) {
+  _meetingsSlide = Math.max(0, Math.min(1, idx));
+  console.log('🔄 goToMeetingsSlide:', _meetingsSlide);
+  
+  const track = document.getElementById('meetingsTrack');
+  if (!track) return;
+  
+  // Через пиксели — точнее
+  const slideW = track.offsetWidth / 2;   // 430px
+  const offset = -_meetingsSlide * slideW;
+  
+  track.style.transform = `translate3d(${offset}px, 0, 0)`;
+  console.log('Transform:', track.style.transform);
+  
+  // Точки
+  document.querySelectorAll('.meetings-dots .dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === _meetingsSlide);
+  });
+}
+
+function initMeetingsSwipe() {
+  const swiper = document.querySelector('.meetings-swiper');
+  if (!swiper) return;
+
+  // ─── Тап по точкам ───
+  document.querySelectorAll('.meetings-dots .dot').forEach(dot => {
+    dot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = Number(dot.dataset.dot);
+      vibro(10);
+      goToMeetingsSlide(idx);
+    });
+  });
+
+  // ─── Свайп ───
+  let startX = 0, startY = 0;
+  let tracking = false, decided = false, isHorizontal = false;
+  const MIN_DX = 50;
+  const MAX_DY = 80;
+
+  swiper.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+
+    // Исключения
+    if (e.target.closest('input, textarea, button, select')) return;
+
+    const t = e.touches[0];
+    startX = t.clientX;
+    startY = t.clientY;
+    tracking = true;
+    decided = false;
+    isHorizontal = false;
+  }, { passive: true });
+
+  swiper.addEventListener('touchmove', (e) => {
+    if (!tracking) return;
+    const t = e.touches[0];
+    if (!t) return;
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+
+    if (!decided) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+      decided = true;
+      if (Math.abs(dy) > Math.abs(dx) * 1.2) {
+        tracking = false;
+        return;
+      }
+      isHorizontal = true;
+    }
+  }, { passive: true });
+
+  swiper.addEventListener('touchend', (e) => {
+    if (!tracking || !decided || !isHorizontal) {
+      tracking = false;
+      decided = false;
+      isHorizontal = false;
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+
+    tracking = false;
+    decided = false;
+    isHorizontal = false;
+
+    if (Math.abs(dx) < MIN_DX) return;
+    if (Math.abs(dy) > MAX_DY) return;
+
+    if (dx < 0) {
+      // Свайп влево → следующий (B2B)
+      goToMeetingsSlide(_meetingsSlide + 1);
+      vibro(10);
+    } else {
+      // Свайп вправо → предыдущий (B2C)
+      goToMeetingsSlide(_meetingsSlide - 1);
+      vibro(10);
+    }
+  }, { passive: true });
+
+  swiper.addEventListener('touchcancel', () => {
+    tracking = false;
+    decided = false;
+    isHorizontal = false;
+  }, { passive: true });
 }
 
 const HOLIDAYS = {
@@ -5611,13 +5918,26 @@ function goToTab(n, animate = true) {
   if (n < 1 || n > 5) return;
   if (n === currentTab) return;
 
-  // Сброс аккордеона при уходе с «Сегодня»
+    // Сброс аккордеона и продуктов при уходе с «Сегодня»
   if (currentTab === 1 && n !== 1) {
     SECTIONS1.forEach(section => {
       if (section.title !== 'Встречи') {
         localStorage.removeItem('section_open_' + section.title);
       }
     });
+    
+    // ─── Скрыть продукты при уходе с «Сегодня» ───
+    const productsWrap = document.getElementById('productsWrap');
+    const toggleBtn = document.getElementById('productsToggleBtn');
+    if (productsWrap) productsWrap.style.display = 'none';
+    if (toggleBtn) {
+      const iconEl = toggleBtn.querySelector('.ptb-icon');
+      const textEl = toggleBtn.querySelector('.ptb-text');
+      if (iconEl) iconEl.textContent = '▼';
+      if (textEl) textEl.textContent = 'Показать продукты';
+    }
+    // Сбросить сохранённое состояние в localStorage
+    localStorage.removeItem('products_open');
   }
 
 
@@ -6782,7 +7102,48 @@ statusBadge.addEventListener('click', (e) => {
 statusBadge.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
 
 card.appendChild(topRow);
+// ─── Переключатель B2C / B2B ───
+const catSwitch = document.createElement('div');
+catSwitch.className = 'route-category-switch';
 
+const currentCat = item.category || 'b2c';
+
+const btnB2C = document.createElement('button');
+btnB2C.type = 'button';
+btnB2C.className = 'rcs-btn' + (currentCat === 'b2c' ? ' active' : '');
+btnB2C.dataset.cat = 'b2c';
+btnB2C.textContent = 'B2C';
+btnB2C.addEventListener('click', (e) => {
+  e.stopPropagation();
+  item.category = 'b2c';
+  saveRouteState(routeState);
+  vibro(10);
+  renderRoute();
+  renderTotals1();
+  if (map) renderMapMarkers();
+});
+btnB2C.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+
+const btnB2B = document.createElement('button');
+btnB2B.type = 'button';
+btnB2B.className = 'rcs-btn' + (currentCat === 'b2b' ? ' active' : '');
+btnB2B.dataset.cat = 'b2b';
+btnB2B.textContent = 'B2B';
+btnB2B.addEventListener('click', (e) => {
+  e.stopPropagation();
+  item.category = 'b2b';
+  saveRouteState(routeState);
+  vibro(10);
+  renderRoute();
+  renderTotals1();
+  if (map) renderMapMarkers();
+});
+btnB2B.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+
+catSwitch.appendChild(btnB2C);
+catSwitch.appendChild(btnB2B);
+
+card.appendChild(catSwitch);
 // ─── Строка со статусом и кнопкой «Начать» / индикатором ───
 const statusLine = document.createElement('div');
 statusLine.className = 'route-status-line';
@@ -7392,38 +7753,120 @@ function render1() {
             });
     }
 
-      // ─── Встречи — всегда наверху. Остальные — в скрытом контейнере ───
-    if (section.title === 'Встречи') {
-      app.appendChild(sec);
+    // ─── Встречи — слайдер B2C ↔ B2B ───
+if (section.title === 'Встречи') {
+  // ─── Обёртка-слайдер ───
+  const swiperWrap = document.createElement('div');
+  swiperWrap.className = 'meetings-swiper';
 
-      // ─── Кнопка-аккордеон «Показать продукты» ───
-      const toggleBtn = document.createElement('button');
-      toggleBtn.className = 'products-toggle-btn';
-      toggleBtn.id = 'productsToggleBtn';
-      toggleBtn.innerHTML = `
-        <span class="ptb-icon">▼</span>
-        <span class="ptb-text">Показать продукты</span>
+  // ─── Точки-индикаторы ───
+  const dots = document.createElement('div');
+  dots.className = 'meetings-dots';
+  dots.innerHTML = `
+    <span class="dot active" data-dot="0"></span>
+    <span class="dot" data-dot="1"></span>
+  `;
+  swiperWrap.appendChild(dots);
+
+  // ─── Дорожка со слайдами ───
+  const track = document.createElement('div');
+  track.className = 'meetings-track';
+  track.id = 'meetingsTrack';
+
+  // ─── Слайд 1: B2C (Встречи ФД) ───
+  const slideB2C = document.createElement('div');
+  slideB2C.className = 'meetings-slide';
+  slideB2C.appendChild(sec);
+  track.appendChild(slideB2C);
+
+  // ─── Слайд 2: B2B (Бизнес) ───
+  const slideB2B = document.createElement('div');
+  slideB2B.className = 'meetings-slide';
+
+  const bizSection = SECTIONS1.find(s => s.title === 'Бизнес');
+  if (bizSection) {
+    const b2bSec = document.createElement('div');
+    b2bSec.className = 'section';
+    b2bSec.dataset.sectionTitle = 'Бизнес';
+
+    const b2bTitle = document.createElement('div');
+    b2bTitle.className = 'section-title ' + (bizSection.color || 'sec-biz');
+    b2bTitle.style.display = 'none';
+    b2bSec.appendChild(b2bTitle);
+
+    const b2bBody = document.createElement('div');
+    b2bBody.className = 'section-body';
+
+    const B2B_ICONS = {
+      'biz_rko':  '<span class="row-icon-emoji">🏦</span>',
+      'biz_ip':   '<span class="row-icon-emoji">🪪</span>',
+      'biz_card': '<span class="row-icon-emoji">💼</span>',
+    };
+
+    bizSection.items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.dataset.id = item.id;
+
+      const icon = B2B_ICONS[item.id] || '';
+
+      row.innerHTML = `
+        <div class="name">${icon}${item.name}<span class="coef">${item.up}</span></div>
+        <div class="counter">
+          <button data-act="minus">−</button>
+          <div class="value ${getCount1(item.id) === 0 ? 'zero' : ''}">${getCount1(item.id)}</div>
+          <button data-act="plus">+</button>
+        </div>
       `;
-      app.appendChild(toggleBtn);
+      b2bBody.appendChild(row);
+    });
 
-      // ─── Контейнер для остальных секций (скрыт) ───
-      const productsWrap = document.createElement('div');
-      productsWrap.className = 'products-wrap';
-      productsWrap.id = 'productsWrap';
-      productsWrap.style.display = 'none';
-      app.appendChild(productsWrap);
-    } else {
-      // ─── Все остальные секции — в контейнер ───
-      let wrap = document.getElementById('productsWrap');
-      if (!wrap) {
-        wrap = document.createElement('div');
-        wrap.id = 'productsWrap';
-        wrap.className = 'products-wrap';
-        wrap.style.display = 'none';
-        app.appendChild(wrap);
-      }
-      wrap.appendChild(sec);
-    }
+    b2bSec.appendChild(b2bBody);
+    slideB2B.appendChild(b2bSec);
+  }
+
+  track.appendChild(slideB2B);
+  swiperWrap.appendChild(track);
+  app.appendChild(swiperWrap);
+
+  // ─── Инициализация свайпа ───
+  setTimeout(() => {
+    initMeetingsSwipe();
+  }, 50);
+
+  // ─── Кнопка «Показать продукты» ───
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'products-toggle-btn';
+  toggleBtn.id = 'productsToggleBtn';
+  toggleBtn.innerHTML = `
+    <span class="ptb-icon">▼</span>
+    <span class="ptb-text">Показать продукты</span>
+  `;
+  app.appendChild(toggleBtn);
+
+  // ─── Контейнер для остальных секций ───
+  const productsWrap = document.createElement('div');
+  productsWrap.className = 'products-wrap';
+  productsWrap.id = 'productsWrap';
+  productsWrap.style.display = 'none';
+  app.appendChild(productsWrap);
+
+} else if (section.title === 'Бизнес') {
+  // ← Пропускаем B2B — уже добавлен в слайдер
+  return;
+
+} else {
+  // ─── Остальные секции — в контейнер «Продукты» ───
+  let wrap = document.getElementById('productsWrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'productsWrap';
+    wrap.className = 'products-wrap';
+    wrap.style.display = 'none';
+    app.appendChild(wrap);
+  }
+  wrap.appendChild(sec);
+}
   });  
   
   const appsSec = document.createElement('div');
@@ -7500,10 +7943,42 @@ function render1() {
         </button>
       </div>
     `;
-  } else {
-    const ph = m.placeholder ? ` placeholder="${m.placeholder}"` : '';
-    row.innerHTML = `<div class="name">${m.name}</div><input type="text" inputmode="${m.mode || 'numeric'}" data-manual="${m.id}"${ph} value="${getManual1(m.id)}">`;
-  }
+  } else if (m.id === 'b2b_total') {
+  // ─── B2B: авто + override с 🔄 ───
+  const t = calcTotals1();
+  const manualVal = String(getManual1('b2b_total') || '').trim();
+  const isManual = manualVal !== '' && manualVal !== '0';
+  const displayVal = isManual ? manualVal : t.b2bAuto;
+
+  row.innerHTML = `
+    <div class="name">
+      ${m.name}
+      <span class="b2c-mode-badge" style="font-size:10px;font-weight:800;color:${isManual ? '#f39c12' : '#8e44ad'};margin-left:4px;">
+        ${isManual ? '(ручной)' : '(авто)'}
+      </span>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+      <input type="text" inputmode="numeric" data-manual="${m.id}"
+             class="b2b-input"
+             value="${displayVal}"
+             style="width:64px;text-align:center;font-weight:800;
+                    background:${isManual ? '#3a2f14' : '#f4ecf7'};
+                    color:${isManual ? '#f39c12' : '#8e44ad'};
+                    border:1px solid ${isManual ? '#7a5c00' : '#d7bde2'};
+                    padding:8px 6px;border-radius:8px;">
+      <button class="b2b-reset-btn" data-b2b-reset
+              title="Вернуть авто-значение"
+              style="padding:7px 9px;border:none;border-radius:8px;
+                     background:#ecf0f1;color:#2c3e50;font-size:13px;
+                     font-weight:800;cursor:pointer;">
+        🔄
+      </button>
+    </div>
+  `;
+} else {
+  const ph = m.placeholder ? ` placeholder="${m.placeholder}"` : '';
+  row.innerHTML = `<div class="name">${m.name}</div><input type="text" inputmode="${m.mode || 'numeric'}" data-manual="${m.id}"${ph} value="${getManual1(m.id)}">`;
+}
 
   b2cSec.appendChild(row);
 });
@@ -7632,6 +8107,18 @@ if (b2cReset) {
   showToast('🔄 B2C: авто-режим');
   return;
 }
+// ─── Кнопка 🔄 B2B: вернуть авто ───
+const b2bReset = e.target.closest('#app1 button[data-b2b-reset]');
+if (b2bReset) {
+  e.preventDefault();
+  e.stopPropagation();
+  setManual1('b2b_total', '');
+  vibro(15);
+  render1();
+  renderTotals1();
+  showToast('🔄 B2B: авто-режим');
+  return;
+}
 });
 document.addEventListener('input', (e) => {
   const inp = e.target.closest('#app1 input[data-manual]');
@@ -7676,32 +8163,61 @@ function calcTotals1() {
   up += zkCount * ZK_COEF;
   (state1.extra || []).forEach(x => { upFD += num(x.up); od += num(x.od); });
 
-// ─── B2C: авто из активностей + override ───
-let b2cAuto = 0;
+// ─── B2C и B2B: адреса + счётчики встреч + ручной override ───
+
+// 1. Считаем адреса из активностей по категориям
+let b2cFromActivities = 0;
+let b2bFromActivities = 0;
 let b2cDone = 0;
+let b2bDone = 0;
 
 ROUTE_TIMES.forEach(t => {
   (routeState.lists[t.id] || []).forEach(item => {
     if (!item) return;
     if (!item.addr || !item.addr.trim()) return;
-    b2cAuto++;
-    if (item.status === 'done') b2cDone++;
+    
+    const cat = item.category || 'b2c';   // по умолчанию B2C
+    
+    if (cat === 'b2b') {
+      b2bFromActivities++;
+      if (item.status === 'done') b2bDone++;
+    } else {
+      b2cFromActivities++;
+      if (item.status === 'done') b2cDone++;
+    }
   });
 });
+// 2. B2C — ТОЛЬКО из активностей (карточки встреч)
+// ⚠️ Плюсики «Встреча ФД» больше НЕ считаем в B2C — они идут только в УП!
+let b2cFromMeetings = 0;
+SECTIONS1.forEach(s => s.items.forEach(i => {
+  if (i.type === 'meeting') b2cFromMeetings += getCount1(i.id);
+  // B2B (type: 'biz') — НЕ считаем, он в слайдере
+}));
 
-// Ручное значение, если введено > 0 — имеет приоритет
+// 3. Ручной override для B2C
 const b2cManualRaw = String(getManual1('b2c_total') || '').trim();
 const b2cManual = (b2cManualRaw !== '' && b2cManualRaw !== '0')
   ? (Number(b2cManualRaw) || 0)
   : null;
 
+const b2cAuto = b2cFromActivities;
 const b2cTotal = b2cManual !== null ? b2cManual : b2cAuto;
 
-// B2B — оставляем ручное
-const b2bTotal = Number(getManual1('b2b_total')) || 0;
+// 4. Ручной override для B2B
+const b2bManualRaw = String(getManual1('b2b_total') || '').trim();
+const b2bManual = (b2bManualRaw !== '' && b2bManualRaw !== '0')
+  ? (Number(b2bManualRaw) || 0)
+  : null;
+
+// ⚠️ B2B — только из активностей (не из секций)
+const b2bAuto = b2bFromActivities;
+const b2bTotal = b2bManual !== null ? b2bManual : b2bAuto;
 
 return { up, od, upFD, meetings, bizMeetings,
-         b2cTotal, b2cAuto, b2cDone, b2bTotal, zkCount };
+         b2cTotal, b2cAuto, b2cDone,
+         b2bTotal, b2bAuto, b2bDone,
+         zkCount };
 }
 function renderTotals1() {
   const t = calcTotals1();
@@ -7709,7 +8225,7 @@ function renderTotals1() {
   document.getElementById('totalOD1').textContent = t.od;
   document.getElementById('totalUPFD1').textContent = t.upFD.toFixed(2);
   document.getElementById('totalB2C1').textContent = `${t.b2cTotal}/${t.b2cDone}`;
-  document.getElementById('totalB2B1').textContent = `${t.b2bTotal}/${t.bizMeetings}`;
+  document.getElementById('totalB2B1').textContent = `${t.b2bTotal}/${t.b2bDone}`;
   const btn = document.getElementById('btnReport1');
 btn.disabled = getManual1('reasons').trim() === '';
   const dUP = document.getElementById('drawerTotalUP');
@@ -7721,7 +8237,7 @@ btn.disabled = getManual1('reasons').trim() === '';
   if (dOD) dOD.textContent = t.od;
   if (dUPFD) dUPFD.textContent = t.upFD.toFixed(2);
   if (dB2C) dB2C.textContent = `${t.b2cTotal}/${t.b2cDone}`;
-  if (dB2B) dB2B.textContent = `${t.b2bTotal}/${t.bizMeetings}`;
+  if (dB2B) dB2B.textContent = `${t.b2bTotal}/${t.b2bDone}`;
 }
 
 const GROUP_STYLE = {
@@ -11347,105 +11863,7 @@ document.getElementById('aapBody')?.addEventListener('click', (e) => {
 });  
 
 loadGeocache();
-/* ═══════════════════════════════════════════════
-   СВАЙП ПО ЭКРАНУ — ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
-   ═══════════════════════════════════════════════ */
-(function initTabSwipe() {
-  const TABS = [4, 1, 5, 2, 3];       // порядок вкладок (как в нижнем баре)
-  const MIN_DX = 60;                  // минимальная длина свайпа
-  const MAX_DY = 60;                  // чтобы не путать со скроллом
-  const MIN_DECIDE = 10;              // порог принятия решения
 
-  let startX = 0, startY = 0;
-  let tracking = false;
-  let decided = false;
-  let isHorizontal = false;
-
-  function isExcluded(el) {
-    if (!el || !el.closest) return false;
-    if (el.closest('input, textarea, select, [contenteditable="true"]')) return true;
-    if (el.closest('.modal-overlay.show')) return true;
-    if (el.closest('.drawer-totals-panel.open')) return true;
-    if (el.closest('.bottom-bar')) return true;
-    if (el.closest('.route-status-row')) return true;
-    if (el.closest('.slot-map-btn')) return true;
-    if (el.closest('.route-side-btn')) return true;
-    if (el.closest('.map-toolbar')) return true;
-    if (el.closest('.leaflet-container')) return true;   // карта — не свайпаем
-    return false;
-  }
-
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1) { tracking = false; return; }
-    if (isExcluded(e.target)) { tracking = false; return; }
-
-    const t = e.touches[0];
-    startX = t.clientX;
-    startY = t.clientY;
-    tracking = true;
-    decided = false;
-    isHorizontal = false;
-  }, { passive: true });
-
-  document.addEventListener('touchmove', (e) => {
-    if (!tracking) return;
-    const t = e.touches[0];
-    if (!t) return;
-
-    const dx = t.clientX - startX;
-    const dy = t.clientY - startY;
-
-    if (!decided) {
-      if (Math.abs(dx) < MIN_DECIDE && Math.abs(dy) < MIN_DECIDE) return;
-      decided = true;
-
-      // Если вертикальное движение больше — отменяем (это скролл)
-      if (Math.abs(dy) > Math.abs(dx) * 1.2) {
-        tracking = false;
-        return;
-      }
-      isHorizontal = true;
-    }
-  }, { passive: true });
-
-  document.addEventListener('touchend', (e) => {
-    if (!tracking || !decided || !isHorizontal) {
-      tracking = false;
-      decided = false;
-      isHorizontal = false;
-      return;
-    }
-
-    const touch = e.changedTouches[0];
-    if (!touch) { tracking = false; return; }
-
-    const dx = touch.clientX - startX;
-    const dy = touch.clientY - startY;
-
-    tracking = false;
-    decided = false;
-    isHorizontal = false;
-
-    // Проверка порогов
-    if (Math.abs(dx) < MIN_DX) return;
-    if (Math.abs(dy) > MAX_DY) return;
-
-    const currentIdx = TABS.indexOf(currentTab);
-    if (currentIdx === -1) return;
-
-    // Свайп влево (dx < 0) → следующая; вправо (dx > 0) → предыдущая
-    let nextIdx = currentIdx + (dx < 0 ? 1 : -1);
-    if (nextIdx < 0 || nextIdx >= TABS.length) return;
-
-    vibro(15);
-    goToTab(TABS[nextIdx]);
-  }, { passive: true });
-    document.addEventListener('touchcancel', () => {
-    tracking = false;
-    decided = false;
-    isHorizontal = false;
-  }, { passive: true });
-})();
 /* ═══════════════════════════════════════════════
    ФОКУС-РЕЖИМ: тап по замыленному фону — сброс
    ═══════════════════════════════════════════════ */
