@@ -4889,7 +4889,12 @@ body.dark .r3-header-compact {
 
 #screen1,
 #screen4 {
-  padding-top: env(safe-area-inset-top, 0) !important;
+  padding-top: 0 !important;
+}
+
+#screen1 .screen-date-bar,
+#screen4 .r3-header-compact {
+  padding-top: calc(env(safe-area-inset-top, 0) + 6px) !important;
 }
 
 /* ═══════════════════════════════════════════════
@@ -5004,20 +5009,24 @@ body.dark .row-icon-img {
 .section[data-section-title="Встречи"] .row .name {
   font-size: 14px !important;
   font-weight: 500 !important;
-  line-height: 1.3 !important;
+  line-height: 1.25 !important;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
+  align-items: center;         /* ← центрируем по вертикали */
+  gap: 6px;
+  flex: 1 1 auto;
   min-width: 0;
+  flex-wrap: nowrap;           /* ← НЕ переносим иконку */
 }
 
-/* ─── Коэффициент ─── */
+/* ─── Коэффициент — всегда виден ─── */
 .section[data-section-title="Встречи"] .row .coef {
   font-size: 11px !important;
   color: #888 !important;
   margin-left: 4px !important;
-  flex-shrink: 0;
+  flex-shrink: 0 !important;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
 }
 
 /* ─── Иконки ─── */
@@ -7470,9 +7479,9 @@ const ZK_COEF = 0.10;
 const SECTIONS1 = [
   // ─── ВСТРЕЧИ (не трогаем) ───
    { title: 'Встречи', color: 'sec-meet', items: [
-    { id: 'fd_meet_02',  name: 'Встреча ФД обычная', up: 0.20, od: 0, type: 'meeting' },
-    { id: 'fd_meet_035', name: 'Встреча ФД детская с верификацией', up: 0.35, od: 0, type: 'meeting' },
-    { id: 'fd_meet_dbo', name: 'Встреча ФД ДБО', up: 0.35, od: 0, type: 'meeting' },
+    { id: 'fd_meet_02',  name: 'ФД обычная', up: 0.20, od: 0, type: 'meeting' },
+    { id: 'fd_meet_035', name: 'ФД детская с вериф.', up: 0.35, od: 0, type: 'meeting' },
+    { id: 'fd_meet_dbo', name: 'ФД ДБО', up: 0.35, od: 0, type: 'meeting' },
     { id: 'fd_meet_sim', name: 'ФД Сим', up: 0.12, od: 0, type: 'meeting' },
   ]},
   // ─── БИЗНЕС (фиолетовый) ───
@@ -7722,7 +7731,7 @@ function render1() {
         }
       }
 
-      row.innerHTML = `<div class="name">${icon}${item.name}<span class="coef">${item.up}</span></div><div class="counter"><button data-act="minus">−</button><div class="value ${getCount1(item.id) === 0 ? 'zero' : ''}">${getCount1(item.id)}</div><button data-act="plus">+</button></div>`;
+      row.innerHTML = `<div class="name">${icon}<span class="name-text">${item.name}</span><span class="coef">${item.up}</span></div><div class="counter"><button data-act="minus">−</button><div class="value ${getCount1(item.id) === 0 ? 'zero' : ''}">${getCount1(item.id)}</div><button data-act="plus">+</button></div>`;
       body.appendChild(row);
     });
 
