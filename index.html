@@ -4855,6 +4855,42 @@ body.dark .vp-delete {
   color: #90a4ae;
   border-color: #3a4a5a;
 }
+/* ─── Компактная шапка «Активности» ─── */
+.r3-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 45px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #172b3a 0%, #126b50 55%, #20a36a 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(18, 107, 80, 0.18);
+  position: relative;
+  z-index: 5;
+}
+
+.r3-header-compact .short-date {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+body.dark .r3-header-compact {
+  background: linear-gradient(135deg, #0f1e29 0%, #0d4a37 55%, #14734a 100%);
+}
+
+/* ═══════════════════════════════════════════════
+   ОТСТУП ПОД ВЫРЕЗ / СТАТУС-БАР
+   ═══════════════════════════════════════════════ */
+
+#screen1,
+#screen4 {
+  padding-top: env(safe-area-inset-top, 0) !important;
+}
 </style>
 
 </head>
@@ -4865,9 +4901,6 @@ body.dark .vp-delete {
   <div class="screens-track" id="screensTrack">
 
     <div class="screen" id="screen1">
-  <div class="r1-header">
-    <div class="r1-header-left"><div><h1>📊 Сегодня</h1><div class="date" id="todayDate1"></div></div></div>
-  </div>
   <div id="app1"></div>
 </div>
 
@@ -4892,11 +4925,6 @@ body.dark .vp-delete {
     </div>
 
     <div class="screen active" id="screen4">
-  <div class="r3-header">
-    <div class="r3-header-left"><div><h1>⚡ Активности</h1><div class="date" id="todayDate4"></div></div></div>
-    <div class="r3-header-right">
-    </div>
-  </div>
   <div id="app4"></div>
 </div>
 
@@ -7032,7 +7060,15 @@ function render1() {
       ? '' // у «Встречи» стрелки нет — она всегда открыта
       : `<span class="section-arrow" style="font-size:12px;opacity:0.85;transition:transform 0.2s;${isOpen ? 'transform:rotate(180deg);' : ''}">▼</span>`;
 
-    title.innerHTML = `<span>${section.title}${countBadge}</span>${arrow}`;
+    // ─── Для «Встречи» — добавляем дату справа ───
+if (section.title === 'Встречи') {
+  title.innerHTML = `
+    <span>${section.title}${countBadge}</span>
+    <span class="short-date-inline" id="shortDate1"></span>
+  `;
+} else {
+  title.innerHTML = `<span>${section.title}${countBadge}</span>${arrow}`;
+}
 
     // Контейнер для содержимого
     const body = document.createElement('div');
@@ -7199,7 +7235,20 @@ btnReport1El.addEventListener('click', async () => {
     btnReport1El.disabled = false;
     btnReport1El.textContent = 'Отчёт';
   }
-});
+}); 
+    }
+
+
+  // ─── Обновляем короткую дату в заголовке «ВСТРЕЧИ» ───
+  const sd1 = document.getElementById('shortDate1');
+  if (sd1) {
+    const now = new Date();
+    const days = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+    const day = days[now.getDay()];
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yy = String(now.getFullYear()).slice(-2);
+    sd1.textContent = `${day} ${dd}.${mm}.${yy}`;
   }
 }
 
@@ -10103,16 +10152,33 @@ setInterval(checkReminder, 60 * 1000);
   }
 })();
 function updateAllDates() {
+  // Длинная дата — для МВС (screen2) и Итоги (screen3)
   const d = new Date().toLocaleDateString('ru-RU', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric'
   });
-  ['todayDate1', 'todayDate2', 'todayDate3', 'todayDate4'].forEach(id => {
+  ['todayDate2', 'todayDate3'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = d;
   });
+
+  // Короткая дата «ВС 11.10.26»
+  const now = new Date();
+  const days = ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'];
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const shortDate = `${days[now.getDay()]} ${dd}.${mm}.${yy}`;
+
+  // Дата в заголовке «ВСТРЕЧИ» (Сегодня)
+  const sd1 = document.getElementById('shortDate1');
+  if (sd1) sd1.textContent = shortDate;
+
+  // Дата в шапке «Активности»
+  const sd4 = document.getElementById('shortDate4');
+  if (sd4) sd4.textContent = shortDate;
 }
 updateAllDates();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) updateAllDates(); });
