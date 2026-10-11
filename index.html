@@ -10043,10 +10043,8 @@ setInterval(checkReminder, 60 * 1000);
 })();
 (function initHeaderCompact() {
   const screenToHeader = {
-    1: document.querySelector('#screen1 .r1-header'),
     2: document.querySelector('#screen2 .r2-header'),
     3: document.querySelector('#screen3 .r1-header'),
-    4: document.querySelector('#screen4 .r3-header'),
   };
   const screenToScroll = {
     1: document.getElementById('screen1'),
@@ -10060,25 +10058,25 @@ setInterval(checkReminder, 60 * 1000);
   // Автоскрытие плашки итогов на вкладке 1
   const r1Totals = document.getElementById('r1Totals');
   let lastScrollY = { 1: 0 };
-   let hideTotalsProgress = 0; 
-  const HIDE_THRESHOLD = 8;
 
   Object.keys(screenToScroll).forEach(n => {
     const el = screenToScroll[n];
-    const header = screenToHeader[n];
-    if (!el || !header) return;
+    const header = screenToHeader[n];   // может быть null (для screen1 и screen4)
+    if (!el) return;
 
     el.addEventListener('scroll', () => {
       const y = el.scrollTop;
 
-      // компактная шапка
-      const shouldCompact = y > COMPACT_THRESHOLD;
-      if (shouldCompact !== compacted[n]) {
-        compacted[n] = shouldCompact;
-        header.classList.toggle('compact', shouldCompact);
+      // ─── Компактная шапка (только если она есть) ───
+      if (header) {
+        const shouldCompact = y > COMPACT_THRESHOLD;
+        if (shouldCompact !== compacted[n]) {
+          compacted[n] = shouldCompact;
+          header.classList.toggle('compact', shouldCompact);
+        }
       }
 
-              // плашка итогов — только на вкладке 1
+      // ─── Плашка итогов — только на вкладке 1 ───
       if (n === '1' && r1Totals) {
         const y0 = lastScrollY[1];
         const dy = y - y0;
