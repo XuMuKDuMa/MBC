@@ -5245,9 +5245,23 @@ body.dark .meetings-dots .dot.active {
   font-family: inherit;
   transition: background 0.2s, border-color 0.2s;
   min-height: 42px;
-  max-height: 200px;
-  overflow-y: auto;
+  overflow: hidden;        /* ← JS управляет */
   -webkit-appearance: none;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.reasons-textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+.reasons-textarea::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 2px;
+}
+
+body.dark .reasons-textarea::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
 }
 
 .reasons-textarea:focus {
@@ -7845,13 +7859,26 @@ if (section.title === 'Встречи') {
     </div>
   `;
   
-  // ─── Авто-высота для textarea ───
-  const reasonsTextarea = row.querySelector('.reasons-textarea');
+// ─── Авто-высота для textarea с лимитом ───
+const reasonsTextarea = row.querySelector('.reasons-textarea');
+
+const MAX_HEIGHT = 200;   // максимальная высота поля (px)
+
+function autoGrowReasons() {
+  // Сбрасываем высоту, чтобы scrollHeight посчитался правильно
+  reasonsTextarea.style.height = 'auto';
   
-  function autoGrowReasons() {
-    reasonsTextarea.style.height = 'auto';
-    reasonsTextarea.style.height = reasonsTextarea.scrollHeight + 'px';
+  // Считаем новую высоту
+  const newHeight = Math.min(reasonsTextarea.scrollHeight, MAX_HEIGHT);
+  reasonsTextarea.style.height = newHeight + 'px';
+  
+  // Если контент больше лимита — включаем внутренний скролл
+  if (reasonsTextarea.scrollHeight > MAX_HEIGHT) {
+    reasonsTextarea.style.overflowY = 'auto';
+  } else {
+    reasonsTextarea.style.overflowY = 'hidden';
   }
+}
   
   // Сразу после рендера — применить высоту
   requestAnimationFrame(autoGrowReasons);
@@ -7904,10 +7931,11 @@ if (section.title === 'Встречи') {
         // Сохраняем в state1
         setManual1('reasons', input.value);
 
-// ─── Обновляем высоту после вставки ───
+// ─── Обновляем высоту после вставки (с лимитом) ───
 input.style.height = 'auto';
-input.style.height = input.scrollHeight + 'px';
-
+const newH = Math.min(input.scrollHeight, 200);
+input.style.height = newH + 'px';
+input.style.overflowY = input.scrollHeight > 200 ? 'auto' : 'hidden';
 const btn1 = document.getElementById('btnReport1');
 if (btn1) {
   btn1.disabled = input.value.trim() === '';
