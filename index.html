@@ -7599,13 +7599,7 @@ function render1() {
       body.appendChild(row);
     });
 
-    // ЗК для «Встречи»
-    if (section.title === 'Встречи') {
-      const zkRow = document.createElement('div');
-      zkRow.className = 'row';
-      zkRow.innerHTML = `<div class="name">ЗК (зарплатная карта)<span class="coef">${ZK_COEF}</span></div><input class="zk-input" id="zkInput1" type="text" inputmode="numeric" value="${getZK1()}" placeholder="0">`;
-      body.appendChild(zkRow);
-    }
+  
 
     sec.appendChild(title);
     sec.appendChild(body);
@@ -7657,46 +7651,70 @@ swiperWrap.appendChild(dots);
   slideB2B.className = 'meetings-slide';
 
   const bizSection = SECTIONS1.find(s => s.title === 'Бизнес');
-  if (bizSection) {
-    const b2bSec = document.createElement('div');
-    b2bSec.className = 'section';
-    b2bSec.dataset.sectionTitle = 'Бизнес';
+if (bizSection) {
+  const b2bSec = document.createElement('div');
+  b2bSec.className = 'section';
+  b2bSec.dataset.sectionTitle = 'Бизнес';
 
-    const b2bTitle = document.createElement('div');
-    b2bTitle.className = 'section-title ' + (bizSection.color || 'sec-biz');
-    b2bTitle.style.display = 'none';
-    b2bSec.appendChild(b2bTitle);
+  const b2bTitle = document.createElement('div');
+  b2bTitle.className = 'section-title ' + (bizSection.color || 'sec-biz');
+  b2bTitle.style.display = 'none';
+  b2bSec.appendChild(b2bTitle);
 
-    const b2bBody = document.createElement('div');
-    b2bBody.className = 'section-body';
+  const b2bBody = document.createElement('div');
+  b2bBody.className = 'section-body';
 
-    const B2B_ICONS = {
-      'biz_rko':  '<span class="row-icon-emoji">🏦</span>',
-      'biz_ip':   '<span class="row-icon-emoji">🪪</span>',
-      'biz_card': '<span class="row-icon-emoji">💼</span>',
-    };
+  const B2B_ICONS = {
+    'biz_rko':  '<span class="row-icon-emoji">🏦</span>',
+    'biz_ip':   '<span class="row-icon-emoji">🪪</span>',
+    'biz_card': '<span class="row-icon-emoji">💼</span>',
+  };
 
-    bizSection.items.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'row';
-      row.dataset.id = item.id;
+  bizSection.items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.dataset.id = item.id;
 
-      const icon = B2B_ICONS[item.id] || '';
+    const icon = B2B_ICONS[item.id] || '';
 
-      row.innerHTML = `
-        <div class="name">${icon}${item.name}<span class="coef">${item.up}</span></div>
-        <div class="counter">
-          <button data-act="minus">−</button>
-          <div class="value ${getCount1(item.id) === 0 ? 'zero' : ''}">${getCount1(item.id)}</div>
-          <button data-act="plus">+</button>
-        </div>
-      `;
-      b2bBody.appendChild(row);
-    });
+    row.innerHTML = `
+      <div class="name">${icon}${item.name}<span class="coef">${item.up}</span></div>
+      <div class="counter">
+        <button data-act="minus">−</button>
+        <div class="value ${getCount1(item.id) === 0 ? 'zero' : ''}">${getCount1(item.id)}</div>
+        <button data-act="plus">+</button>
+      </div>
+    `;
+    b2bBody.appendChild(row);
+  });
 
-    b2bSec.appendChild(b2bBody);
-    slideB2B.appendChild(b2bSec);
-  }
+  // ─── ЗК (зарплатная карта) — теперь в B2B ───
+  const zkRow = document.createElement('div');
+  zkRow.className = 'row';
+  zkRow.innerHTML = `
+    <div class="name">
+      <span class="row-icon-emoji">💰</span>
+      ЗК (зарплатная карта)
+      <span class="coef">${ZK_COEF}</span>
+    </div>
+    <input class="zk-input" id="zkInput1" type="text" inputmode="numeric" 
+           value="${getZK1()}" placeholder="0">
+  `;
+  b2bBody.appendChild(zkRow);
+
+  b2bSec.appendChild(b2bBody);
+  slideB2B.appendChild(b2bSec);
+
+  // ─── Обработчик для ЗК ───
+  setTimeout(() => {
+    const zkInp = document.getElementById('zkInput1');
+    if (zkInp) {
+      zkInp.addEventListener('input', () => {
+        setZK1(zkInp.value);
+      });
+    }
+  }, 0);
+}
 
   track.appendChild(slideB2B);
   swiperWrap.appendChild(track);
@@ -7988,8 +8006,6 @@ showToast('✅ Вставлено из дневного отчёта');
 });
   app.appendChild(b2cSec);
 
-  const zkInp = document.getElementById('zkInput1');
-  if (zkInp) zkInp.addEventListener('input', () => setZK1(zkInp.value));
 
   // Кнопка «Отчёт» — в конце контента, едет со скроллом
   const reportBtnWrap = document.createElement('div');
