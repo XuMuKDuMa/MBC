@@ -4110,7 +4110,6 @@ body.dark #screen4 .slot-time-top {
 #screen4 .slot-btn .slot-head { min-height: 20px; width: 100%; }
 #screen4 .slot-btn .slot-time { font-size: 12px !important; font-weight: 850 !important; }
 #screen4 .slot-summary {
-  position: relative;   /* ← чтобы таймер позиционировался внутри */
   width: 100%;
   display: flex;
   align-items: center;
@@ -4127,58 +4126,66 @@ body.dark #screen4 .slot-time-top {
   letter-spacing: -0.3px;
 }
 
-/* ─── Таймер слота (в правом верхнем углу) ─── */
-#screen4 .slot-timer {
-  position: absolute;
-  top: -6px;
-  right: 4px;
-  font-size: 10px;
+/* ═══════════════════════════════════════════════
+   ТАЙМЕР СЛОТА (сверху, над цифрой)
+   ═══════════════════════════════════════════════ */
+#screen4 .slot-timer-top {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
   font-weight: 800;
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-  letter-spacing: -0.2px;
+  letter-spacing: 0.2px;
   line-height: 1;
-  padding: 2px 5px;
+  padding: 1px 0 3px;
+  margin: 0 0 2px;
   border-radius: 6px;
-  transition: color 0.3s, background 0.3s;
+  transition: color 0.3s;
   white-space: nowrap;
 }
 
 /* ─── До слота — серый ─── */
-#screen4 .slot-timer.slot-timer-before {
+#screen4 .slot-timer-top.slot-timer-before {
   color: #82919b;
-  background: rgba(130, 145, 155, 0.12);
 }
 
 /* ─── Слот идёт — зелёный ─── */
-#screen4 .slot-timer.slot-timer-active {
+#screen4 .slot-timer-top.slot-timer-active {
   color: #168653;
-  background: rgba(39, 174, 96, 0.15);
+  font-weight: 900;
 }
 
-/* ─── Слот прошёл — серый блёклый ─── */
-#screen4 .slot-timer.slot-timer-done {
+/* ─── Слот прошёл — блёклый серый ─── */
+#screen4 .slot-timer-top.slot-timer-done {
   color: #b0bec5;
-  background: rgba(176, 190, 197, 0.12);
 }
 
 /* ─── Тёмная тема ─── */
-body.dark #screen4 .slot-timer.slot-timer-before {
+body.dark #screen4 .slot-timer-top.slot-timer-before {
   color: #90a4ae;
-  background: rgba(144, 164, 174, 0.15);
 }
-body.dark #screen4 .slot-timer.slot-timer-active {
+body.dark #screen4 .slot-timer-top.slot-timer-active {
   color: #4ade80;
-  background: rgba(74, 222, 128, 0.18);
 }
-body.dark #screen4 .slot-timer.slot-timer-done {
+body.dark #screen4 .slot-timer-top.slot-timer-done {
   color: #5a6b7a;
-  background: rgba(90, 107, 122, 0.15);
 }
 
 /* ─── На активном слоте (залитый цветом) — таймер белый ─── */
-#screen4 .slot-btn.active .slot-timer {
+#screen4 .slot-btn.active .slot-timer-top {
   color: rgba(255, 255, 255, 0.85) !important;
-  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   Контейнер цифры — без position: relative
+   ═══════════════════════════════════════════════ */
+#screen4 .slot-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  flex: 1;
 }
 #screen4 .slot-summary-status {
   min-width: 0;
@@ -7309,9 +7316,9 @@ ROUTE_TIMES.forEach(t => {
     const perenos = list.filter(x => x.status === 'perenos').length;
 
         btn.innerHTML = `
+  <div class="slot-timer-top" data-slot-timer="${t.id}">--.--</div>
   <div class="slot-summary">
     <span class="slot-summary-main">${cnt ? cnt : '—'}</span>
-    <span class="slot-timer" data-slot-timer="${t.id}">--.--</span>
   </div>
 `;
 
