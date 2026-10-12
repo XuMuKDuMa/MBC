@@ -637,9 +637,16 @@ body.dark .drawer-totals-panel .dtp-value.magenta {
   .extra-add:active { background: #ebd9a7; }
 
   .manual {
-    display: flex; align-items: center;
-    padding: 8px 10px; border-bottom: 1px solid #f0f0f0;
-  }
+  display: flex; align-items: center;
+  padding: 8px 10px; border-bottom: 1px solid #f0f0f0;
+}
+
+/* ─── Специальный стиль для поля «Причины не доставок» ─── */
+.manual.manual-reasons {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
   .manual:last-child { border-bottom: none; }
   .manual .name { flex: 1; font-size: 14px; }
   .manual input {
@@ -7787,23 +7794,24 @@ if (section.title === 'Встречи') {
     }
     
     if (m.id === 'reasons') {
-      // ─── Специальный рендер для «reasons»: поле + кнопка 📋 ───
-      row.innerHTML = `
-        <div class="name">${m.name}</div>
-        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex:1;min-width:0;max-width:60%;">
-          <input type="text" inputmode="text" data-manual="${m.id}"${ph} 
-                 value="${escapeHtml(currentValue)}"
-                 style="flex:1;min-width:0;">
-          <button class="btn-paste-fd" 
-                  title="Вставить из дневного отчёта"
-                  style="padding:8px 10px;border:none;border-radius:8px;
-                         background:#eaf3fb;color:#2980b9;font-size:16px;
-                         font-weight:800;cursor:pointer;flex-shrink:0;
-                         transition:transform 0.12s, background 0.15s;">
-            📋
-          </button>
-        </div>
-      `;
+      row.classList.add('manual-reasons');
+  // ─── Специальный рендер для «reasons»: широкое поле + кнопка 📋 ───
+  row.innerHTML = `
+    <div class="name" style="flex:0 0 auto;min-width:auto;margin-bottom:6px;">${m.name}</div>
+    <div style="display:flex;gap:6px;align-items:stretch;width:100%;">
+      <input type="text" inputmode="text" data-manual="${m.id}"${ph} 
+             value="${escapeHtml(currentValue)}"
+             style="flex:1;min-width:0;padding:10px 12px;font-size:14px;font-weight:600;">
+      <button class="btn-paste-fd" 
+              title="Вставить из дневного отчёта"
+              style="padding:10px 12px;border:none;border-radius:8px;
+                     background:#eaf3fb;color:#2980b9;font-size:18px;
+                     font-weight:800;cursor:pointer;flex-shrink:0;
+                     transition:transform 0.12s, background 0.15s;">
+        📋
+      </button>
+    </div>
+  `;
       
       // ─── Обработчик кнопки «Вставить из дневного» ───
       row.querySelector('.btn-paste-fd').addEventListener('click', (e) => {
