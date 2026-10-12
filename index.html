@@ -5237,6 +5237,36 @@ body.dark .meetings-dots .dot.active {
   box-sizing: border-box;
   overflow: hidden;
 }
+/* ─── Поле «Причины не доставок» — textarea с авто-высотой ─── */
+.reasons-textarea {
+  background: #fafafa;
+  border: 1px solid #ddd;
+  color: #2c3e50;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s;
+  min-height: 42px;
+  max-height: 200px;
+  overflow-y: auto;
+  -webkit-appearance: none;
+}
+
+.reasons-textarea:focus {
+  outline: none;
+  background: #fff;
+  border-color: #3498db;
+}
+
+/* Тёмная тема */
+body.dark .reasons-textarea {
+  background: #2c3a48;
+  border-color: #3a4a5a;
+  color: #e8eef5;
+}
+
+body.dark .reasons-textarea:focus {
+  background: #37485a;
+  border-color: #3498db;
+}
 </style>
 
 </head>
@@ -7794,24 +7824,49 @@ if (section.title === 'Встречи') {
     }
     
     if (m.id === 'reasons') {
-      row.classList.add('manual-reasons');
-  // ─── Специальный рендер для «reasons»: широкое поле + кнопка 📋 ───
+  row.classList.add('manual-reasons');
   row.innerHTML = `
     <div class="name" style="flex:0 0 auto;min-width:auto;margin-bottom:6px;">${m.name}</div>
-    <div style="display:flex;gap:6px;align-items:stretch;width:100%;">
-      <input type="text" inputmode="text" data-manual="${m.id}"${ph} 
-             value="${escapeHtml(currentValue)}"
-             style="flex:1;min-width:0;padding:10px 12px;font-size:14px;font-weight:600;">
+    <div style="display:flex;gap:6px;align-items:flex-end;width:100%;">
+      <textarea class="reasons-textarea" data-manual="${m.id}"${ph}
+                rows="1"
+                style="flex:1;min-width:0;padding:10px 12px;font-size:14px;font-weight:600;
+                       border-radius:8px;resize:none;overflow:hidden;line-height:1.35;
+                       font-family:inherit;">${escapeHtml(currentValue)}</textarea>
       <button class="btn-paste-fd" 
               title="Вставить из дневного отчёта"
               style="padding:10px 12px;border:none;border-radius:8px;
                      background:#eaf3fb;color:#2980b9;font-size:18px;
                      font-weight:800;cursor:pointer;flex-shrink:0;
-                     transition:transform 0.12s, background 0.15s;">
+                     transition:transform 0.12s, background 0.15s;
+                     min-height:42px;">
         📋
       </button>
     </div>
   `;
+  
+  // ─── Авто-высота для textarea ───
+  const reasonsTextarea = row.querySelector('.reasons-textarea');
+  
+  function autoGrowReasons() {
+    reasonsTextarea.style.height = 'auto';
+    reasonsTextarea.style.height = reasonsTextarea.scrollHeight + 'px';
+  }
+  
+  // Сразу после рендера — применить высоту
+  requestAnimationFrame(autoGrowReasons);
+  setTimeout(autoGrowReasons, 50);
+  setTimeout(autoGrowReasons, 200);
+  
+  // При вводе — расти
+  reasonsTextarea.addEventListener('input', () => {
+    autoGrowReasons();
+  });
+  
+  // При вставке — тоже расти
+  reasonsTextarea.addEventListener('paste', () => {
+    setTimeout(autoGrowReasons, 10);
+  });
       
       // ─── Обработчик кнопки «Вставить из дневного» ───
       row.querySelector('.btn-paste-fd').addEventListener('click', (e) => {
@@ -7827,7 +7882,7 @@ if (section.title === 'Встречи') {
           return;
         }
         
-        const input = row.querySelector('input[data-manual="reasons"]');
+        const input = row.querySelector('.reasons-textarea');
         const existing = (input.value || '').trim();
         
         // Если уже что-то есть и отличается — спросим
@@ -7848,15 +7903,18 @@ if (section.title === 'Встречи') {
         
         // Сохраняем в state1
         setManual1('reasons', input.value);
-        
-        // Пересчитываем кнопку «Отчёт»
-        const btn1 = document.getElementById('btnReport1');
-        if (btn1) {
-          btn1.disabled = input.value.trim() === '';
-        }
-        
-        vibro(15);
-        showToast('✅ Вставлено из дневного отчёта');
+
+// ─── Обновляем высоту после вставки ───
+input.style.height = 'auto';
+input.style.height = input.scrollHeight + 'px';
+
+const btn1 = document.getElementById('btnReport1');
+if (btn1) {
+  btn1.disabled = input.value.trim() === '';
+}
+
+vibro(15);
+showToast('✅ Вставлено из дневного отчёта');
       });
       
       // ─── Ховер/актив для кнопки ───
@@ -8059,7 +8117,7 @@ if (b2bReset) {
 }
 });
 document.addEventListener('input', (e) => {
-  const inp = e.target.closest('#app1 input[data-manual]');
+  const inp = e.target.closest('#app1 input[data-manual], #app1 textarea[data-manual]');
   if (inp) {
     setManual1(inp.dataset.manual, inp.value);
 
