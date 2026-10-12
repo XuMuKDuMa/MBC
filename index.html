@@ -4109,6 +4109,14 @@ body.dark #screen4 .slot-time-top {
 }
 #screen4 .slot-btn .slot-head { min-height: 20px; width: 100%; }
 #screen4 .slot-btn .slot-time { font-size: 12px !important; font-weight: 850 !important; }
+#screen4 .slot-summary {
+  position: relative;   /* ← чтобы таймер позиционировался внутри */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 #screen4 .slot-summary-main {
   font-size: 20px !important;
   font-weight: 900 !important;
@@ -4116,8 +4124,61 @@ body.dark #screen4 .slot-time-top {
   white-space: nowrap;
   line-height: 1;
   text-align: center;
-  width: 100%;
   letter-spacing: -0.3px;
+}
+
+/* ─── Таймер слота (в правом верхнем углу) ─── */
+#screen4 .slot-timer {
+  position: absolute;
+  top: -6px;
+  right: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: -0.2px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 6px;
+  transition: color 0.3s, background 0.3s;
+  white-space: nowrap;
+}
+
+/* ─── До слота — серый ─── */
+#screen4 .slot-timer.slot-timer-before {
+  color: #82919b;
+  background: rgba(130, 145, 155, 0.12);
+}
+
+/* ─── Слот идёт — зелёный ─── */
+#screen4 .slot-timer.slot-timer-active {
+  color: #168653;
+  background: rgba(39, 174, 96, 0.15);
+}
+
+/* ─── Слот прошёл — серый блёклый ─── */
+#screen4 .slot-timer.slot-timer-done {
+  color: #b0bec5;
+  background: rgba(176, 190, 197, 0.12);
+}
+
+/* ─── Тёмная тема ─── */
+body.dark #screen4 .slot-timer.slot-timer-before {
+  color: #90a4ae;
+  background: rgba(144, 164, 174, 0.15);
+}
+body.dark #screen4 .slot-timer.slot-timer-active {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.18);
+}
+body.dark #screen4 .slot-timer.slot-timer-done {
+  color: #5a6b7a;
+  background: rgba(90, 107, 122, 0.15);
+}
+
+/* ─── На активном слоте (залитый цветом) — таймер белый ─── */
+#screen4 .slot-btn.active .slot-timer {
+  color: rgba(255, 255, 255, 0.85) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
 }
 #screen4 .slot-summary-status {
   min-width: 0;
@@ -4815,6 +4876,72 @@ body.dark .r3-header-compact {
 }
 
 /* ═══════════════════════════════════════════════
+   ТАЙМЕР РАБОЧЕГО ДНЯ
+   ═══════════════════════════════════════════════ */
+.work-timer {
+  font-size: 14px;
+  font-weight: 800;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  margin-right: auto;   /* ← прижимаем влево */
+  transition: color 0.3s, background 0.3s, border-color 0.3s;
+  line-height: 1;
+}
+
+/* ─── До 09:00 — серый ─── */
+.work-timer.before {
+  color: #7f8c8d;
+  background: rgba(127, 140, 141, 0.12);
+  border: 1px solid rgba(127, 140, 141, 0.2);
+}
+
+/* ─── Рабочее время — зелёный ─── */
+.work-timer.work {
+  color: #27ae60;
+  background: rgba(39, 174, 96, 0.12);
+  border: 1px solid rgba(39, 174, 96, 0.25);
+}
+
+/* ─── Переработка — красный + пульсация ─── */
+.work-timer.overtime {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.14);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  animation: workTimerPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes workTimerPulse {
+  0%, 100% { 
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4);
+  }
+  50%      { 
+    opacity: 0.85;
+    box-shadow: 0 0 0 6px rgba(231, 76, 60, 0);
+  }
+}
+
+/* ─── Тёмная тема ─── */
+body.dark .work-timer.before {
+  color: #90a4ae;
+  background: rgba(144, 164, 174, 0.12);
+  border-color: rgba(144, 164, 174, 0.2);
+}
+
+body.dark .work-timer.work {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.25);
+}
+
+body.dark .work-timer.overtime {
+  color: #e57373;
+  background: rgba(231, 76, 60, 0.18);
+  border-color: rgba(231, 76, 60, 0.4);
+}
+/* ═══════════════════════════════════════════════
    СЕКЦИЯ «ВСТРЕЧИ» — ЦВЕТНЫЕ ПОЛОСКИ И ИКОНКИ
    ═══════════════════════════════════════════════ */
 
@@ -5316,6 +5443,7 @@ body.dark .reasons-textarea:focus {
 
     <div class="screen" id="screen1">
   <div class="screen-date-bar">
+    <span class="work-timer" id="workTimer1">09:00</span>
     <span class="short-date" id="shortDate1"></span>
   </div>
   <div id="app1"></div>
@@ -7181,10 +7309,11 @@ ROUTE_TIMES.forEach(t => {
     const perenos = list.filter(x => x.status === 'perenos').length;
 
         btn.innerHTML = `
-      <div class="slot-summary">
-        <span class="slot-summary-main">${cnt ? cnt : '—'}</span>
-      </div>
-    `;
+  <div class="slot-summary">
+    <span class="slot-summary-main">${cnt ? cnt : '—'}</span>
+    <span class="slot-timer" data-slot-timer="${t.id}">--.--</span>
+  </div>
+`;
 
   btn.addEventListener('click', (e) => {
     if (e.target.closest('[data-map-btn]')) return;
@@ -7285,6 +7414,9 @@ if (window._showTapHint) {
 
 app.innerHTML = '';
 app.appendChild(frag);
+
+// ─── Обновляем таймеры слотов ───
+updateSlotTimers();
 // Обновляем B2C поле в «Сегодня» через универсальную функцию
 if (typeof updateB2cField === 'function') {
   updateB2cField();
@@ -12080,6 +12212,134 @@ window.__showMapCache = function() {
   }
 };
 
+/* ═══════════════════════════════════════════════
+   ТАЙМЕР ВНУТРИ СЛОТА (сколько осталось до конца)
+   ═══════════════════════════════════════════════ */
+function getSlotRemaining(slotId) {
+  // Расписание слотов
+  const SLOTS = {
+    't10_12': { startH: 10, endH: 12 },
+    't12_14': { startH: 12, endH: 14 },
+    't14_16': { startH: 14, endH: 16 },
+    't16_18': { startH: 16, endH: 18 },
+  };
+  
+  const slot = SLOTS[slotId];
+  if (!slot) return null;
+  
+  const now = new Date();
+  const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const startSec = slot.startH * 3600;
+  const endSec = slot.endH * 3600;
+  
+  let diffSec;
+  let mode;
+  
+  if (nowSec < startSec) {
+    // До слота — показываем полное время
+    diffSec = endSec - startSec;
+    mode = 'before';
+  } else if (nowSec > endSec) {
+    // Слот прошёл — показываем 0
+    diffSec = 0;
+    mode = 'done';
+  } else {
+    // Слот идёт — сколько осталось
+    diffSec = endSec - nowSec;
+    mode = 'active';
+  }
+  
+  const hh = Math.floor(diffSec / 3600);
+  const mm = Math.floor((diffSec % 3600) / 60);
+  
+  // Формат: "2.00" (часы.минуты — без двоеточия!)
+  const hours = String(hh).padStart(1, '0');
+  const mins = String(mm).padStart(2, '0');
+  const timeStr = hours + '.' + mins;
+  
+  return { timeStr, mode };
+}
+
+function updateSlotTimers() {
+  document.querySelectorAll('[data-slot-timer]').forEach(el => {
+    const slotId = el.dataset.slotTimer;
+    const result = getSlotRemaining(slotId);
+    if (!result) return;
+    
+    if (el.textContent !== result.timeStr) {
+      el.textContent = result.timeStr;
+    }
+    
+    el.classList.toggle('slot-timer-before', result.mode === 'before');
+    el.classList.toggle('slot-timer-active', result.mode === 'active');
+    el.classList.toggle('slot-timer-done',   result.mode === 'done');
+  });
+}
+
+// Обновляем каждую минуту (часы.минуты — секунды не нужны)
+setInterval(updateSlotTimers, 60000);
+/* ═══════════════════════════════════════════════
+   ТАЙМЕР РАБОЧЕГО ДНЯ (09:00 — 18:00)
+   ═══════════════════════════════════════════════ */
+function updateWorkTimer() {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const seconds = now.getSeconds();
+  
+  // Рабочий день: 09:00 — 18:00 (9 часов)
+  const WORK_START_H = 9;
+  const WORK_END_H = 18;
+  
+  // Текущее время в секундах от полуночи
+  const nowSec = hours * 3600 + minutes * 60 + seconds;
+  const startSec = WORK_START_H * 3600;    // 32400 (09:00)
+  const endSec = WORK_END_H * 3600;        // 64800 (18:00)
+  
+  let diffSec;
+  let mode;  // 'before' | 'work' | 'overtime'
+  
+  if (nowSec < startSec) {
+    // До 09:00 — показываем полный день
+    diffSec = endSec - startSec;
+    mode = 'before';
+  } else if (nowSec > endSec) {
+    // После 18:00 — переработка
+    diffSec = nowSec - endSec;
+    mode = 'overtime';
+  } else {
+    // Рабочее время — сколько осталось
+    diffSec = endSec - nowSec;
+    mode = 'work';
+  }
+  
+  // Форматируем: 480 минут → "08:00"
+  const hh = Math.floor(diffSec / 3600);
+  const mm = Math.floor((diffSec % 3600) / 60);
+  
+  const timeStr = 
+    String(hh).padStart(2, '0') + ':' +
+    String(mm).padStart(2, '0');
+  
+  // Показываем знак "минус" для переработки
+  const display = (mode === 'overtime' ? '-' : '') + timeStr;
+  
+  // Обновляем все таймеры на странице
+  document.querySelectorAll('.work-timer').forEach(el => {
+    if (el.textContent !== display) {
+      el.textContent = display;
+    }
+    
+    // Классы для цвета
+    el.classList.toggle('overtime', mode === 'overtime');
+    el.classList.toggle('before', mode === 'before');
+    el.classList.toggle('work', mode === 'work');
+  });
+}
+
+// Обновляем каждую секунду
+setInterval(updateWorkTimer, 1000);
+updateWorkTimer();
 
 </script>
 </body>
