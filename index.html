@@ -961,8 +961,16 @@ body.dark #btnMorningReport2:active {
   transform: rotate(-12deg);
   transition: transform 0.2s;
   opacity: 0.95;
-  pointer-events: none;   /* ← не мешает кликам по карточке */
+  pointer-events: none;
   z-index: 2;
+  /* ─── Жёстко вырываем из потока ─── */
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 96px !important;
+  max-height: 96px !important;
 }
 
 .status-stamp svg {
