@@ -794,6 +794,62 @@ body.dark #btnMorningReport2:active {
   }
   .toast.show { opacity: 1; }
 
+/* ═══════════════════════════════════════════════
+   ПУЛЬСАЦИЯ АКТИВНОГО СЛОТА
+   ═══════════════════════════════════════════════ */
+@keyframes slotLivePulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.12);
+    filter: brightness(1.3);
+  }
+}
+
+/* ─── Цифра внутри активного слота пульсирует ─── */
+#screen4 .slot-btn.slot-live .slot-summary-main {
+  animation: slotLivePulse 1.6s ease-in-out infinite;
+  font-weight: 900;
+}
+
+/* ─── Цвет пульсации для каждого слота ─── */
+#screen4 .slot-btn.slot-live[data-slot-id="t10_12"] .slot-summary-main {
+  color: #e67e22 !important;
+  text-shadow: 0 0 12px rgba(230, 126, 34, 0.6);
+}
+#screen4 .slot-btn.slot-live[data-slot-id="t12_14"] .slot-summary-main {
+  color: #8e44ad !important;
+  text-shadow: 0 0 12px rgba(142, 68, 173, 0.6);
+}
+#screen4 .slot-btn.slot-live[data-slot-id="t14_16"] .slot-summary-main {
+  color: #2471a3 !important;
+  text-shadow: 0 0 12px rgba(36, 113, 163, 0.6);
+}
+#screen4 .slot-btn.slot-live[data-slot-id="t16_18"] .slot-summary-main {
+  color: #27ae60 !important;
+  text-shadow: 0 0 12px rgba(39, 174, 96, 0.6);
+}
+
+/* ─── Тёмная тема ─── */
+body.dark #screen4 .slot-btn.slot-live[data-slot-id="t10_12"] .slot-summary-main {
+  color: #f5b041 !important;
+  text-shadow: 0 0 14px rgba(245, 176, 65, 0.7);
+}
+body.dark #screen4 .slot-btn.slot-live[data-slot-id="t12_14"] .slot-summary-main {
+  color: #a569bd !important;
+  text-shadow: 0 0 14px rgba(165, 105, 189, 0.7);
+}
+body.dark #screen4 .slot-btn.slot-live[data-slot-id="t14_16"] .slot-summary-main {
+  color: #5dade2 !important;
+  text-shadow: 0 0 14px rgba(93, 173, 226, 0.7);
+}
+body.dark #screen4 .slot-btn.slot-live[data-slot-id="t16_18"] .slot-summary-main {
+  color: #58d68d !important;
+  text-shadow: 0 0 14px rgba(88, 214, 141, 0.7);
+}
+
   /* ═══════════════════════════════════════════
    ПРЕДУПРЕЖДЕНИЕ О VPN
    ═══════════════════════════════════════════ */
@@ -882,7 +938,109 @@ body.dark .vpn-warning {
       color 0.2s;
     min-width: 240px;
     pointer-events: none;
+      pointer-events: none;
+  overflow: visible;   /* ← чтобы ракета не обрезалась */
+}
+/* ═══════════════════════════════════════════════
+   РАКЕТА — ЛЕТИТ СНИЗУ ВВЕРХ + ДЫМ
+   ═══════════════════════════════════════════════ */
+
+/* ─── Контейнер ракеты ─── */
+.success-notif-rocket {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 44px;
+  flex-shrink: 0;
+  margin-right: 4px;
+  overflow: visible;
+  animation: none;
+}
+
+/* ─── Ракета — нос вверх ─── */
+.success-notif-rocket .rocket-emoji {
+  display: inline-block;
+  font-size: 24px;
+  line-height: 1;
+  transform: rotate(-45deg);
+  transform-origin: center center;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.5));
+  animation: rocketFlyUp 1.6s ease-in-out infinite;
+  position: relative;
+  z-index: 2;
+}
+
+/* ─── Полёт снизу вверх ─── */
+@keyframes rocketFlyUp {
+  0% {
+    transform: rotate(-45deg) translateY(8px);
+    opacity: 0.4;
   }
+  50% {
+    transform: rotate(-45deg) translateY(-4px);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-45deg) translateY(8px);
+    opacity: 0.4;
+  }
+}
+
+/* ─── Дым за ракетой ─── */
+.success-notif-rocket .rocket-smoke {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ─── Пузырьки дыма ─── */
+.success-notif-rocket .smoke-puff {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  filter: blur(1.5px);
+  transform: translateX(-50%);
+  animation: smokeRise 1.6s ease-out infinite;
+  opacity: 0;
+}
+
+.success-notif-rocket .smoke-puff:nth-child(1) { animation-delay: 0s; }
+.success-notif-rocket .smoke-puff:nth-child(2) { animation-delay: 0.5s; }
+.success-notif-rocket .smoke-puff:nth-child(3) { animation-delay: 1s; }
+
+/* ─── Дым поднимается и растворяется ─── */
+@keyframes smokeRise {
+  0% {
+    transform: translateX(-50%) translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  60% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(-50%) translateY(20px) scale(1.8);
+    opacity: 0;
+  }
+}
+/* ─── Тёмная тема — усилить свечение ─── */
+body.dark .success-notif-rocket {
+  filter: drop-shadow(0 0 8px rgba(255, 180, 80, 0.6))
+          drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
   .success-notification.show {
     top: 20px;
     opacity: 1;
@@ -5587,6 +5745,14 @@ body.dark .reasons-textarea:focus {
 <div class="status-menu" id="statusMenu"></div>
 
 <div class="success-notification" id="successNotif">
+  <div class="success-notif-rocket">
+    <span class="rocket-emoji">🚀</span>
+    <span class="rocket-smoke">
+      <span class="smoke-puff"></span>
+      <span class="smoke-puff"></span>
+      <span class="smoke-puff"></span>
+    </span>
+  </div>
   <svg class="success-check" viewBox="0 0 52 52">
     <circle class="check-circle" cx="26" cy="26" r="22" fill="none"/>
     <path class="check-mark" fill="none" d="M14 27 L23 36 L38 18"/>
@@ -6080,13 +6246,19 @@ function goToTab(n, animate = true) {
     setTimeout(resetTotalsPosition, 50);
   }
 
-  // Если уходим с вкладки «Активности» — закрываем открытый слот
-  if (currentTab === 4 && n !== 4) {
+  // Если уходим с вкладки «Активности» — закрываем слот,
+// НО только если в нём НЕТ активной встречи
+if (currentTab === 4 && n !== 4) {
+  const activeSlot = findSlotWithActiveActivity();
+  if (!activeSlot) {
     _openSlotId = null;
   }
+  // Если активная встреча есть — слот остаётся "запомненным",
+  // при возврате откроется автоматически
+}
 
   if (n === 4) {
-    // Приоритет 1: если есть встреча «в процессе» — открываем её слот
+    // ─── Открываем слот с активной встречей (если есть) ───
     const activeSlot = findSlotWithActiveActivity();
     let scrollToActive = false;
 
@@ -6094,17 +6266,9 @@ function goToTab(n, animate = true) {
       _openSlotId = activeSlot;
       scrollToActive = true;
     }
-    // Приоритет 2: если слот уже задан вручную (например, из карты) — не перезаписываем
-    else if (!_openSlotId) {
-      const h = new Date().getHours();
-      if (h >= 10 && h < 12) _openSlotId = 't10_12';
-      else if (h >= 12 && h < 14) _openSlotId = 't12_14';
-      else if (h >= 14 && h < 16) _openSlotId = 't14_16';
-      else if (h >= 16 && h < 18) _openSlotId = 't16_18';
-      else _openSlotId = null;
-    }
+    // Если активной встречи нет — НЕ открываем слот по времени
+    // (но и не сбрасываем уже открытый)
 
-    // Если нашли активную встречу — скроллим и подсвечиваем ПОСЛЕ рендера
     if (scrollToActive) {
       setTimeout(scrollToActiveActivity, 600);
     }
@@ -6331,13 +6495,26 @@ function showToast(text) {
   setTimeout(() => t.classList.remove('show'), 1800);
 }
 async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); showToast('✅ Скопировано'); return true; }
+  try { 
+    await navigator.clipboard.writeText(text); 
+    showToast('🚀 Отчёт скопирован'); 
+    return true; 
+  }
   catch (e) {
     const ta = document.createElement('textarea');
     ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); showToast('✅ Скопировано'); document.body.removeChild(ta); return true; }
-    catch (e2) { document.body.removeChild(ta); showToast('❌ Не удалось скопировать'); return false; }
+    try { 
+      document.execCommand('copy'); 
+      showToast('🚀 Отчёт скопирован'); 
+      document.body.removeChild(ta); 
+      return true; 
+    }
+    catch (e2) { 
+      document.body.removeChild(ta); 
+      showToast('❌ Не удалось скопировать'); 
+      return false; 
+    }
   }
 }
 function num(v) { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? 0 : n; }
@@ -6372,7 +6549,6 @@ function showSuccessNotification(text, kind) {
 
   // очистить старые цветовые классы
   notif.classList.remove('notif-wait', 'notif-done', 'notif-perenos', 'notif-ndz');
-  // добавить новый
   if (kind === 'wait')    notif.classList.add('notif-wait');
   if (kind === 'done')    notif.classList.add('notif-done');
   if (kind === 'perenos') notif.classList.add('notif-perenos');
@@ -6380,22 +6556,34 @@ function showSuccessNotification(text, kind) {
 
   const textEl = notif.querySelector('.success-text');
   if (textEl) textEl.textContent = text || 'Готово';
+  
+  // ─── Сброс анимаций галочки ───
   const circle = notif.querySelector('.check-circle');
   const mark = notif.querySelector('.check-mark');
-  [circle, mark].forEach(el => { el.style.animation = 'none'; el.offsetHeight; el.style.animation = ''; });
+  [circle, mark].forEach(el => { 
+    el.style.animation = 'none'; 
+    el.offsetHeight; 
+    el.style.animation = ''; 
+  });
+
+  // ─── Сброс анимации ракеты ───
+  const rocket = notif.querySelector('.success-notif-rocket');
+  if (rocket) {
+    rocket.style.animation = 'none';
+    void rocket.offsetWidth;
+    rocket.style.animation = '';
+  }
 
   // показать
   void notif.offsetWidth;
   notif.classList.add('show');
 
-  // через 1.8 сек — начать плавное исчезновение
   _successTimeout = setTimeout(() => {
     notif.classList.add('hiding');
-    // через 0.6 сек — убрать полностью (чуть больше, чем длительность анимации)
     _successHideTimeout = setTimeout(() => {
       notif.classList.remove('show', 'hiding');
     }, 600);
-  }, 1800);
+  }, 2200);   // ← было 1800, +400мс, чтобы ракета успела улететь
 }
 
 function isHoliday(date) {
@@ -6581,17 +6769,15 @@ function getSlotDominantStatus(timeId) {
   return 'empty';
 }
 
-// Слот по умолчанию — null, дальше определим по текущему времени
+// Слот по умолчанию — null
 let _openSlotId = null;
 
-// При старте — раскрыть слот, соответствующий текущему часу
-(function autoOpenCurrentSlot() {
-  const h = new Date().getHours();
-  if (h >= 10 && h < 12) _openSlotId = 't10_12';
-  else if (h >= 12 && h < 14) _openSlotId = 't12_14';
-  else if (h >= 14 && h < 16) _openSlotId = 't14_16';
-  else if (h >= 16 && h < 18) _openSlotId = 't16_18';
-  // До 10:00 или после 18:00 — ничего не открываем
+// При старте — открываем ТОЛЬКО слот с активной встречей (в процессе)
+(function autoOpenActiveSlot() {
+  const activeSlot = findSlotWithActiveActivity();
+  if (activeSlot) {
+    _openSlotId = activeSlot;
+  }
 })();
 
 /* ═══════════════════════════════════════════════
@@ -7288,12 +7474,33 @@ const grid = document.createElement('div');
 grid.className = 'slot-grid';
 
 // ─── Сначала ВСЕ кнопки слотов ───
+// ─── Определяем активный слот по текущему времени ───
+const now = new Date();
+const nowMin = now.getHours() * 60 + now.getMinutes();
+const SLOTS_TIME = {
+  't10_12': { start: 10 * 60,  end: 12 * 60 },
+  't12_14': { start: 12 * 60,  end: 14 * 60 },
+  't14_16': { start: 14 * 60,  end: 16 * 60 },
+  't16_18': { start: 16 * 60,  end: 18 * 60 },
+};
+
+function isSlotActiveNow(timeId) {
+  const slot = SLOTS_TIME[timeId];
+  if (!slot) return false;
+  // С учётом буфера 15 минут до и после
+  const BUFFER = 15;
+  return nowMin >= (slot.start - BUFFER) && nowMin < (slot.end + BUFFER);
+}
+
 ROUTE_TIMES.forEach(t => {
   sortRouteList(t.id);
   const list = routeState.lists[t.id] || [];
   const cnt = list.length;
   const dom = getSlotDominantStatus(t.id);
   const isOpen = (_openSlotId === t.id);
+  const isActive = isSlotActiveNow(t.id);   // ← активный ли слот по времени
+  
+  // 
 
       // ─── Обёртка: время сверху + кнопка снизу ───
     const wrap = document.createElement('div');
@@ -7307,8 +7514,9 @@ ROUTE_TIMES.forEach(t => {
 
     // Сама кнопка слота — внутри только счётчик
     const btn = document.createElement('button');
-    btn.className = 'slot-btn status-' + dom + (isOpen ? ' active' : '');
-    btn.dataset.slotId = t.id;
+btn.className = 'slot-btn status-' + dom + (isOpen ? ' active' : '');
+if (isActive && !isOpen) btn.classList.add('slot-live');   // ← пульсация
+btn.dataset.slotId = t.id;
 
         const wait = list.filter(x => x.status === 'wait').length;
     const done = list.filter(x => x.status === 'done').length;
@@ -12223,7 +12431,7 @@ window.__showMapCache = function() {
    ТАЙМЕР ВНУТРИ СЛОТА (сколько осталось до конца)
    ═══════════════════════════════════════════════ */
 function getSlotRemaining(slotId) {
-  // Расписание слотов
+  // Расписание слотов + буферы 15 минут
   const SLOTS = {
     't10_12': { startH: 10, endH: 12 },
     't12_14': { startH: 12, endH: 14 },
@@ -12231,41 +12439,71 @@ function getSlotRemaining(slotId) {
     't16_18': { startH: 16, endH: 18 },
   };
   
+  const BUFFER_MIN = 15;   // ← буфер 15 минут до и после
+  
   const slot = SLOTS[slotId];
   if (!slot) return null;
   
   const now = new Date();
   const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  const startSec = slot.startH * 3600;
-  const endSec = slot.endH * 3600;
+  
+  // Реальное окно слота = [start - 15мин, end + 15мин]
+  const startSec = slot.startH * 3600 - BUFFER_MIN * 60;
+  const endSec   = slot.endH   * 3600 + BUFFER_MIN * 60;
   
   let diffSec;
   let mode;
   
   if (nowSec < startSec) {
-    // До слота — показываем полное время
+    // До открытия окна — показываем полное окно
     diffSec = endSec - startSec;
     mode = 'before';
   } else if (nowSec > endSec) {
-    // Слот прошёл — показываем 0
+    // Окно закрылось
     diffSec = 0;
     mode = 'done';
   } else {
-    // Слот идёт — сколько осталось
+    // Окно открыто — сколько осталось
     diffSec = endSec - nowSec;
     mode = 'active';
   }
   
   const hh = Math.floor(diffSec / 3600);
   const mm = Math.floor((diffSec % 3600) / 60);
-  
-  // Формат: "2.00" (часы.минуты — без двоеточия!)
   const hours = String(hh).padStart(1, '0');
   const mins = String(mm).padStart(2, '0');
   const timeStr = hours + '.' + mins;
   
   return { timeStr, mode };
 }
+/* ═══════════════════════════════════════════════
+   ОБНОВЛЕНИЕ АКТИВНОГО СЛОТА (каждую минуту)
+   ═══════════════════════════════════════════════ */
+function updateActiveSlotPulse() {
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const SLOTS_TIME = {
+    't10_12': { start: 10 * 60, end: 12 * 60 },
+    't12_14': { start: 12 * 60, end: 14 * 60 },
+    't14_16': { start: 14 * 60, end: 16 * 60 },
+    't16_18': { start: 16 * 60, end: 18 * 60 },
+  };
+  
+  document.querySelectorAll('#screen4 .slot-btn').forEach(btn => {
+    const slotId = btn.dataset.slotId;
+    const slot = SLOTS_TIME[slotId];
+    if (!slot) return;
+    
+    const BUFFER = 15;
+const isActive = nowMin >= (slot.start - BUFFER) && nowMin < (slot.end + BUFFER);
+    const isOpen = btn.classList.contains('active');
+    
+    btn.classList.toggle('slot-live', isActive && !isOpen);
+  });
+}
+
+setInterval(updateActiveSlotPulse, 60000);   // каждую минуту
+
 
 function updateSlotTimers() {
   document.querySelectorAll('[data-slot-timer]').forEach(el => {
