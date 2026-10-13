@@ -164,12 +164,18 @@ body.dark .daily-quote .dq-day {
   .sales-list-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
   body.dark .sales-list-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { 
-    overflow-x: hidden; 
-    overscroll-behavior-y: none;
-    height: 100%;
-    overflow-y: hidden;
-  }
+
+html, body { 
+  overflow-x: hidden; 
+  overscroll-behavior-y: none;
+  height: 100%;
+  overflow-y: hidden;
+  /* ─── Выравнивание шрифтов между вебом и APK ─── */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
   
 /* ─── Подсказка «выбери статус» перед бейджем ─── */
 .status-hint {
@@ -953,8 +959,9 @@ body.dark #btnMorningReport2:active {
   position: absolute;
   right: 12px;
   bottom: 12px;
-  width: 96px;
-  height: 96px;
+  /* ─── Адаптивный размер: 72px–96px ─── */
+  width: clamp(72px, 22vw, 96px);
+  height: clamp(72px, 22vw, 96px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -963,14 +970,6 @@ body.dark #btnMorningReport2:active {
   opacity: 0.95;
   pointer-events: none;
   z-index: 2;
-  /* ─── Жёстко вырываем из потока ─── */
-  margin: 0 !important;
-  padding: 0 !important;
-  flex: 0 0 0 !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  max-width: 96px !important;
-  max-height: 96px !important;
 }
 
 .status-stamp svg {
@@ -7675,20 +7674,20 @@ else if (item.status === 'done') {
       
       <!-- Текст по кругу (верх): ЗАВЕРШЕНО -->
       <path id="topArc" d="M 22,60 A 38,38 0 0 1 98,60" fill="none"/>
-      <text font-size="13" font-weight="800" fill="currentColor" letter-spacing="1.5">
-        <textPath href="#topArc" startOffset="50%" text-anchor="middle">ЗАВЕРШЕНО</textPath>
-      </text>
+      <text font-size="15" font-weight="800" fill="currentColor" letter-spacing="1.2">
+  <textPath href="#topArc" startOffset="50%" text-anchor="middle">ЗАВЕРШЕНО</textPath>
+</text>
       
       <!-- Текст по кругу (низ): ЗАВЕРШЕНО (перевёрнутый) -->
       <path id="bottomArc" d="M 98,60 A 38,38 0 0 1 22,60" fill="none"/>
-      <text font-size="13" font-weight="800" fill="currentColor" letter-spacing="1.5">
+      <text font-size="13" font-weight="800" fill="currentColor" letter-spacing="1.2">
         <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">ЗАВЕРШЕНО</textPath>
       </text>
       
       <!-- Галочка в центре -->
       <path d="M 42,60 L 55,73 L 80,48" 
-            fill="none" stroke="currentColor" stroke-width="7" 
-            stroke-linecap="round" stroke-linejoin="round"/>
+      fill="none" stroke="currentColor" stroke-width="8" 
+      stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `;
   statusLine.appendChild(stamp);
@@ -7719,10 +7718,9 @@ else if (item.status === 'perenos') {
       
       <!-- Крестик в центре -->
       <line x1="46" y1="46" x2="74" y2="74" 
-            stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
-      <line x1="74" y1="46" x2="46" y2="74" 
-            stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
-    </svg>
+      stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+<line x1="74" y1="46" x2="46" y2="74" 
+      stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
   `;
   statusLine.appendChild(stamp);
 }
