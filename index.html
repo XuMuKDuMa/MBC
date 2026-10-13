@@ -640,6 +640,158 @@ body.dark .drawer-totals-panel .dtp-value.magenta {
   display: flex; align-items: center;
   padding: 8px 10px; border-bottom: 1px solid #f0f0f0;
 }
+/* ═══════════════════════════════════════════════
+   ПОЛНОЭКРАННЫЙ РЕДАКТОР «ПРИЧИНЫ НЕ ДОСТАВОК»
+   ═══════════════════════════════════════════════ */
+.fullscreen-editor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.fullscreen-editor.show {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ─── Шапка ─── */
+.fe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0) + 10px) 12px 10px;
+  background: #2980b9;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.fe-title {
+  font-size: 15px;
+  font-weight: 700;
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fe-btn {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fe-btn:active {
+  background: rgba(255,255,255,0.35);
+  transform: scale(0.96);
+}
+
+.fe-save {
+  background: rgba(255,255,255,0.95);
+  color: #2980b9;
+  border-color: #fff;
+}
+
+.fe-save:active {
+  background: #fff;
+}
+
+/* ─── Textarea на весь экран ─── */
+.fe-textarea {
+  flex: 1;
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: inherit;
+  line-height: 1.5;
+  border: none;
+  outline: none;
+  resize: none;
+  background: #fff;
+  color: #2c3e50;
+  -webkit-appearance: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── Тёмная тема ─── */
+body.dark .fullscreen-editor {
+  background: #121a22;
+}
+
+body.dark .fe-header {
+  background: #1a2a3a;
+}
+
+body.dark .fe-textarea {
+  background: #121a22;
+  color: #e8eef5;
+}
+
+body.dark .fe-save {
+  background: rgba(74, 222, 128, 0.9);
+  color: #0f2818;
+  border-color: #4ade80;
+}
+
+body.dark .fe-save:active {
+  background: #4ade80;
+}
+.btn-expand-fd {
+  /* Стили уже в inline, но добавим для тёмной темы */
+}
+.btn-expand-fd:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #5a6b7a;
+}
+
+.btn-expand-fd:active {
+  background: rgba(0, 0, 0, 0.1);
+  color: #2c3e50;
+}
+
+body.dark .btn-expand-fd {
+  color: #90a4ae;
+}
+
+body.dark .btn-expand-fd:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #b0bec5;
+}
+
+body.dark .btn-expand-fd:active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #e8eef5;
+}
+body.dark .btn-expand-fd {
+  background: #2c3a48 !important;
+  color: #90a4ae !important;
+}
+
+body.dark .btn-expand-fd:active {
+  background: #3a4a5a !important;
+}
 
 /* ─── Специальный стиль для поля «Причины не доставок» ─── */
 .manual.manual-reasons {
@@ -794,6 +946,58 @@ body.dark #btnMorningReport2:active {
   }
   .toast.show { opacity: 1; }
 
+/* ═══════════════════════════════════════════════
+   ПЕЧАТЬ «ЗАВЕРШЕНО / ОТМЕНЕНО»
+   ═══════════════════════════════════════════════ */
+.status-stamp {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-12deg);
+  transition: transform 0.2s;
+  opacity: 0.95;
+  pointer-events: none;   /* ← не мешает кликам по карточке */
+  z-index: 2;
+}
+
+.status-stamp svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+}
+
+/* ─── Завершено — зелёная печать ─── */
+.stamp-done {
+  color: #168653;
+}
+
+/* ─── Отменено — серая печать ─── */
+.stamp-cancel {
+  color: #5a6b7a;
+  transform: rotate(-8deg);
+}
+
+/* ─── Тёмная тема — яркие цвета ─── */
+body.dark .stamp-done {
+  color: #4ade80;
+}
+body.dark .stamp-cancel {
+  color: #b0bec5;
+}
+
+body.dark .status-stamp svg {
+  filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.4));
+}
+
+body.dark .stamp-cancel svg {
+  filter: drop-shadow(0 0 6px rgba(176, 190, 197, 0.3));
+}
 /* ═══════════════════════════════════════════════
    ПУЛЬСАЦИЯ АКТИВНОГО СЛОТА
    ═══════════════════════════════════════════════ */
@@ -6110,6 +6314,100 @@ function initMeetingsSwipe() {
   }, { passive: true });
 }
 
+/* ═══════════════════════════════════════════════
+   ПОЛНОЭКРАННЫЙ РЕДАКТОР «ПРИЧИНЫ НЕ ДОСТАВОК»
+   ═══════════════════════════════════════════════ */
+function openReasonsFullscreen() {
+  const editor = document.getElementById('reasonsFullscreen');
+  const textarea = document.getElementById('feTextarea');
+  
+  if (!editor || !textarea) return;
+  
+  // Загружаем текущее значение
+  const currentText = getManual1('reasons') || '';
+  textarea.value = currentText;
+  
+  // Показываем
+  editor.classList.add('show');
+  
+  // Фокус на текстовое поле (с задержкой для анимации)
+  setTimeout(() => {
+    textarea.focus();
+    // Курсор в конец
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+  }, 350);
+  
+  vibro(15);
+}
+
+function closeReasonsFullscreen(save) {
+  const editor = document.getElementById('reasonsFullscreen');
+  const textarea = document.getElementById('feTextarea');
+  
+  if (!editor || !textarea) return;
+  
+  if (save) {
+    // Сохраняем
+    const newValue = textarea.value;
+    setManual1('reasons', newValue);
+    
+    // Обновляем поле в основном интерфейсе
+    const mainInput = document.querySelector('#app1 textarea[data-manual="reasons"]');
+    if (mainInput) {
+      mainInput.value = newValue;
+      // Обновляем высоту
+      mainInput.style.height = 'auto';
+      const contentH = mainInput.scrollHeight;
+      if (contentH > 180) {
+        mainInput.style.height = '180px';
+        mainInput.style.overflowY = 'scroll';
+      } else {
+        mainInput.style.height = contentH + 'px';
+        mainInput.style.overflowY = 'hidden';
+      }
+    }
+    
+    // Пересчитываем кнопку «Отчёт»
+    const btn1 = document.getElementById('btnReport1');
+    if (btn1) {
+      btn1.disabled = newValue.trim() === '';
+    }
+    
+    vibro(20);
+    showToast('✅ Сохранено');
+  }
+  
+  // Скрываем
+  editor.classList.remove('show');
+  textarea.blur();
+  
+  // Через 350мс очищаем
+  setTimeout(() => {
+    if (!editor.classList.contains('show')) {
+      textarea.value = '';
+    }
+  }, 400);
+}
+// ─── Обработчики (делегирование — работает даже если элементы созданы позже) ───
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#feCancel')) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeReasonsFullscreen(false);
+  }
+  if (e.target.closest('#feSave')) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeReasonsFullscreen(true);
+  }
+});
+
+// ─── Escape закрывает ───
+document.getElementById('feTextarea')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeReasonsFullscreen(false);
+  }
+});
 const HOLIDAYS = {
   '2026-01-01': 'Новый год','2026-01-02': 'Новогодние каникулы','2026-01-03': 'Новогодние каникулы',
   '2026-01-04': 'Новогодние каникулы','2026-01-05': 'Новогодние каникулы','2026-01-06': 'Новогодние каникулы',
@@ -7039,28 +7337,12 @@ function buildRouteCard(item, timeId, timeLabel) {
   if (item.status === 'perenos') card.classList.add('status-perenos');
   if (item.status === 'ndz') card.classList.add('status-ndz');
   
-   const isCollapsed = (item.status === 'done' || item.status === 'perenos');
-  if (isCollapsed) card.classList.add('collapsed');
+   // ─── Карточки больше НЕ сворачиваются ───
+const isCollapsed = false;
     // Если встреча в процессе — добавляем класс "живой"
   if (item.startedAt) card.classList.add('route-card-live');
 
-  if (isCollapsed) {
-    const addrDiv = document.createElement('div');
-    addrDiv.className = 'route-addr-collapsed';
-    addrDiv.textContent = item.addr || 'Адрес доставки';
-    card.appendChild(addrDiv);
 
-    card.addEventListener('click', (ev) => {
-      if (ev.target.closest('input, button')) return;
-      item.status = null;
-      saveRouteState(routeState);
-      renderRoute();
-      updateDrawerRoutes();
-      if (map) renderMapMarkers();
-      vibro(10);
-    });
-    return card;
-  }
 
     // ─── Тап по обычной карточке → открыть на карте ───
   card.addEventListener('click', (e) => {
@@ -7371,22 +7653,137 @@ if (item.startedAt) {
   `;
   statusLine.appendChild(live);
 }
+// ─── Бейдж «Сбер Завершено» для done ───
+else if (item.status === 'done') {
+  const stamp = document.createElement('div');
+  stamp.className = 'status-stamp stamp-done';
+  stamp.innerHTML = `
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <!-- Внешний круг -->
+      <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="4" opacity="0.9"/>
+      <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+      <!-- Внутренний круг -->
+      <circle cx="60" cy="60" r="36" fill="none" stroke="currentColor" stroke-width="2" opacity="0.8"/>
+      
+      <!-- Текст по кругу (верх): ЗАВЕРШЕНО -->
+      <path id="topArc" d="M 22,60 A 38,38 0 0 1 98,60" fill="none"/>
+      <text font-size="13" font-weight="800" fill="currentColor" letter-spacing="1.5">
+        <textPath href="#topArc" startOffset="50%" text-anchor="middle">ЗАВЕРШЕНО</textPath>
+      </text>
+      
+      <!-- Текст по кругу (низ): ЗАВЕРШЕНО (перевёрнутый) -->
+      <path id="bottomArc" d="M 98,60 A 38,38 0 0 1 22,60" fill="none"/>
+      <text font-size="13" font-weight="800" fill="currentColor" letter-spacing="1.5">
+        <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">ЗАВЕРШЕНО</textPath>
+      </text>
+      
+      <!-- Галочка в центре -->
+      <path d="M 42,60 L 55,73 L 80,48" 
+            fill="none" stroke="currentColor" stroke-width="7" 
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+  statusLine.appendChild(stamp);
+}
+// ─── Бейдж «Сбер Отмена» для perenos ───
+else if (item.status === 'perenos') {
+  const stamp = document.createElement('div');
+  stamp.className = 'status-stamp stamp-cancel';
+  stamp.innerHTML = `
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <!-- Внешний круг -->
+      <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="4" opacity="0.9"/>
+      <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+      <!-- Внутренний круг -->
+      <circle cx="60" cy="60" r="36" fill="none" stroke="currentColor" stroke-width="2" opacity="0.8"/>
+      
+      <!-- Текст по кругу (верх): ОТМЕНЕНО -->
+      <path id="topArcCancel" d="M 22,60 A 38,38 0 0 1 98,60" fill="none"/>
+      <text font-size="12" font-weight="800" fill="currentColor" letter-spacing="1">
+        <textPath href="#topArcCancel" startOffset="50%" text-anchor="middle">ОТМЕНЕНО</textPath>
+      </text>
+      
+      <!-- Текст по кругу (низ): ОТМЕНЕНО -->
+      <path id="bottomArcCancel" d="M 98,60 A 38,38 0 0 1 22,60" fill="none"/>
+      <text font-size="12" font-weight="800" fill="currentColor" letter-spacing="1">
+        <textPath href="#bottomArcCancel" startOffset="50%" text-anchor="middle">ОТМЕНЕНО</textPath>
+      </text>
+      
+      <!-- Крестик в центре -->
+      <line x1="46" y1="46" x2="74" y2="74" 
+            stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+      <line x1="74" y1="46" x2="46" y2="74" 
+            stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+    </svg>
+  `;
+  statusLine.appendChild(stamp);
+}
+// ─── Обычный режим — кнопка «Начать» ───
 else {
-  // Ещё не начата — показываем кнопку «Начать»
   const startBtn = document.createElement('button');
-  startBtn.type = 'button';
-  startBtn.className = 'route-start-btn';
-  startBtn.innerHTML = `<span class="rsb-icon">▶</span><span>Начать</span>`;
-    startBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    item.startedAt = Date.now();
-    saveRouteState(routeState);
-    vibro(20);
-    renderRoute();
-    updateActivitiesBadge();
-    _mapHash = '';                  // ← ГЛАВНОЕ: СБРОС хеша
-    if (map) renderMapMarkers();
-  });
+startBtn.type = 'button';
+startBtn.className = 'route-start-btn';
+startBtn.innerHTML = `<span class="rsb-icon">▶</span><span>Начать</span>`;
+startBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  
+  // ─── Проверка времени начала ───
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  
+  // Получаем время слота
+  const SLOTS_TIME = {
+    't10_12': { start: 10 * 60, end: 12 * 60, label: '10:00–12:00' },
+    't12_14': { start: 12 * 60, end: 14 * 60, label: '12:00–14:00' },
+    't14_16': { start: 14 * 60, end: 16 * 60, label: '14:00–16:00' },
+    't16_18': { start: 16 * 60, end: 18 * 60, label: '16:00–18:00' },
+  };
+  
+  const BUFFER = 15;   // буфер 15 минут
+  const slot = SLOTS_TIME[timeId];
+  
+  if (slot) {
+    const earliest = slot.start - BUFFER;   // самое раннее начало
+    const latest = slot.end + BUFFER;       // самое позднее начало
+    
+    // ─── Начинаем раньше интервала ───
+    if (nowMin < earliest) {
+      const waitMin = earliest - nowMin;
+      const confirmed = confirm(
+        `⚠️ Ты начинаешь встречу раньше интервала!\n\n` +
+        `Слот: ${slot.label}\n` +
+        `Сейчас: ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}\n` +
+        `Можно начинать с: ${Math.floor(earliest / 60)}:${String(earliest % 60).padStart(2, '0')}\n\n` +
+        `Подожди ещё ${waitMin} ${plural(waitMin, 'минуту', 'минуты', 'минут')}.\n\n` +
+        `Всё равно начать?`
+      );
+      if (!confirmed) return;
+    }
+    
+    // ─── Начинаем позже интервала ───
+    if (nowMin > latest) {
+      const lateMin = nowMin - latest;
+      const confirmed = confirm(
+        `⚠️ Ты начинаешь встречу позже интервала!\n\n` +
+        `Слот: ${slot.label}\n` +
+        `Сейчас: ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}\n` +
+        `Интервал закрылся в: ${Math.floor(latest / 60)}:${String(latest % 60).padStart(2, '0')}\n\n` +
+        `Опоздание: ${lateMin} ${plural(lateMin, 'минута', 'минуты', 'минут')}.\n\n` +
+        `Всё равно начать?`
+      );
+      if (!confirmed) return;
+    }
+  }
+  
+  // ─── Начинаем встречу ───
+  item.startedAt = Date.now();
+  saveRouteState(routeState);
+  vibro(20);
+  renderRoute();
+  updateActivitiesBadge();
+  _mapHash = '';
+  if (map) renderMapMarkers();
+});
   startBtn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
   statusLine.appendChild(startBtn);
 }
@@ -8236,22 +8633,47 @@ if (bizSection) {
   row.innerHTML = `
     <div class="name" style="flex:0 0 auto;min-width:auto;margin-bottom:6px;">${m.name}</div>
     <div style="display:flex;gap:6px;align-items:flex-end;width:100%;">
-      <textarea class="reasons-textarea" data-manual="${m.id}"${ph}
-                rows="1"
-                style="flex:1;min-width:0;padding:10px 12px;font-size:14px;font-weight:600;
-                       border-radius:8px;resize:none;overflow:hidden;line-height:1.35;
-                       font-family:inherit;">${escapeHtml(currentValue)}</textarea>
-      <button class="btn-paste-fd" 
-              title="Вставить из дневного отчёта"
+      
+      <!-- ─── Обёртка с textarea + кнопка ⇱ внутри ─── -->
+      <div style="position:relative;flex:1;min-width:0;">
+        <textarea class="reasons-textarea" data-manual="${m.id}"${ph} rows="1" 
+                  style="width:100%;padding:10px 36px 10px 12px;font-size:14px;font-weight:600;
+                         border-radius:8px;resize:none;overflow:hidden;line-height:1.35;
+                         font-family:inherit;box-sizing:border-box;">${escapeHtml(currentValue)}</textarea>
+        
+        <button class="btn-expand-fd" title="Открыть на весь экран" 
+                style="position:absolute;top:6px;right:6px;
+                       width:28px;height:28px;padding:0;
+                       border:none;border-radius:6px;
+                       background:transparent;color:#82919b;
+                       font-size:16px;font-weight:800;
+                       cursor:pointer;
+                       display:flex;align-items:center;justify-content:center;
+                       transition:background 0.15s, color 0.15s;">⇱</button>
+      </div>
+      
+      <button class="btn-paste-fd" title="Вставить из дневного отчёта" 
               style="padding:10px 12px;border:none;border-radius:8px;
                      background:#eaf3fb;color:#2980b9;font-size:18px;
                      font-weight:800;cursor:pointer;flex-shrink:0;
                      transition:transform 0.12s, background 0.15s;
-                     min-height:42px;">
-        📋
-      </button>
+                     min-height:42px;">📋</button>
     </div>
   `;
+  
+  // ─── Обработчик кнопки ⇱ ───
+  row.querySelector('.btn-expand-fd')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openReasonsFullscreen();
+  });
+  
+  // ─── Обработчик кнопки ⇱ ───
+  row.querySelector('.btn-expand-fd')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openReasonsFullscreen();
+  });
   
 // ─── Авто-высота для textarea с лимитом ───
 const reasonsTextarea = row.querySelector('.reasons-textarea');
@@ -12604,5 +13026,18 @@ setInterval(updateWorkTimer, 1000);
 updateWorkTimer();
 
 </script>
+
+<!-- Модалка полноэкранного ввода «Причины не доставок» -->
+<div class="fullscreen-editor" id="reasonsFullscreen">
+  <div class="fe-header">
+    <button class="fe-btn fe-cancel" id="feCancel">Отмена</button>
+    <div class="fe-title">Причины не доставок</div>
+    <button class="fe-btn fe-save" id="feSave">Сохранить</button>
+  </div>
+  <textarea class="fe-textarea" id="feTextarea" 
+            placeholder="Введи причины не доставок..."></textarea>
+</div>
+
+</body>
 </body>
 </html>
