@@ -6650,8 +6650,13 @@ function loadRouteState() {
 function saveRouteState(s) { localStorage.setItem(ROUTE_KEY, JSON.stringify(s)); }
 function getTodayKey23() {
   const now = new Date();
+  // Сдвиг дня в 23:00 — рабочий день считается с вечера предыдущего дня
+  // Но причины не доставок должны сбрасываться УТРОМ
   const day = new Date(now);
-  if (now.getHours() < 23) day.setDate(day.getDate() - 1);
+  if (now.getHours() >= 23) {
+    // После 23:00 — уже новый день
+    day.setDate(day.getDate() + 1);
+  }
   return day.toDateString();
 }
 function checkRouteAutoReset() {
@@ -11493,6 +11498,18 @@ const DAY_RESET_KEY1 = 'report_day_last_reset';
 function checkDayReset1() {
   const lastDay = localStorage.getItem(DAY_RESET_KEY1);
   const todayKey = getTodayKey23();
+    // ─── Отдельный сброс «Причины не доставок» по календарному дню ───
+  const reasonsResetKey = 'reasons_last_reset';
+  const todayCalendar = new Date().toDateString();
+  if (localStorage.getItem(reasonsResetKey) !== todayCalendar) {
+    if (state1.manual && state1.manual.reasons) {
+      state1.manual.reasons = '';
+      saveState1(state1);
+        // Перерисовать поле на экране
+      if (typeof render1 === 'function') render1();
+    }
+    localStorage.setItem(reasonsResetKey, todayCalendar);
+  }
   if (lastDay !== todayKey) {
     const hasData = Object.keys(state1.counts || {}).length > 0
                  || Object.keys(state1.manual || {}).length > 0
