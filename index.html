@@ -11978,16 +11978,27 @@ function checkDayReset1() {
     return true;
   }
   
-  // ═══ 2. Сброс reasons (на случай, если основной не сработал) ═══
-  const reasonsResetKey = 'reasons_last_reset';
-  if (localStorage.getItem(reasonsResetKey) !== todayCalendar) {
-    if (state1.manual && state1.manual.reasons) {
-      state1.manual.reasons = '';
-      saveState1(state1);
-      if (typeof render1 === 'function') render1();
-    }
-    localStorage.setItem(reasonsResetKey, todayCalendar);
+  // ═══ 2. Жёсткий сброс reasons ═══
+const reasonsResetKey = 'reasons_last_reset';
+const lastReset = localStorage.getItem(reasonsResetKey);
+
+if (lastReset !== todayCalendar) {
+  // ─── Сброса сегодня не было — сбрасываем ───
+  console.log('🔄 Сброс reasons:', lastReset, '→', todayCalendar);
+  if (state1.manual && state1.manual.reasons) {
+    state1.manual.reasons = '';
+    saveState1(state1);
+    if (typeof render1 === 'function') render1();
   }
+  localStorage.setItem(reasonsResetKey, todayCalendar);
+} 
+else if (state1.manual && state1.manual.reasons && state1.manual.reasons.trim()) {
+  // ─── Ключ уже стоит, но поле НЕ ПУСТО — значит баг, очищаем ───
+  console.warn('⚠️ reasons не пусто, хотя сброс был. Очищаю.');
+  state1.manual.reasons = '';
+  saveState1(state1);
+  if (typeof render1 === 'function') render1();
+}
   
   return false;
 }
