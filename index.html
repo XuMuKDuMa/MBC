@@ -9741,7 +9741,8 @@ function renderTotals3() {
   });
   const todayTotals = calcTotals1();
   const todayUP = Number(todayTotals.up.toFixed(2));
-  const monthUP = Number(sumUP.toFixed(2));
+    // ─── УП за месяц — берём ИЗ МВС (state2.month.upDone) ───
+  const monthUP = Number(state2.month.upDone || 0);
   const remains = plan > 0 ? plan - monthUP : 0;
   const progress = plan > 0 ? Math.min(100, (monthUP / plan) * 100) : 0;
   // История по месяцам — из двух источников
@@ -9765,10 +9766,16 @@ Object.keys(h).forEach(dateStr => {
   const m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
   const key = y + '-' + String(m + 1).padStart(2, '0');
   if (!monthTotals[key]) monthTotals[key] = { up: 0, od: 0, days: 0 };
-  monthTotals[key].up += h[dateStr].up || 0;
   monthTotals[key].od += h[dateStr].od || 0;
   monthTotals[key].days++;
 });
+  // ─── Для ТЕКУЩЕГО месяца в списке — подменяем на upDone из МВС ───
+  const currentMonthKey = year + '-' + String(month + 1).padStart(2, '0');
+  if (monthTotals[currentMonthKey]) {
+    monthTotals[currentMonthKey].up = monthUP;
+  } else if (monthUP > 0) {
+    monthTotals[currentMonthKey] = { up: monthUP, od: sumOD, days: days };
+  }
 const monthsSorted = Object.keys(monthTotals).sort().reverse();const meetRows = remains > 0 ? ANALYSIS_MEETINGS.map(m => ({ label: m.label, count: remains / m.coef })) : [];
   const salesRows = remains > 0 ? ANALYSIS_SALES.map(s => ({ label: s.label, count: remains / s.coef })) : [];
   const wdStats = getWorkingDaysStats();
@@ -10546,14 +10553,13 @@ function collectMonthlyReportByMonth(year, month) {
   const meetings = getMeetingsForMonth(year, month);
 
   const h = loadHistory1();
-  let sumUP = 0, sumOD = 0, sumMeetings = 0, days = 0;
+  let sumOD = 0, sumMeetings = 0, days = 0;
   Object.keys(h).forEach(dateStr => {
     const parts = dateStr.split('.');
     if (parts.length !== 3) return;
     const m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
     if (m !== month || y !== year) return;
     days++;
-    sumUP += h[dateStr].up || 0;
     sumOD += h[dateStr].od || 0;
     sumMeetings += h[dateStr].meetings || 0;
   });
@@ -11163,9 +11169,43 @@ function syncMonthUpFromHistory() {
   });
 
   const historyUP = Number(sumUP.toFixed(2));
-  if (state2.month.upDone !== historyUP) {
-    console.log('🔄 syncMonthUp:', state2.month.upDone, '→', historyUP);
-    state2.month.upDone = historyUP;
+  
+  // ─── Учитываем РУЧНУЮ БАЗУ ───
+  const base = Number(state2.month.upDoneManualBase || 0);
+  const baseDate = state2.month.upDoneManualBaseDate || null;
+  
+  let finalUP;
+  
+  if (base > 0 && baseDate) {
+    // Считаем, сколько УП появилось в истории ПОСЛЕ базы
+    let afterBaseUP = 0;
+    Object.keys(h).forEach(dateStr => {
+      const parts = dateStr.split('.');
+      if (parts.length !== 3) return;
+      const m = parseInt(parts[1]) - 1;
+      const y = parseInt(parts[2]);
+      if (m !== month || y !== year) return;
+      
+      // Сравниваем даты: только записи ПОСЛЕ baseDate
+      const [day, mon, yr] = dateStr.split('.').map(Number);
+      const recDate = new Date(yr, mon - 1, day);
+      const baseD = new Date(baseDate);
+      
+      if (recDate > baseD) {
+        afterBaseUP += h[dateStr].up || 0;
+      }
+    });
+    
+    // Итог = ручная база + дни после неё
+    finalUP = Number((base + afterBaseUP).toFixed(2));
+  } else {
+    // Нет базы — просто сумма из истории
+    finalUP = historyUP;
+  }
+  
+  if (state2.month.upDone !== finalUP) {
+    console.log('🔄 syncMonthUp:', state2.month.upDone, '→', finalUP, '(база:', base, ')');
+    state2.month.upDone = finalUP;
     saveState2(state2);
   }
 }
@@ -11465,46 +11505,35 @@ function mkAutoUp2() {
 
     // ✓ Сохранить — запоминаем базу истории на момент ввода
     row.querySelector('#upManualSave').addEventListener('click', () => {
-      const v = num(document.getElementById('upManualInput').value);
-
-      // Считаем ТЕКУЩУЮ сумму из истории — она пойдёт в "уже учтено"
-      const h = loadHistory1();
-      const now = new Date();
-      const month = now.getMonth();
-      const year = now.getFullYear();
-      let sumUP = 0;
-      Object.keys(h).forEach(dateStr => {
-        const parts = dateStr.split('.');
-        if (parts.length !== 3) return;
-        const m = parseInt(parts[1]) - 1;
-        const y = parseInt(parts[2]);
-        if (m === month && y === year) {
-          sumUP += h[dateStr].up || 0;
-        }
-      });
-
-      state2.month.upDoneManual = v;
-      state2.month.upDoneManualCounted = Number(sumUP.toFixed(2));  // ← база
-      state2.upMonthManual = true;
-      state2.month.upDone = v;
-      saveState2(state2);
-      render2();
-      renderTotals2();
-      vibro(15);
-      showToast('✅ Сохранено: ' + v.toFixed(2));
-    });
+  const v = num(document.getElementById('upManualInput').value);
+  
+  // ─── Сохраняем РУЧНУЮ БАЗУ + дату ───
+  state2.month.upDoneManualBase = v;              // ← база
+  state2.month.upDoneManualBaseDate = new Date().toISOString();  // ← дата
+  state2.month.upDoneManual = v;
+  state2.month.upDone = v;
+  state2.upMonthManual = true;
+  
+  saveState2(state2);
+  render2();
+  renderTotals2();
+  vibro(15);
+  showToast('✅ Сохранено: ' + v.toFixed(2));
+});
 
     // 🔄 Авто — НЕ трогаем upDone, значение остаётся
     row.querySelector('#upManualAuto').addEventListener('click', () => {
-      state2.upMonthManual = false;
-      // НЕ вызываем syncMonthUpFromHistory() — оставляем текущее upDone
-      // Синхронизация сработает при следующем заходе на вкладку МВС
-      saveState2(state2);
-      render2();
-      renderTotals2();
-      vibro(10);
-      showToast('🔄 Авто-режим (значение ' + state2.month.upDone + ' сохранено)');
-    });
+  state2.upMonthManual = false;
+  
+  // ─── СРАЗУ пересчитываем из истории ───
+  syncMonthUpFromHistory();
+  
+  saveState2(state2);
+  render2();
+  renderTotals2();
+  vibro(10);
+  showToast('🔄 Авто-режим: ' + state2.month.upDone.toFixed(2));
+});
 
     // Подсчёт % в реальном времени
     const inp = row.querySelector('#upManualInput');
