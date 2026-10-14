@@ -6105,6 +6105,16 @@ body.dark .reasons-textarea:focus {
 </div>
 
 <script>
+
+  // ═══════════════════════════════════════════════
+// ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ КАРТЫ (объявляем СРАЗУ)
+// ═══════════════════════════════════════════════
+var map = null;
+var mapMarkers = [];
+var mapGeocache = {};
+var userLocation = null;
+var currentMapFilter = 'all';
+var _mapHash = '';
   // ─── Глобальное состояние слайдера встреч ───
 let meetingsSlide = 0;
 /* ═══════════════════════════════════════════════
@@ -12028,11 +12038,7 @@ requestAnimationFrame(() => {
    МОДУЛЬ КАРТЫ (OpenStreetMap + Leaflet)
    ═══════════════════════════════════════════════ */
 
-let map = null;
-let mapMarkers = [];
-let mapGeocache = {};
-let userLocation = null;
-let currentMapFilter = 'all';
+
 
 // Загрузка Leaflet (если ещё не загружен)
 /* ═══════════════════════════════════════════════
@@ -12216,6 +12222,7 @@ function initMap() {
   zoomControl: false,
   attributionControl: false
 }).setView([55.7558, 37.6173], 11);
+
 // ─── Тайлы OpenStreetMap (работают без API-ключа) ───
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
@@ -12223,7 +12230,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// ...
+
 
 // ─── Сначала пробуем центрироваться по сохранённому городу ───
 const savedCity = getMyCity();
