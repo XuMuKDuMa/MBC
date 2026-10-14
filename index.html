@@ -11391,6 +11391,11 @@ if (btnRep) {
           tr_nag: getT2('tr_nag'), tr_usp: getT2('tr_usp'),
           slot_nag: getT2('slot_nag'), slot_usp: getT2('slot_usp')
         };
+        
+         // ─── Прибавляем up_day ТОЛЬКО если не отправляли сегодня ───
+      const todayStr2 = new Date().toDateString();
+      const alreadySent2 = state2.lastDay === todayStr2 && state2.savedToday === true;
+
   // ═══ ФИКС: защита от задвоения ═══
   const todayRu = new Date().toLocaleDateString('ru-RU');
   const h = loadHistory1();
