@@ -6601,11 +6601,16 @@ if (currentTab === 4 && n !== 4) {
   // Отложенно обновляем поле B2C — когда routeState точно готов
   setTimeout(updateB2cField, 50);
 }
-  if (n === 2) {
-  syncMonthUpFromHistory();   // ← синхронизация upDone из истории
+if (n === 2) {
+  // ─── Синхронизация только если отчёт НЕ отправлен сегодня ───
+  const todayStr = new Date().toDateString();
+  const sentToday = state2.lastDay === todayStr && state2.savedToday === true;
+  if (!sentToday) {
+    syncMonthUpFromHistory();
+  }
   autofillMvsFromToday();
   render2();
-}
+  }
 if (n === 3) renderTotals3();
 if (n === 4) {
   renderRoute();
@@ -8651,14 +8656,7 @@ if (bizSection) {
     
     let currentValue = getManual1(m.id);
     
-    // ─── Автоподстановка для «Причины не доставок» ───
-    if (m.id === 'reasons' && !currentValue.trim()) {
-      const q = loadQuickReport();
-      if (q.fdNotes && q.fdNotes.trim()) {
-        currentValue = q.fdNotes.trim();
-        setManual1(m.id, currentValue);
-      }
-    }
+  
     
     if (m.id === 'reasons') {
   row.classList.add('manual-reasons');
@@ -8834,10 +8832,11 @@ btnReport1El.addEventListener('click', async () => {
     return;
   }
 
-  try {
+        try {
     const text = buildReportText1();
     saveDayToHistory();
     localStorage.setItem(REPORT_SENT_KEY, new Date().toDateString());
+    
     await copyText(text);
     showSuccessNotification('Отчёт готов', 'done');
   } catch (e) {
@@ -8991,20 +8990,18 @@ document.addEventListener('input', (e) => {
   if (inp) {
     setManual1(inp.dataset.manual, inp.value);
 
-    // Пересчитать кнопку «Отчёт» в МВС
+    // ─── Кнопка «Отчёт» в МВС — только up_day ───
     const btn2 = document.getElementById('btnReport2');
     if (btn2) {
       const upDay = getT2('up_day').trim();
-      const reasons = getManual1('reasons').trim();
-      btn2.disabled = upDay === '' || reasons === '';
+      btn2.disabled = upDay === '';
     }
 
-    // Пересчитать кнопку «Отчёт» на «Сегодня»
+    // ─── Кнопка «Отчёт» на «Сегодня» — только reasons ───
     const btn1 = document.getElementById('btnReport1');
     if (btn1) {
-      const b2cTotal = getManual1('b2c_total').trim();
       const reasons = getManual1('reasons').trim();
-      btn1.disabled = b2cTotal === '' || reasons === '';
+      btn1.disabled = reasons === '';
     }
 
     return;
@@ -9189,24 +9186,34 @@ function buildMeetingsBreakdownToday() {
   return { b2c, b2b };
 }
 function buildReportText1() {
-   let up = 0, od = 0, upFD = 0, fd02 = 0, fd035 = 0, fdSim = 0;
+  let up = 0, od = 0, upFD = 0, fd02 = 0, fd035 = 0, fdSim = 0;
   let sumSim = 0, sumPrime = 0, sumPDS = 0, cntKK = 0, cntPK = 0, cntSZ = 0, bizMeetings = 0;
-let cntPerenos = 0;
- const others = [];
+  let cntPerenos = 0;
+  const others = [];
+
   SECTIONS1.forEach(s => s.items.forEach(i => {
     const c = getCount1(i.id);
     if (!c) return;
     up += c * i.up; od += c * i.od;
-        if (i.type === 'meeting') {
+
+    if (i.type === 'meeting') {
       if (i.id === 'fd_meet_02') fd02 += c;
       else if (i.id === 'fd_meet_sim') fdSim += c;
       else fd035 += c;
-      return;
+      return;                          // ← выходим — это встречи
     }
-    if (i.type === 'biz') bizMeetings += c;
+
+    if (i.type === 'biz') {
+      // ═══ B2B — НЕ идёт в УП на ФД ═══
+      bizMeetings += c;
+      return;                          // ← выходим — не идём в upFD
+    }
+
+    // ─── Всё остальное — продукты, идут в УП на ФД ───
     upFD += c * i.up;
+
     if (i.id === 'perenos_sim') cntPerenos += c;
-else if (i.group === 'Сим') sumSim += c;
+    else if (i.group === 'Сим') sumSim += c;
     if (i.group === 'Прайм') sumPrime += c;
     if (i.group === 'ПДС')   sumPDS   += c;
     if (i.group === 'КК')    cntKK    += c;
@@ -9219,14 +9226,14 @@ else if (i.group === 'Сим') sumSim += c;
   (state1.extra || []).forEach(x => {
     if (x.name && x.name.trim()) { upFD += num(x.up); od += num(x.od); others.push(x.name.trim()); }
   });
-    const m = (id) => getManual1(id);
-const b2bTotal = Number(m('b2b_total')) || 0;
+        const m = (id) => getManual1(id);
 
-// ─── B2C: назначено и успешных — АВТО из активностей ───
+// ─── B2C и B2B из АКТИВНОСТЕЙ (по категориям) ───
 let b2cTotal = 0;
 let b2cDone = 0;
+let b2bFromCards = 0;
+let b2bDone = 0;
 
-// Защита от неинициализированных переменных
 if (typeof ROUTE_TIMES !== 'undefined' &&
     typeof routeState !== 'undefined' &&
     routeState && routeState.lists) {
@@ -9235,14 +9242,29 @@ if (typeof ROUTE_TIMES !== 'undefined' &&
     list.forEach(item => {
       if (!item) return;
       if (!item.addr || !item.addr.trim()) return;
-      b2cTotal++;
-      if (item.status === 'done') b2cDone++;
+
+      const cat = item.category || 'b2c';
+
+      if (cat === 'b2b') {
+        b2bFromCards++;
+        if (item.status === 'done') b2bDone++;
+      } else {
+        b2cTotal++;
+        if (item.status === 'done') b2cDone++;
+      }
     });
   });
 }
 
+// ─── Ручной override для B2B ───
+const b2bManualRaw = String(m('b2b_total') || '').trim();
+const b2bManual = (b2bManualRaw !== '' && b2bManualRaw !== '0')
+  ? (Number(b2bManualRaw) || 0)
+  : null;
+const b2bTotalFinal = b2bManual !== null ? b2bManual : b2bFromCards;
+
 const b2cLine = `${b2cTotal}/${b2cDone}`;
-const b2bLine = `${b2bTotal}/${bizMeetings}`;
+const b2bLine = `${b2bTotalFinal}/${b2bDone}`;
   return `‼️‼️‼️
 Новый формат ✅
 
@@ -10564,6 +10586,25 @@ function collectMonthlyReportByMonth(year, month) {
     sumMeetings += h[dateStr].meetings || 0;
   });
 
+  // ─── УП за месяц — из МВС, если это текущий месяц ───
+  const now = new Date();
+  let sumUP;
+  if (year === now.getFullYear() && month === now.getMonth()) {
+    // Текущий месяц — берём из state2 (МВС)
+    sumUP = Number(state2.month?.upDone || 0);
+  } else {
+    // Прошлый месяц — суммируем из истории
+    sumUP = 0;
+    Object.keys(h).forEach(dateStr => {
+      const parts = dateStr.split('.');
+      if (parts.length !== 3) return;
+      const m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
+      if (m === month && y === year) {
+        sumUP += h[dateStr].up || 0;
+      }
+    });
+  }
+
   return {
     year, month,
     monthName: d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }),
@@ -11151,6 +11192,14 @@ function syncMonthUpFromHistory() {
     return;
   }
 
+    // ❗ Если отчёт отправлен сегодня — НЕ трогаем upDone
+  // (он уже включает сегодняшний день)
+  const todayStr = new Date().toDateString();
+  if (state2.lastDay === todayStr && state2.savedToday === true) {
+    console.log('⏸ syncMonthUpFromHistory: отчёт отправлен сегодня — пропускаю');
+    return;
+  }
+
   // Считаем сумму УП за текущий месяц из истории
   const h = loadHistory1();
   const now = new Date();
@@ -11212,9 +11261,31 @@ function syncMonthUpFromHistory() {
 function checkNewDay2() {
   const today = new Date().toDateString();
   if (state2.lastDay && state2.lastDay !== today) {
+    console.log('📅 Новый день! lastDay:', state2.lastDay, '→ сегодня:', today);
+    
+    // ═══ ФИКС: если вчера НЕ отправляли — сохраняем вчерашний день в историю ═══
+    if (state2.savedToday !== true) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayRu = yesterday.toLocaleDateString('ru-RU');
+      
+      const h = loadHistory1();
+      // Пишем ТОЛЬКО если за вчера ещё нет записи
+      if (!h[yesterdayRu] || !h[yesterdayRu].up) {
+        h[yesterdayRu] = {
+          up: Number((state2.month.upDone || 0).toFixed(2)),
+          upFD: 0, od: 0, meetings: 0,
+          savedAt: new Date().toISOString()
+        };
+        saveHistory1(h);
+        console.log('💾 Сохранил вчерашний день:', yesterdayRu, '=', state2.month.upDone);
+      }
+    }
+    // ═══════════════════════════════════════════════════════════════════════════
+    
     state2.savedToday = false;
-    state2.daySnapshot = null;  // ← сбрасываем снимок
-    saveState2(state2);          // ← не забыть сохранить
+    state2.daySnapshot = null;
+    saveState2(state2);
     return true;
   }
   return false;
@@ -11302,21 +11373,47 @@ if (btnRep) {
     btnRep.disabled = true;
     btnRep.textContent = 'Отправка…';
 
-    try {
-      state2.last = {
-        up_day: getT2('up_day'), kk_fact: getT2('kk_fact'), pk: getT2('pk'),
-        tr_nag: getT2('tr_nag'), tr_usp: getT2('tr_usp'),
-        slot_nag: getT2('slot_nag'), slot_usp: getT2('slot_usp')
-      };
-      state2.month.upDone = Number((state2.month.upDone + num(getT2('up_day'))).toFixed(2));
-      state2.month.trMonth.nag += num(getT2('tr_nag'));
-state2.month.trMonth.usp += num(getT2('tr_usp'));
-state2.month.slotMonth.nag += num(getT2('slot_nag'));
-state2.month.slotMonth.usp += num(getT2('slot_usp'));
 
-state2.lastDay = new Date().toDateString();
-state2.savedToday = true;
+        // ═══ ЗАЩИТА: не отправлять пустой отчёт ═══
+      const upDayVal = getT2('up_day').trim();
+      if (upDayVal === '' || num(upDayVal) === 0) {
+        showToast('⚠️ УП за день не заполнен');
+        btnRep.dataset.sending = '';
+        btnRep.disabled = false;
+        btnRep.textContent = 'Отчёт';
+        return;
+      }
+      // ═════════════════════════════════════════════
 
+      try {
+        state2.last = {
+          up_day: getT2('up_day'), kk_fact: getT2('kk_fact'), pk: getT2('pk'),
+          tr_nag: getT2('tr_nag'), tr_usp: getT2('tr_usp'),
+          slot_nag: getT2('slot_nag'), slot_usp: getT2('slot_usp')
+        };
+  // ═══ ФИКС: защита от задвоения ═══
+  const todayRu = new Date().toLocaleDateString('ru-RU');
+  const h = loadHistory1();
+  const todayAlreadyInHistory = !!(h[todayRu] && h[todayRu].up > 0);
+
+  if (!alreadySent2 && !todayAlreadyInHistory) {
+    state2.month.upDone = Number((state2.month.upDone + num(getT2('up_day'))).toFixed(2));
+    
+    h[todayRu] = {
+      up: Number(state2.month.upDone.toFixed(2)),
+      upFD: 0,
+      od: 0,
+      meetings: 0,
+      savedAt: new Date().toISOString()
+    };
+    saveHistory1(h);
+  }
+
+  state2.month.trMonth.nag += num(getT2('tr_nag'));
+  state2.month.trMonth.usp += num(getT2('tr_usp'));
+  state2.month.slotMonth.nag += num(getT2('slot_nag'));
+  state2.month.slotMonth.usp += num(getT2('slot_usp'));
+  // ...
 // ─── ВАЖНО: daySnapshot = 0, потому что день УЖЕ добавлен в month ───
 // Иначе при показе month + snapshot будет двойной счёт
 state2.daySnapshot = {
@@ -11586,9 +11683,22 @@ function mkRow2_2(id1, id2) {
 function renderTotals2() {
   // ─── Обновляем поле "УП фактический за месяц" ───
   const isManualUP = state2.upMonthManual === true;
+
+  // ─── Проверяем: есть ли сегодняшний день в истории? ───
+  const todayStr = new Date().toDateString();
+  const todayRu = new Date().toLocaleDateString('ru-RU');
+  const h = loadHistory1();
+  const todayInHistory = !!(h[todayRu] && h[todayRu].up > 0);
+
+  // ─── Отчёт отправлен сегодня? ───
+  const alreadySentToday = state2.lastDay === todayStr && state2.savedToday === true;
+
+  // ─── Если отчёт отправлен ИЛИ сегодня уже в истории — НЕ прибавляем up_day ───
+  const shouldNotAddUpDay = alreadySentToday || todayInHistory;
+
   const upDoneDisplay = isManualUP
     ? Number(state2.month.upDone || 0)
-    : Number((state2.month.upDone + num(getT2('up_day'))).toFixed(2));
+    : Number((state2.month.upDone + (shouldNotAddUpDay ? 0 : num(getT2('up_day')))).toFixed(2));
 
   const autoUpEl = document.getElementById('auto_up2');
   if (autoUpEl) autoUpEl.textContent = upDoneDisplay.toFixed(2);
@@ -11620,7 +11730,7 @@ function renderTotals2() {
   const el3p = document.getElementById('pct_slotm2');
   if (el3p) el3p.textContent = pct2(slUsp, slNag);
 
-  // Кнопка «Отчёт»
+    // Кнопка «Отчёт»
   const btn = document.getElementById('btnReport2');
   if (btn) {
     const todayStr = new Date().toDateString();
@@ -11630,12 +11740,13 @@ function renderTotals2() {
       btn.textContent = '✓ Отправлено';
       return;
     }
-    const upDay = getT2('up_day').trim();
-    const reasons = getManual1('reasons').trim();
-    btn.disabled = upDay === '' || reasons === '';
-    btn.textContent = 'Отчёт';
+  // ─── Для МВС — только «УП за день» (reasons не нужны) ───
+const upDay = getT2('up_day').trim();
+btn.disabled = upDay === '' || num(upDay) === 0;
+btn.textContent = 'Отчёт';
   }
-}
+}   
+
 function buildMorningReport2() {
   const today = new Date().toLocaleDateString('ru-RU');
   const fio = getPlan2('fio') || '';
@@ -12020,19 +12131,12 @@ if (lastReset !== todayCalendar) {
     if (typeof render1 === 'function') render1();
   }
   localStorage.setItem(reasonsResetKey, todayCalendar);
-} 
-else if (state1.manual && state1.manual.reasons && state1.manual.reasons.trim()) {
-  // ─── Ключ уже стоит, но поле НЕ ПУСТО — значит баг, очищаем ───
-  console.warn('⚠️ reasons не пусто, хотя сброс был. Очищаю.');
-  state1.manual.reasons = '';
-  saveState1(state1);
-  if (typeof render1 === 'function') render1();
-}
   
   return false;
 }
+}   
 
-checkDayReset1();
+checkDayReset1();   
 checkQuickReportReset();
 setTimeout(checkMonthlyReport, 1500);
 setTimeout(checkQuickReportReminder, 3000);
@@ -12067,12 +12171,34 @@ setInterval(checkQuickReportReminder, 60 * 1000);
 setInterval(() => { if (checkAutoReset2()) render2(); }, 60 * 1000);
 renderRoute();
 updateActivitiesBadge();
-requestAnimationFrame(() => {
+
+// ─── Принудительно открываем «Активности» при старте ───
+function forceOpenActivitiesTab() {
   const w = window.innerWidth;
+  if (!w) return false;   // ещё не готово
+  
   screensTrack.style.transition = 'none';
   screensTrack.style.transform = `translateX(${-3 * w}px)`;
-  requestAnimationFrame(() => { screensTrack.style.transition = ''; });
+  document.body.classList.remove('tab-1', 'tab-2', 'tab-3', 'tab-4');
+  document.body.classList.add('tab-4');
+  updateBottomBarActive(4);
+  currentTab = 4;
+  return true;
+}
+
+// Пытаемся сразу
+requestAnimationFrame(() => {
+  if (!forceOpenActivitiesTab()) {
+    // Если не получилось — пробуем на следующем кадре
+    requestAnimationFrame(() => {
+      forceOpenActivitiesTab();
+    });
+  }
 });
+
+// ─── На случай медленной загрузки — ещё раз через 100мс и 500мс ───
+setTimeout(forceOpenActivitiesTab, 100);
+setTimeout(forceOpenActivitiesTab, 500);
 
 /* ═══════════════════════════════════════════════
    МОДУЛЬ КАРТЫ (OpenStreetMap + Leaflet)
@@ -13125,7 +13251,27 @@ function updateWorkTimer() {
 // Обновляем каждую секунду
 setInterval(updateWorkTimer, 1000);
 updateWorkTimer();
+// ═══════════════════════════════════════════════
+// ПЕРЕСЧЁТ TRANSFORM ПРИ RESIZE
+// ═══════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  if (currentTab) {
+    const w = window.innerWidth;
+    screensTrack.style.transition = 'none';
+    screensTrack.style.transform = `translateX(${-(currentTab - 1) * w}px)`;
+  }
+});
 
+// ─── Также при orientationchange (поворот экрана) ───
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    if (currentTab) {
+      const w = window.innerWidth;
+      screensTrack.style.transition = 'none';
+      screensTrack.style.transform = `translateX(${-(currentTab - 1) * w}px)`;
+    }
+  }, 300);
+});
 </script>
 
 <!-- Модалка полноэкранного ввода «Причины не доставок» -->
