@@ -6609,16 +6609,32 @@ if (n === 4) {
   }, 80);
 }
 if (n === 5) {
-  initMap();
-  checkVpnAndWarn();
+  try {
+    initMap();
+  } catch (e) {
+    console.warn('⚠️ initMap error:', e);
+    showToast('⚠️ Ошибка карты: ' + e.message);
+  }
+  
+  try {
+    checkVpnAndWarn();
+  } catch (e) {
+    console.warn('⚠️ VPN check error:', e);
+  }
+  
   setTimeout(() => {
-    if (map) renderMapMarkers();
-    // ─── Принудительно обновляем надпись города ───
-    updateMapCityLabel();
+    try {
+      if (map) renderMapMarkers();
+      updateMapCityLabel();
+    } catch (e) {
+      console.warn('⚠️ Post-init error:', e);
+    }
   }, 300);
-  // ─── Ещё раз через 1 сек — на случай медленной инициализации ───
+  
   setTimeout(() => {
-    updateMapCityLabel();
+    try {
+      updateMapCityLabel();
+    } catch (e) {}
   }, 1200);
 }
 
@@ -8667,12 +8683,6 @@ if (bizSection) {
     </div>
   `;
   
-  // ─── Обработчик кнопки ⇱ ───
-  row.querySelector('.btn-expand-fd')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openReasonsFullscreen();
-  });
   
   // ─── Обработчик кнопки ⇱ ───
   row.querySelector('.btn-expand-fd')?.addEventListener('click', (e) => {
@@ -8767,14 +8777,16 @@ vibro(15);
 showToast('✅ Вставлено из дневного отчёта');
       });
       
-      // ─── Ховер/актив для кнопки ───
-      const pasteBtn = row.querySelector('.btn-paste-fd');
-      pasteBtn.addEventListener('touchstart', () => {
-        pasteBtn.style.background = '#d5e8f7';
-      }, { passive: true });
-      pasteBtn.addEventListener('touchend', () => {
-        pasteBtn.style.background = '';
-      }, { passive: true });
+        // ─── Ховер/актив для кнопки ───
+  const pasteBtn = row.querySelector('.btn-paste-fd');
+  if (pasteBtn) {                              // ← ДОБАВИТЬ проверку
+    pasteBtn.addEventListener('touchstart', () => {
+      pasteBtn.style.background = '#d5e8f7';
+    }, { passive: true });
+    pasteBtn.addEventListener('touchend', () => {
+      pasteBtn.style.background = '';
+    }, { passive: true });
+  }
       
     } else {
       // ─── Обычный рендер для остальных полей ───
@@ -11924,39 +11936,49 @@ function checkAutoReset2() {
 const DAY_RESET_KEY1 = 'report_day_last_reset';
 
 function checkDayReset1() {
-  const lastDay = localStorage.getItem(DAY_RESET_KEY1);
-  const todayKey = getTodayKey23();
-    // ─── Отдельный сброс «Причины не доставок» по календарному дню ───
-  const reasonsResetKey = 'reasons_last_reset';
+  // ═══ 1. ОСНОВНОЙ СБРОС — по КАЛЕНДАРНОМУ дню ═══
+  const calendarResetKey = 'report_day_calendar_reset';
   const todayCalendar = new Date().toDateString();
-  if (localStorage.getItem(reasonsResetKey) !== todayCalendar) {
-    if (state1.manual && state1.manual.reasons) {
-      state1.manual.reasons = '';
-      saveState1(state1);
-        // Перерисовать поле на экране
-      if (typeof render1 === 'function') render1();
-    }
-    localStorage.setItem(reasonsResetKey, todayCalendar);
-  }
-  if (lastDay !== todayKey) {
+  
+  if (localStorage.getItem(calendarResetKey) !== todayCalendar) {
+    console.log('🔄 Сброс дня (календарный):', todayCalendar);
+    
     const hasData = Object.keys(state1.counts || {}).length > 0
                  || Object.keys(state1.manual || {}).length > 0
                  || (state1.extra && state1.extra.length > 0)
                  || (state1.zk && state1.zk.trim() !== '');
+    
     if (hasData) {
-      // Сохраняем под ВЧЕРАШНЮЮ дату
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       saveDayToHistory(yesterday.toLocaleDateString('ru-RU'));
     }
+    
+    // ─── СБРОС ───
     state1 = { counts: {}, manual: {}, extra: [], zk: '' };
     saveState1(state1);
-    localStorage.setItem(DAY_RESET_KEY1, todayKey);
+    
+    localStorage.setItem(calendarResetKey, todayCalendar);
+    localStorage.setItem(DAY_RESET_KEY1, getTodayKey23());
+    localStorage.setItem('reasons_last_reset', todayCalendar);   // ← заодно
+    
     render1();
     renderTotals1();
     if (currentTab === 3) renderTotals3();
     return true;
   }
+  
+  // ═══ 2. Сброс reasons (на случай, если основной не сработал) ═══
+  const reasonsResetKey = 'reasons_last_reset';
+  if (localStorage.getItem(reasonsResetKey) !== todayCalendar) {
+    if (state1.manual && state1.manual.reasons) {
+      state1.manual.reasons = '';
+      saveState1(state1);
+      if (typeof render1 === 'function') render1();
+    }
+    localStorage.setItem(reasonsResetKey, todayCalendar);
+  }
+  
   return false;
 }
 
@@ -12149,14 +12171,38 @@ async function checkVpnAndWarn() {
 function loadLeaflet(callback) {
   if (window.L) { callback(); return; }
   
+  console.log('📥 Загружаю Leaflet...');
+  
+  // CSS
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  link.href = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
   document.head.appendChild(link);
   
+  // JS с fallback
   const script = document.createElement('script');
-  script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-  script.onload = callback;
+  script.src = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
+  
+  script.onload = () => {
+    console.log('✅ Leaflet загружен (jsdelivr)');
+    callback();
+  };
+  
+  script.onerror = () => {
+    console.warn('⚠️ jsdelivr не сработал, пробую unpkg');
+    const script2 = document.createElement('script');
+    script2.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script2.onload = () => {
+      console.log('✅ Leaflet загружен (unpkg)');
+      callback();
+    };
+    script2.onerror = () => {
+      console.error('❌ Leaflet не загрузился');
+      showToast('⚠️ Карта не загрузилась — проверь интернет');
+    };
+    document.head.appendChild(script2);
+  };
+  
   document.head.appendChild(script);
 }
 
@@ -12170,9 +12216,10 @@ function initMap() {
   zoomControl: false,
   attributionControl: false
 }).setView([55.7558, 37.6173], 11);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19
+// ─── Тайлы OpenStreetMap (работают без API-ключа) ───
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap'
 }).addTo(map);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
@@ -13044,6 +13091,5 @@ updateWorkTimer();
             placeholder="Введи причины не доставок..."></textarea>
 </div>
 
-</body>
 </body>
 </html>
